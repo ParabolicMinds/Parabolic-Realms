@@ -3,13 +3,13 @@ cmake_minimum_required(VERSION 2.8.8)
 set(InOpenJK TRUE)
 
 # Project name
-set(ProjectName "OpenJK" CACHE STRING "Project Name")
+set(ProjectName "Parabolic-Realms" CACHE STRING "Project Name")
 project(${ProjectName})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 # Customizable options
-option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" OFF)
+option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" ON)
 
 option(BuildMPEngine "Whether to create projects for the MP client (openjk.exe)" ON)
 option(BuildMPRdVanilla "Whether to create projects for the MP default renderer (rd-vanilla_x86.dll)" ON)
@@ -17,13 +17,6 @@ option(BuildMPDed "Whether to create projects for the MP dedicated server (openj
 option(BuildMPGame "Whether to create projects for the MP server-side gamecode (jampgamex86.dll)" ON)
 option(BuildMPCGame "Whether to create projects for the MP clientside gamecode (cgamex86.dll)" ON)
 option(BuildMPUI "Whether to create projects for the MP UI code (uix86.dll)" ON)
-option(BuildSPEngine "Whether to create projects for the SP engine (openjk_sp.exe)" ON)
-option(BuildSPGame "Whether to create projects for the SP gamecode (jagamex86.dll)" ON)
-option(BuildSPRdVanilla "Whether to create projects for the SP default renderer (rdsp-vanilla_x86.dll)" ON)
-
-option(BuildJK2SPEngine "Whether to create projects for the jk2 SP engine (openjo_sp.exe)" OFF)
-option(BuildJK2SPGame "Whether to create projects for the jk2 sp gamecode mod (jk2gamex86.dll)" OFF)
-option(BuildJK2SPRdVanilla "Whether to create projects for the jk2 sp renderer (rdjosp-vanilla_x86.dll)" OFF)
 
 # Customizable libraries
 if(WIN32)
@@ -92,26 +85,18 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 message("Git revision is ${GIT_SHA1}")
 
 # Binary names
-set(SPEngine "openjk_sp.${Architecture}")
-set(SPGame "jagame${Architecture}")
-set(SPRDVanillaRenderer "rdsp-vanilla_${Architecture}")
-set(MPEngine "openjk.${Architecture}")
+set(MPEngine "pararealms.${Architecture}")
 set(MPVanillaRenderer "rd-vanilla_${Architecture}")
-set(MPDed "openjkded.${Architecture}")
+set(MPDed "pararealms_ded.${Architecture}")
 set(MPGame "jampgame${Architecture}")
 set(MPCGame "cgame${Architecture}")
 set(MPUI "ui${Architecture}")
-set(JK2SPEngine "openjo_sp.${Architecture}")
-set(JK2SPGame "jospgame${Architecture}")
-set(JK2SPVanillaRenderer "rdjosp-vanilla_${Architecture}")
 # Library names
 set(MPBotLib "botlib")
 set(SharedLib "shared")
 
 # Paths
-set(SPDir "${CMAKE_SOURCE_DIR}/code")
 set(MPDir "${CMAKE_SOURCE_DIR}/codemp")
-set(JK2SPDir "${CMAKE_SOURCE_DIR}/codeJK2")
 set(SharedDir ${CMAKE_SOURCE_DIR}/shared)
 
 # Common settings
@@ -237,10 +222,10 @@ set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 # I'm just not appending the version for now
-set(CPACK_PACKAGE_FILE_NAME "OpenJK-${CMAKE_SYSTEM_NAME}-${Architecture}")
+set(CPACK_PACKAGE_FILE_NAME "Pararealms-${CMAKE_SYSTEM_NAME}-${Architecture}")
 
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "An improved Jedi Academy")
-set(CPACK_PACKAGE_VENDOR "JACoders")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Don't worry about it alright?")
+set(CPACK_PACKAGE_VENDOR "Team Taco Shark")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 set(CPACK_PACKAGE_DIRECTORY ${PACKAGE_DIR})
