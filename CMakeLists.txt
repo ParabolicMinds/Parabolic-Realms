@@ -210,10 +210,6 @@ endif()
 set(ReleaseDefines "FINAL_BUILD")
 
 # Add projects
-add_subdirectory(${SPDir})
-if(BuildJK2SPGame)
-	add_subdirectory("${JK2SPDir}/game")
-endif()
 add_subdirectory(${MPDir})
 
 # CPack for installer creation
