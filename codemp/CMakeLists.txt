@@ -180,6 +180,14 @@ if(BuildMPEngine OR BuildMPDed)
 		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} ${ZLIB_LIBRARY})
 	endif()
 
+        set(MPEngineAndDedParaFiles
+                "${MPDir}/para/scripting_engine_vm.h"
+                "${MPDir}/para/scripting_engine.hpp"
+                "${MPDir}/para/scripting_engine.cpp"
+                )
+        source_group("para" FILES ${MPEngineAndDedParaFiles})
+        set(MPEngineAndDedFiles ${MPEngineAndDedFiles} ${MPEngineAndDedParaFiles})
+
 	set(MPEngineAndDedCgameFiles
 		"${MPDir}/cgame/cg_public.h"
 		)

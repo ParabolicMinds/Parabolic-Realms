@@ -11,6 +11,8 @@
 #include "qcommon/timing.h"
 #include "NPCNav/navigator.h"
 
+#include "para/scripting_engine.hpp"
+
 botlib_export_t	*botlib_export;
 
 // game interface
@@ -2862,7 +2864,7 @@ void SV_BindGame( void ) {
 	static gameImport_t gi;
 	gameExport_t		*ret;
 	GetGameAPI_t		GetGameAPI;
-	char				dllName[MAX_OSPATH] = "jampgame"ARCH_STRING DLL_EXT;
+	char				dllName[MAX_OSPATH] = "jampgame" ARCH_STRING DLL_EXT;
 
 	memset( &gi, 0, sizeof( gi ) );
 
@@ -3177,6 +3179,10 @@ void SV_BindGame( void ) {
 		gi.G2API_CleanEntAttachments			= SV_G2API_CleanEntAttachments;
 		gi.G2API_OverrideServer					= SV_G2API_OverrideServer;
 		gi.G2API_GetSurfaceName					= SV_G2API_GetSurfaceName;
+		gi.PARA_CreateScriptingContext			= PARA_LoadManifest;
+		gi.PARA_DeleteScriptingContext			= PARA_CloseManifest;
+		gi.PARA_CreateImport					= PARA_GenerateImport;
+		gi.PARA_DeleteImport					= PARA_DeleteImport;
 
 		GetGameAPI = (GetGameAPI_t)gvm->GetModuleAPI;
 		ret = GetGameAPI( GAME_API_VERSION, &gi );

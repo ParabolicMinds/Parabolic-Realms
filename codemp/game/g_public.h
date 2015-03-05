@@ -6,6 +6,7 @@
 // g_public.h -- game module information visible to server
 
 #include "qcommon/q_shared.h"
+#include "para/scripting_engine_vm.h"
 
 #define Q3_INFINITE			16777216
 
@@ -1073,6 +1074,10 @@ typedef struct gameImport_s {
 	void		(*G2API_CleanEntAttachments)			( void );
 	qboolean	(*G2API_OverrideServer)					( void *serverInstance );
 	void		(*G2API_GetSurfaceName)					( void *ghoul2, int surfNumber, int modelIndex, char *fillBuf );
+	void *		(*PARA_CreateScriptingContext)			( char const * manifestPath );
+	void        (*PARA_DeleteScriptingContext)          ( void * handle);
+	para_seImport_t * (*PARA_CreateImport)				( void );
+	void		(*PARA_DeleteImport)					( para_seImport_t * import );
 } gameImport_t;
 
 typedef struct gameExport_s {
