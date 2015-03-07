@@ -1571,6 +1571,17 @@ int svcmdcmp( const void *a, const void *b ) {
 	return Q_stricmp( (const char *)a, ((serverCommand_t*)b)->cmd );
 }
 
+static char const * const espeak_chatbreak = "<break time=\"700ms\"/>";
+
+static void CG_Espeak() {
+	char text[1024];
+	memset(text, 0, sizeof(text));
+	trap->Cmd_Argv( 1, text, sizeof( text ) );
+	char const * etext = va("<> %s %s", espeak_chatbreak, text);
+	espeak_Cancel();
+	espeak_Synth(etext, strlen(etext)+1, 0, 0, 0, espeakSSML, 0, 0);
+}
+
 /* This array MUST be sorted correctly by alphabetical name field */
 static serverCommand_t	commands[] = {
 	{ "chat",				CG_Chat_f },
@@ -1578,6 +1589,7 @@ static serverCommand_t	commands[] = {
 	{ "cp",					CG_CenterPrint_f },
 	{ "cps",				CG_CenterPrintSE_f },
 	{ "cs",					CG_ConfigStringModified },
+	{ "espeak",				CG_Espeak },
 	{ "ircg",				CG_RestoreClientGhoul_f },
 	{ "kg2",				CG_KillGhoul2_f },
 	{ "kls",				CG_KillLoopSounds_f },

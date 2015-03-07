@@ -2459,6 +2459,8 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 	const char	*s;
 	int i = 0;
 
+	espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 0, 0, 0);
+
 	BG_InitAnimsets(); //clear it out
 
 	trap->RegisterSharedMemory( cg.sharedBuffer.raw );
@@ -2746,6 +2748,8 @@ Called before every level change or subsystem restart
 */
 void CG_Shutdown( void )
 {
+	espeak_Terminate();
+
 	BG_ClearAnimsets(); //free all dynamic allocations made through the engine
 
     CG_DestroyAllGhoul2();
