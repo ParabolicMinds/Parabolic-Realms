@@ -6,8 +6,9 @@ if(NOT InOpenJK)
 endif(NOT InOpenJK)
 
 set(MPCGameIncludeDirectories "${MPDir}")
+set(MPCGameLibraries "espeak" "portaudio")
 if(WIN32)
-	set(MPCGameLibraries "odbc32" "odbccp32") # what are these even?
+        set(MPCGameLibraries ${MPCGameLibraries} "odbc32" "odbccp32") # what are these even?
 endif(WIN32)
 set(MPCGameDefines ${MPSharedDefines} "_CGAME" )
 set(MPCGameGameFiles
