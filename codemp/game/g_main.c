@@ -18,6 +18,8 @@ int killPlayerTimer = 0;
 gentity_t		g_entities[MAX_GENTITIES];
 gclient_t		g_clients[MAX_CLIENTS];
 
+para_seImport_t * pse_import;
+
 qboolean gDuelExit = qfalse;
 
 void G_InitGame					( int levelTime, int randomSeed, int restart );
@@ -146,6 +148,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	vmCvar_t	mapname;
 	vmCvar_t	ckSum;
 	char serverinfo[MAX_INFO_STRING] = {0};
+
+	if (!pse_import) pse_import = trap->PARA_CreateImport();
 
 	//Init RMG to 0, it will be autoset to 1 if there is terrain on the level.
 	trap->Cvar_Set("RMG", "0");
@@ -478,6 +482,9 @@ void G_ShutdownGame( int restart ) {
 	if ( trap->Cvar_VariableIntegerValue( "bot_enable" ) ) {
 		BotAIShutdown( restart );
 	}
+
+	if (pse_import) trap->PARA_DeleteImport(pse_import);
+	pse_import = 0;
 
 	B_CleanupAlloc(); //clean up all allocations made with B_Alloc
 }

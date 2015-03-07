@@ -23,4 +23,10 @@
 #	define Sys_LibraryError() SDL_GetError()
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void * QDECL Sys_LoadDll(const char *name, qboolean useSystemLib);
+#ifdef __cplusplus
+}
+#endif

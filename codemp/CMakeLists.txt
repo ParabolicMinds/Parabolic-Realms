@@ -33,7 +33,7 @@ if(BuildMPEngine OR BuildMPDed)
 	#    Botlib
 	# the files could arguably just be put into the engine and dedicated projects without having a library for it.
 	set(MPBotlibDefines ${SharedDefines} "BOTLIB")
-	set(MPBotlibIncludeDirectories ${SharedDir} ${MPDir})
+        set(MPBotlibIncludeDirectories ${SharedDir} ${MPDir})
 	set(MPBotlibBotlibFiles
 		"${MPDir}/botlib/aasfile.h"
 		"${MPDir}/botlib/be_aas.h"
@@ -140,7 +140,7 @@ if(BuildMPEngine OR BuildMPDed)
 		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "winmm" "wsock32")
 	endif(WIN32)
 	# Include directories
-	set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir}) # codemp folder, since includes are not always relative in the files
+        set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir} ${ParaDir}) # codemp folder, since includes are not always relative in the files
 
 	if(UseInternalZlib)
 		set(MPEngineAndDedZLibFiles
@@ -184,9 +184,13 @@ if(BuildMPEngine OR BuildMPDed)
                 "${MPDir}/para/scripting_engine_vm.h"
                 "${MPDir}/para/scripting_engine.hpp"
                 "${MPDir}/para/scripting_engine.cpp"
+                "${MPDir}/para/pse_loader.h"
+                "${MPDir}/para/pse_loader.c"
+                "${MPDir}/para/pse_api.h"
                 )
         source_group("para" FILES ${MPEngineAndDedParaFiles})
         set(MPEngineAndDedFiles ${MPEngineAndDedFiles} ${MPEngineAndDedParaFiles})
+        set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "dl")
 
 	set(MPEngineAndDedCgameFiles
 		"${MPDir}/cgame/cg_public.h"

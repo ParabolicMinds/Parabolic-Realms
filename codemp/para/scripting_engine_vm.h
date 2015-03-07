@@ -5,7 +5,8 @@ extern "C" {
 #endif
 
 typedef struct para_seImport_s {
-	void				(*Test)						();
+	void				(*Ping)						( void );
+	void				(*Event_ChatMsg)			( char const * name, char const * msg );
 } para_seImport_t;
 
 #ifdef __cplusplus
