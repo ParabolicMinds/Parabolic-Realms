@@ -51,16 +51,28 @@ typedef struct cvarTable_s {
 static const cvarTable_t cvarTable[] = {
 	#define XCVAR_LIST
 		#include "cg_xcvar.h"
-		#include "para/para_xcvar.h"
 	#undef XCVAR_LIST
 };
 static const size_t cvarTableSize = ARRAY_LEN( cvarTable );
+
+static const cvarTable_t cvarParaTable[] = {
+	#define XCVAR_LIST
+		#include "para/para_xcvar.h"
+	#undef XCVAR_LIST
+};
+static const size_t cvarParaTableSize = ARRAY_LEN( cvarParaTable );
 
 void CG_RegisterCvars( void ) {
 	size_t i = 0;
 	const cvarTable_t *cv = NULL;
 
 	for ( i=0, cv=cvarTable; i<cvarTableSize; i++, cv++ ) {
+		trap->Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
+		if ( cv->update )
+			cv->update();
+	}
+
+	for ( i=0, cv=cvarParaTable; i<cvarParaTableSize; i++, cv++ ) {
 		trap->Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
 		if ( cv->update )
 			cv->update();
@@ -72,6 +84,17 @@ void CG_UpdateCvars( void ) {
 	const cvarTable_t *cv = NULL;
 
 	for ( i=0, cv=cvarTable; i<cvarTableSize; i++, cv++ ) {
+		if ( cv->vmCvar ) {
+			int modCount = cv->vmCvar->modificationCount;
+			trap->Cvar_Update( cv->vmCvar );
+			if ( cv->vmCvar->modificationCount != modCount ) {
+				if ( cv->update )
+					cv->update();
+			}
+		}
+	}
+
+	for ( i=0, cv=cvarParaTable; i<cvarParaTableSize; i++, cv++ ) {
 		if ( cv->vmCvar ) {
 			int modCount = cv->vmCvar->modificationCount;
 			trap->Cvar_Update( cv->vmCvar );

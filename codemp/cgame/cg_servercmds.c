@@ -9,6 +9,10 @@
 #include "ghoul2/G2.h"
 #include "ui/ui_public.h"
 
+#include "cg_para.h"
+
+#include "para/para_cvar_def.h"
+
 /*
 =================
 CG_ParseScores
@@ -1571,15 +1575,17 @@ int svcmdcmp( const void *a, const void *b ) {
 	return Q_stricmp( (const char *)a, ((serverCommand_t*)b)->cmd );
 }
 
-static char const * const espeak_chatbreak = "<break time=\"700ms\"/>";
+static char const * const espeak_chatbreak = "<break time=\"350ms\"/>";
 
 static void CG_Espeak() {
-	char text[1024];
-	memset(text, 0, sizeof(text));
-	trap->Cmd_Argv( 1, text, sizeof( text ) );
-	char const * etext = va("<> %s %s", espeak_chatbreak, text);
-	espeak_Cancel();
-	espeak_Synth(etext, strlen(etext)+1, 0, 0, 0, espeakSSML, 0, 0);
+	if (PCVAR_CG_TTS.integer) {
+		char text[1024];
+		memset(text, 0, sizeof(text));
+		trap->Cmd_Argv( 1, text, sizeof( text ) );
+		char const * etext = va("<> %s %s", espeak_chatbreak, text);
+		espeak_Cancel();
+		espeak_Synth(etext, strlen(etext)+1, 0, 0, 0, espeakSSML, 0, 0);
+	}
 }
 
 /* This array MUST be sorted correctly by alphabetical name field */

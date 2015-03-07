@@ -10,10 +10,10 @@
 #endif
 
 #ifdef XCVAR_LIST
-	#define XCVAR_DEF( name, defVal, update, flags, announce ) { & name , #name , defVal , update , flags },
+	#define XCVAR_DEF( name, defVal, update, flags, announce ) { & name , QUOTE(name) , defVal , update , flags },
 #endif
-
-#elif defined(_GAME)
+#endif
+#if defined(_GAME)
 #ifdef XCVAR_PROTO
 	#define XCVAR_DEF( name, defVal, update, flags, announce ) extern vmCvar_t name;
 #endif
@@ -23,7 +23,7 @@
 #endif
 
 #ifdef XCVAR_LIST
-	#define XCVAR_DEF( name, defVal, update, flags, announce ) { & name , #name , defVal , update , flags , announce },
+	#define XCVAR_DEF( name, defVal, update, flags, announce ) { & name , QUOTE(name) , defVal , update , flags , announce },
 #endif
 #endif
 

@@ -4,6 +4,6 @@
 #define Q(x) #x
 #define QUOTE(x) Q(x)
 
-#define PCVAR_CG_TTS cg_tts
+#define PCVAR_CG_TTS				cg_tts
 
 #endif
