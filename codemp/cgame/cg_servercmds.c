@@ -1576,13 +1576,13 @@ int svcmdcmp( const void *a, const void *b ) {
 }
 
 static char const * const espeak_chatbreak = "<break time=\"350ms\"/>";
+char espeak_text[1024];
 
 static void CG_Espeak() {
 	if (PCVAR_CG_TTS.integer) {
-		char text[1024];
-		memset(text, 0, sizeof(text));
-		trap->Cmd_Argv( 1, text, sizeof( text ) );
-		char const * etext = va("<> %s %s", espeak_chatbreak, text);
+		memset(espeak_text, 0, sizeof(espeak_text));
+		trap->Cmd_Argv( 1, espeak_text, sizeof( espeak_text ) );
+		char const * etext = va("<> %s %s", espeak_chatbreak, espeak_text);
 		espeak_Cancel();
 		espeak_Synth(etext, strlen(etext)+1, 0, 0, 0, espeakSSML, 0, 0);
 	}

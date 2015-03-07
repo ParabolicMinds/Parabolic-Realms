@@ -27,8 +27,6 @@
 #endif
 #endif
 
-#define PCVAR_CG_TTS cg_tts
-
 #if defined(_GAME) || defined(_CGAME) //Game and CGame cvars (bg_)
 #endif
 
