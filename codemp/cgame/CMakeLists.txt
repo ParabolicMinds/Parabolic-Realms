@@ -113,6 +113,13 @@ set(MPCGameGFiles
 source_group("ghoul2" FILES ${MPCGameG2Files})
 set(MPCGameFiles ${MPCGameFiles} ${MPCGameG2Files})
 
+set(MPCGameParaFiles
+        "${MPDir}/para/para_cvar_def.h"
+        "${MPDir}/para/para_xcvar.h"
+        )
+source_group("para_cgame" FILES ${MPCGameParaFiles})
+set(MPCGameFiles ${MPCGameFiles} ${MPCGameParaFiles})
+
 add_library(${MPCGame} SHARED ${MPCGameFiles})
 
 if(NOT WIN32)
