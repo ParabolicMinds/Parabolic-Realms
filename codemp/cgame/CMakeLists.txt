@@ -6,8 +6,9 @@ if(NOT InOpenJK)
 endif(NOT InOpenJK)
 
 set(MPCGameIncludeDirectories "${MPDir}")
+set(MPCGameLibraries "espeak" "portaudio")
 if(WIN32)
-	set(MPCGameLibraries "odbc32" "odbccp32") # what are these even?
+        set(MPCGameLibraries ${MPCGameLibraries} "odbc32" "odbccp32") # what are these even?
 endif(WIN32)
 set(MPCGameDefines ${MPSharedDefines} "_CGAME" )
 set(MPCGameGameFiles
@@ -76,6 +77,8 @@ set(MPCGameCgameFiles
 	"${MPDir}/cgame/cg_public.h"
 	"${MPDir}/cgame/cg_xcvar.h"
 	"${MPDir}/cgame/fx_local.h"
+        "${MPDir}/cgame/cg_para.h"
+        "${MPDir}/cgame/cg_para.c"
 	)
 source_group("cgame" FILES ${MPCGameCgameFiles})
 set(MPCGameFiles ${MPCGameFiles} ${MPCGameCgameFiles})
@@ -112,6 +115,13 @@ set(MPCGameGFiles
 	)
 source_group("ghoul2" FILES ${MPCGameG2Files})
 set(MPCGameFiles ${MPCGameFiles} ${MPCGameG2Files})
+
+set(MPCGameParaFiles
+        "${MPDir}/para/para_cvar_def.h"
+        "${MPDir}/para/para_xcvar.h"
+        )
+source_group("para_cgame" FILES ${MPCGameParaFiles})
+set(MPCGameFiles ${MPCGameFiles} ${MPCGameParaFiles})
 
 add_library(${MPCGame} SHARED ${MPCGameFiles})
 

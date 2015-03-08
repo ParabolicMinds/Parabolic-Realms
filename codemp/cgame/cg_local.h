@@ -7,6 +7,8 @@
 #include "game/bg_public.h"
 #include "cg_public.h"
 
+#include <espeak/speak_lib.h>
+
 // The entire cgame module is unloaded and reloaded on each level change,
 // so there is NO persistant data between levels on the client side.
 // If you absolutely need something stored, it can either be kept
@@ -1635,6 +1637,7 @@ extern	markPoly_t		cg_markPolys[MAX_MARK_POLYS];
 // cg_cvar.c
 #define XCVAR_PROTO
 	#include "cg_xcvar.h"
+	#include "para/para_xcvar.h"
 #undef XCVAR_PROTO
 void CG_RegisterCvars( void );
 void CG_UpdateCvars( void );

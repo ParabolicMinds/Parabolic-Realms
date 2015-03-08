@@ -4,6 +4,8 @@
 extern "C" {
 #endif
 
+void PSE_Incomming_G_Say(char const * name, char const * msg);
+
 #ifdef __cplusplus
 }
 #endif

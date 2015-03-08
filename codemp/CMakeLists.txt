@@ -140,7 +140,7 @@ if(BuildMPEngine OR BuildMPDed)
 		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "winmm" "wsock32")
 	endif(WIN32)
 	# Include directories
-        set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir} ${ParaDir}) # codemp folder, since includes are not always relative in the files
+        set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir}) # codemp folder, since includes are not always relative in the files
 
 	if(UseInternalZlib)
 		set(MPEngineAndDedZLibFiles
@@ -187,10 +187,11 @@ if(BuildMPEngine OR BuildMPDed)
                 "${MPDir}/para/pse_loader.h"
                 "${MPDir}/para/pse_loader.c"
                 "${MPDir}/para/pse_api.h"
+                "${MPDir}/para/pse_xincoming.h"
                 )
         source_group("para" FILES ${MPEngineAndDedParaFiles})
         set(MPEngineAndDedFiles ${MPEngineAndDedFiles} ${MPEngineAndDedParaFiles})
-        set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "dl")
+        set(MPEngineAndDedIncludeDirectories ${MPEngineAndDedIncludeDirectories} "${ParaDir}")
 
 	set(MPEngineAndDedCgameFiles
 		"${MPDir}/cgame/cg_public.h"

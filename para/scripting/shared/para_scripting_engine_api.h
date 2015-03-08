@@ -5,6 +5,7 @@
 
 typedef struct pseExport_s {
 	void			(*Printf)			( char const *, ... );
+	void			(*Say)				( char const * name, char const * msg );
 } pseExport_t;
 
 /*

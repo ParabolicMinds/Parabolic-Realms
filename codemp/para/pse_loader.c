@@ -27,6 +27,7 @@ pseImport_t * PSE_LoadLibrary(char * const path) {
 
 	pseExport_t psex;
 	psex.Printf = Com_Printf;
+	psex.Say	= PSE_Incomming_G_Say;
 	psei(psex);
 
 	return pse;
@@ -42,4 +43,9 @@ void PSE_UnloadLibrary(pseImport_t ** import) {
 	Sys_UnloadLibrary((*import)->handle);
 	free(*import);
 	*import = 0;
+}
+
+
+void PSE_Incomming_G_Say(char const * name, char const * msg) {
+	//Invoke G Import Code...
 }
