@@ -187,7 +187,9 @@ if(BuildMPEngine OR BuildMPDed)
                 "${MPDir}/para/pse_loader.h"
                 "${MPDir}/para/pse_loader.c"
                 "${MPDir}/para/pse_api.h"
+                "${MPDir}/para/para_xcommon.h"
                 "${MPDir}/para/pse_xincoming.h"
+                "${MPDir}/para/pse_incoming_export.h"
                 )
         source_group("para" FILES ${MPEngineAndDedParaFiles})
         set(MPEngineAndDedFiles ${MPEngineAndDedFiles} ${MPEngineAndDedParaFiles})

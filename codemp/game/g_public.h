@@ -7,6 +7,7 @@
 
 #include "qcommon/q_shared.h"
 #include "para/scripting_engine_vm.h"
+#include "para/pse_incoming_export.h"
 
 #define Q3_INFINITE			16777216
 
@@ -1121,6 +1122,7 @@ typedef struct gameExport_s {
 	qboolean	(*NAV_EntIsRemovableUsable)			( int entNum );
 	void		(*NAV_FindCombatPointWaypoints)		( void );
 	int			(*BG_GetItemIndexByTag)				( int tag, int type );
+	pseIncomingExport_t * (*PSE_GetIncomingExport)	( void );
 } gameExport_t;
 
 

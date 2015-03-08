@@ -1,5 +1,4 @@
 #include "scripting_engine.hpp"
-
 #include "sys/sys_loadlib.h"
 
 #include <vector>

@@ -5,6 +5,7 @@
 
 typedef struct pseExport_s {
 	void			(*Printf)			( char const *, ... );
+	char *			(*Format)			( char const *, ... ); //WARNING: Make a copy if you intend to keep the result. The returned pointer is on VOLATILE MEMORY.
 	void			(*Say)				( char const * name, char const * msg );
 } pseExport_t;
 

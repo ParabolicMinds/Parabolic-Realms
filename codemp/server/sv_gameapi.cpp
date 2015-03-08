@@ -12,6 +12,7 @@
 #include "NPCNav/navigator.h"
 
 #include "para/scripting_engine.hpp"
+#include "para/pse_incoming_export.h"
 
 botlib_export_t	*botlib_export;
 
@@ -3192,6 +3193,8 @@ void SV_BindGame( void ) {
 			Com_Error( ERR_FATAL, "GetGameAPI failed on %s", dllName );
 		}
 		ge = ret;
+
+		g_pse_e = ge->PSE_GetIncomingExport();
 
 		return;
 	}

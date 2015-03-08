@@ -1117,7 +1117,13 @@ void	Swap_Init (void);
 
 int FloatAsInt( float f );
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 char	* QDECL va(const char *format, ...);
+#ifdef __cplusplus
+}
+#endif
 
 #define TRUNCATE_LENGTH	64
 void Com_TruncateLongString( char *buffer, const char *s );

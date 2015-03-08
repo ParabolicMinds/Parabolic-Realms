@@ -3526,6 +3526,18 @@ static qboolean	G_NAV_CheckNodeFailedForEnt( int entID, int nodeNum ) {
 	return NAV_CheckNodeFailedForEnt( &g_entities[entID], nodeNum );
 }
 
+void G_PSE_Say(char const * name, char const * msg) {
+	trap->SendServerCommand( -1, va("%s \"%s^7: %s\" %i","chat", name, msg, 0));
+}
+
+pseIncomingExport_t * G_PSE_GetIncomingExport() {
+	pseIncomingExport_t * pseie = calloc(1, sizeof(pseIncomingExport_t));
+#define _XPSEGAMEEXPORTASSIGN
+#include "para/pse_xincoming.h"
+#undef _XPSEGAMEEXPORTASSIGN
+	return pseie;
+}
+
 /*
 ============
 GetModuleAPI
@@ -3590,6 +3602,7 @@ Q_EXPORT gameExport_t* QDECL GetModuleAPI( int apiVersion, gameImport_t *import 
 	ge.NAV_EntIsRemovableUsable			= G_EntIsRemovableUsable;
 	ge.NAV_FindCombatPointWaypoints		= CP_FindCombatPointWaypoints;
 	ge.BG_GetItemIndexByTag				= BG_GetItemIndexByTag;
+	ge.PSE_GetIncomingExport			= G_PSE_GetIncomingExport;
 
 	return &ge;
 }

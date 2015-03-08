@@ -4,6 +4,9 @@
 #include "qcommon/q_shared.h"
 #include "sys/sys_loadlib.h"
 
+#include "pse_incoming_export.h"
+pseIncomingExport_t * g_pse_e;
+
 #include "scripting/shared/para_scripting_engine_api.h"
 
 typedef void (*PSEInitFunc) ( pseExport_t );
@@ -27,7 +30,10 @@ pseImport_t * PSE_LoadLibrary(char * const path) {
 
 	pseExport_t psex;
 	psex.Printf = Com_Printf;
-	psex.Say	= PSE_Incomming_G_Say;
+	psex.Format = va;
+#define _XPSEEXPORTASSIGN
+#include "para/pse_xincoming.h"
+#undef _XPSEEXPORTASSIGN
 	psei(psex);
 
 	return pse;
@@ -45,7 +51,6 @@ void PSE_UnloadLibrary(pseImport_t ** import) {
 	*import = 0;
 }
 
-
-void PSE_Incomming_G_Say(char const * name, char const * msg) {
-	//Invoke G Import Code...
-}
+#define _XFUNCDEF
+#include "para/pse_xincoming.h"
+#undef _XFUNCDEF

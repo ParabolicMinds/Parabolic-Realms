@@ -4,7 +4,9 @@
 extern "C" {
 #endif
 
-void PSE_Incomming_G_Say(char const * name, char const * msg);
+#define _XFUNCDEFPROT
+#include "para/pse_xincoming.h"
+#undef _XFUNCDEFPROT
 
 #ifdef __cplusplus
 }
