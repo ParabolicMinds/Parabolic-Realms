@@ -3,7 +3,7 @@
 
 #include "qcommon/qcommon.h"
 
-#include "scripting_engine_vm.h"
+#include "pse_outgoing_import.h"
 
 // Client/Server
 void PARA_ScriptingInit();
@@ -11,11 +11,11 @@ void PARA_ScriptingInit();
 // VM
 void * PARA_LoadManifest(char const * path);
 void PARA_CloseManifest(void *);
-para_seImport_t * PARA_GenerateImport();
-void PARA_DeleteImport(para_seImport_t *);
+pseOutgoingImport_t * PARA_GenerateImport();
+void PARA_DeleteImport(pseOutgoingImport_t *);
 
-// PSE
-void PSE_Outgoing_Ping();
-void PSE_Outgoing_ChatMsg(char const * name, char const * msg);
+#define _XPSEFUNCDEFPROT
+#include "pse_xoutgoing.h"
+#undef _XPSEFUNCDEFPROT
 
 #endif //SCRIPTING_ENGINE_HPP

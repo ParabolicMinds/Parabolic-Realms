@@ -18,7 +18,7 @@ int killPlayerTimer = 0;
 gentity_t		g_entities[MAX_GENTITIES];
 gclient_t		g_clients[MAX_CLIENTS];
 
-para_seImport_t * pse_import;
+pseOutgoingImport_t * pse_import;
 
 qboolean gDuelExit = qfalse;
 
@@ -3528,6 +3528,10 @@ static qboolean	G_NAV_CheckNodeFailedForEnt( int entID, int nodeNum ) {
 
 void G_PSE_Say(char const * name, char const * msg) {
 	trap->SendServerCommand( -1, va("%s \"%s^7: %s\" %i","chat", name, msg, 0));
+}
+
+char const * G_PSE_GetClientName(int num) {
+	return g_clients[num].pers.netname;
 }
 
 pseIncomingExport_t * G_PSE_GetIncomingExport() {

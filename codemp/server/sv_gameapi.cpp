@@ -3194,6 +3194,7 @@ void SV_BindGame( void ) {
 		}
 		ge = ret;
 
+		if (g_pse_e) free(g_pse_e);
 		g_pse_e = ge->PSE_GetIncomingExport();
 
 		return;

@@ -181,7 +181,6 @@ if(BuildMPEngine OR BuildMPDed)
 	endif()
 
         set(MPEngineAndDedParaFiles
-                "${MPDir}/para/scripting_engine_vm.h"
                 "${MPDir}/para/scripting_engine.hpp"
                 "${MPDir}/para/scripting_engine.cpp"
                 "${MPDir}/para/pse_loader.h"
@@ -190,6 +189,8 @@ if(BuildMPEngine OR BuildMPDed)
                 "${MPDir}/para/para_xcommon.h"
                 "${MPDir}/para/pse_xincoming.h"
                 "${MPDir}/para/pse_incoming_export.h"
+                "${MPDir}/para/pse_xoutgoing.h"
+                "${MPDir}/para/pse_outgoing_import.h"
                 )
         source_group("para" FILES ${MPEngineAndDedParaFiles})
         set(MPEngineAndDedFiles ${MPEngineAndDedFiles} ${MPEngineAndDedParaFiles})

@@ -10,7 +10,9 @@ typedef struct pseIncomingExport_s {
 #undef _XPSEEXPORTDEF
 } pseIncomingExport_t;
 
+#if !defined(_GAME)
 extern pseIncomingExport_t * g_pse_e;
+#endif
 
 #ifdef __cplusplus
 }

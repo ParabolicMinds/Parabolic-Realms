@@ -1,7 +1,6 @@
 #include "pse_loader.h"
 #include "pse_api.h"
 
-#include "qcommon/q_shared.h"
 #include "sys/sys_loadlib.h"
 
 #include "pse_incoming_export.h"
@@ -23,10 +22,9 @@ pseImport_t * PSE_LoadLibrary(char * const path) {
 	if (!psei) goto psefail;
 	pse->Identify = Sys_LoadFunction(handle, "PSE_Identify");
 	if (!pse->Identify) goto psefail;
-	pse->Ping = Sys_LoadFunction(handle, "PSE_Ping");
-	if (!pse->Ping) goto psefail;
-	pse->Event_ChatMsg = Sys_LoadFunction(handle, "PSE_Event_ChatMsg");
-	if (!pse->Event_ChatMsg) goto psefail;
+#define _XPSESYSLOAD
+#include "pse_xoutgoing.h"
+#undef _XPSESYSLOAD
 
 	pseExport_t psex;
 	psex.Printf = Com_Printf;

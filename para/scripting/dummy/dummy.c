@@ -14,6 +14,6 @@ void PSE_Ping() {
 	psex.Printf("PONG\n");
 }
 
-void PSE_Event_ChatMsg(char const * name, char const * msg) {
-	psex.Say("Dumbass", psex.Format("Shut the fuck up, %s, you dummy.\n", name));
+void PSE_Event_ChatMsg(clientNum_t clinum, char const * msg) {
+	psex.Say("Dummy", psex.Format("Shut the fuck up, %s.\n", psex.GetClientName(clinum)));
 }

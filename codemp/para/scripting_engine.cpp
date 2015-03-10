@@ -19,10 +19,9 @@ void PARA_ScriptingInit() {
 			pseImport_t * pse = PSE_LoadLibrary(va("base/para-plugins/%s", files[i]));
 			if (!pse) continue;
 			pse_libs.push_back(pse);
+			Com_Printf("Loaded: %s\n", pse->Identify());
 		}
 	}
-
-	PSE_Outgoing_Ping();
 
 	Com_Printf("\n------------------------------------------\n\n");
 }
@@ -42,31 +41,21 @@ void * PARA_LoadManifest(char const * path) {
 }
 
 void PARA_CloseManifest(void * import) {
-	delete reinterpret_cast<para_seImport_t *>(import);
+	delete reinterpret_cast<pseOutgoingImport_t *>(import);
 }
 
-para_seImport_t * PARA_GenerateImport() {
-	para_seImport_t * pse = new para_seImport_t();
-	pse->Ping = PSE_Outgoing_Ping;
-	pse->Event_ChatMsg = PSE_Outgoing_ChatMsg;
+pseOutgoingImport_t * PARA_GenerateImport() {
+	pseOutgoingImport_t * pse = new pseOutgoingImport_t();
+#define _XPSEFUNCASSIGN
+#include "pse_xoutgoing.h"
+#undef _XPSEFUNCASSIGN
 	return pse;
 }
 
-void PARA_DeleteImport(para_seImport_t * pse) {
+void PARA_DeleteImport(pseOutgoingImport_t * pse) {
 	delete pse;
 }
 
-
-
-void PSE_Outgoing_Ping() {
-	Com_Printf("PING\n");
-	for (pseImport_t * psel : pse_libs) {
-		psel->Ping();
-	}
-}
-
-void PSE_Outgoing_ChatMsg(char const * name, char const * msg) {
-	for (pseImport_t * psel : pse_libs) {
-		psel->Event_ChatMsg(name, msg);
-	}
-}
+#define _XPSEFUNCDEF
+#include "pse_xoutgoing.h"
+#undef _XPSEFUNCDEF
