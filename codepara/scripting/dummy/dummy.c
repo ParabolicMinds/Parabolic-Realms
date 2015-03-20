@@ -10,15 +10,6 @@ char const * PSE_Identify() {
 	return "dummy";
 }
 
-void PSE_Ping() {
-	psex.Printf("PONG\n");
-}
-
-void PSE_Event_ChatMsg(clientNum_t clinum, char const * msg) {
-	psex.Say("Dummy", psex.Format("Shut the fuck up, %s.\n", psex.GetClientName(clinum)));
-}
-
-
 void * PSE_OpenManifest(char const * manifest) {
 	psex.Printf(manifest);
 	return 0;
@@ -26,4 +17,12 @@ void * PSE_OpenManifest(char const * manifest) {
 
 void PSE_CloseManifest(void * uid) {
 
+}
+
+void PSE_Shutdown() {
+
+}
+
+void PSE_Event_ChatMsg(client_t client, char const * msg) {
+	psex.Say("Dummy", psex.Format("Shut the fuck up, %s.\n", psex.GetClientName(client)));
 }

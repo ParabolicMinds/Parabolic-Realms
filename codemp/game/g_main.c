@@ -3031,7 +3031,7 @@ void G_RunFrame( int levelTime ) {
 	// get any cvar changes
 	G_UpdateCvars();
 
-
+	pse_import->Event_Frame(levelTime);
 
 #ifdef _G_FRAME_PERFANAL
 	trap->PrecisionTimer_Start(&timer_ItemRun);
@@ -3530,8 +3530,29 @@ void G_PSE_Say(char const * name, char const * msg) {
 	trap->SendServerCommand( -1, va("%s \"%s^7: %s\" %i","chat", name, msg, 0));
 }
 
-char const * G_PSE_GetClientName(int num) {
-	return g_clients[num].pers.netname;
+void G_PSE_KillPlayer(void * client) {
+	gentity_t * ent = (gentity_t *) client;
+	if (ent && ent->client) {
+		ent->flags &= ~FL_GODMODE;
+		ent->client->ps.stats[STAT_HEALTH] = ent->health = -999;
+		player_die (ent, ent, ent, 100000, MOD_SUICIDE);
+	}
+}
+
+char const * G_PSE_GetClientName(void * client) {
+	gentity_t * ent = (gentity_t *) client;
+	if (ent && ent->client) {
+		return ent->client->pers.netname;
+	}
+	return "\0";
+}
+
+int G_PSE_GetClientNum(void * client) {
+	gentity_t * ent = (gentity_t *) client;
+	if (ent && ent->client) {
+		return ent->s.number;
+	}
+	return -1;
 }
 
 pseIncomingExport_t * G_PSE_GetIncomingExport() {

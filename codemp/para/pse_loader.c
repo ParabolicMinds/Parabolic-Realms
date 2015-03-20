@@ -6,7 +6,7 @@
 #include "pse_incoming_export.h"
 pseIncomingExport_t * g_pse_e;
 
-#include "scripting/shared/para_scripting_engine_api.h"
+#include "para_scripting_engine_api.h"
 
 typedef void (*PSEInitFunc) ( pseExport_t );
 
@@ -22,6 +22,12 @@ pseImport_t * PSE_LoadLibrary(char * const path) {
 	if (!psei) goto psefail;
 	pse->Identify = Sys_LoadFunction(handle, "PSE_Identify");
 	if (!pse->Identify) goto psefail;
+	pse->OpenManifest = Sys_LoadFunction(handle, "PSE_OpenManifest");
+	if (!pse->OpenManifest) goto psefail;
+	pse->CloseManifest = Sys_LoadFunction(handle, "PSE_CloseManifest");
+	if (!pse->CloseManifest) goto psefail;
+	pse->Shutdown = Sys_LoadFunction(handle, "PSE_Shutdown");
+	if (!pse->Shutdown) goto psefail;
 #define _XPSESYSLOAD
 #include "pse_xoutgoing.h"
 #undef _XPSESYSLOAD
@@ -37,7 +43,7 @@ pseImport_t * PSE_LoadLibrary(char * const path) {
 	return pse;
 
 	psefail:
-	Com_Printf("Could not load scripting engine plugin due to unresolved API functions at: \"%s\"\n", path);
+	Com_Printf("Could not load scripting engine plugin due to unresolved required API functions at: \"%s\"\n", path);
 	Sys_UnloadLibrary(pse->handle);
 	free(pse);
 	return 0;

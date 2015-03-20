@@ -1620,6 +1620,8 @@ void Com_Shutdown (void)
 		com_journalFile = 0;
 	}
 
+	PARA_ScriptingShutdown();
+
 	MSG_shutdownHuffman();
 /*
 	// Only used for testing changes to huffman frequency table when tuning.

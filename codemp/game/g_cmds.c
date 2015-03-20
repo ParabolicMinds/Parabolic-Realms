@@ -1570,7 +1570,7 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText ) 
 		G_LogPrintf( "say: %s: %s\n", ent->client->pers.netname, text );
 		Com_sprintf (name, sizeof(name), "%s%c%c"EC": ", ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
 		color = COLOR_GREEN;
-		pse_import->Event_ChatMsg(ent->s.number, text);
+		pse_import->Event_ChatMsg(ent, text);
 		trap->SendServerCommand(-1, va("espeak \"%s\"", text));
 		break;
 	case SAY_TEAM:

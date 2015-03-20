@@ -98,8 +98,9 @@ set(SharedLib "shared")
 
 # Paths
 set(MPDir "${CMAKE_SOURCE_DIR}/codemp")
-set(SharedDir ${CMAKE_SOURCE_DIR}/shared)
-set(ParaDir "${CMAKE_SOURCE_DIR}/para")
+set(SharedDir "${CMAKE_SOURCE_DIR}/shared")
+set(ParaDir "${CMAKE_SOURCE_DIR}/codepara")
+set(ParaPSESharedDir "${ParaDir}/scripting/shared")
 
 # Common settings
 if(WIN32)
@@ -146,7 +147,7 @@ else()
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")

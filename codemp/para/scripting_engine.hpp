@@ -7,6 +7,7 @@
 
 // Client/Server
 void PARA_ScriptingInit();
+void PARA_ScriptingShutdown();
 
 // VM
 void * PARA_LoadManifest(char const * path);

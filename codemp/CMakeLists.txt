@@ -140,7 +140,7 @@ if(BuildMPEngine OR BuildMPDed)
 		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "winmm" "wsock32")
 	endif(WIN32)
 	# Include directories
-        set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir}) # codemp folder, since includes are not always relative in the files
+        set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir} ${ParaPSESharedDir}) # codemp folder, since includes are not always relative in the files
 
 	if(UseInternalZlib)
 		set(MPEngineAndDedZLibFiles
@@ -181,6 +181,8 @@ if(BuildMPEngine OR BuildMPDed)
 	endif()
 
         set(MPEngineAndDedParaFiles
+                "${ParaPSESharedDir}/para_scripting_engine_api.h"
+                "${ParaPSESharedDir}/pse_types.h"
                 "${MPDir}/para/scripting_engine.hpp"
                 "${MPDir}/para/scripting_engine.cpp"
                 "${MPDir}/para/pse_loader.h"
@@ -194,7 +196,7 @@ if(BuildMPEngine OR BuildMPDed)
                 )
         source_group("para" FILES ${MPEngineAndDedParaFiles})
         set(MPEngineAndDedFiles ${MPEngineAndDedFiles} ${MPEngineAndDedParaFiles})
-        set(MPEngineAndDedIncludeDirectories ${MPEngineAndDedIncludeDirectories} "${ParaDir}")
+        set(MPEngineAndDedIncludeDirectories ${MPEngineAndDedIncludeDirectories})
 
 	set(MPEngineAndDedCgameFiles
 		"${MPDir}/cgame/cg_public.h"
