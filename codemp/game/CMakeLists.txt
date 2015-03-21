@@ -5,7 +5,7 @@ if(NOT InOpenJK)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InOpenJK)
 
-set(MPGameIncludeDirectories "${MPDir}")
+set(MPGameIncludeDirectories "${MPDir}" "${BULLET_INCLUDE_DIRS}")
 if(WIN32)
 	set(MPGameLibraries "winmm")
 endif(WIN32)
@@ -122,6 +122,8 @@ set(MPGameGameFiles
 	"${MPDir}/game/w_saber.h"
         "${MPDir}/game/g_para.h"
         "${MPDir}/game/g_para.c"
+        "${MPDir}/game/bg_phys.h"
+        "${MPDir}/game/bg_phys.cpp"
 	)
 source_group("game" FILES ${MPGameGameFiles})
 set(MPGameFiles ${MPGameFiles} ${MPGameGameFiles})
@@ -208,5 +210,5 @@ set_target_properties(${MPGame} PROPERTIES INCLUDE_DIRECTORIES "${MPGameIncludeD
 set_target_properties(${MPGame} PROPERTIES PROJECT_LABEL "MP Game Library")
 # no libraries used
 if(MPGameLibraries)
-	target_link_libraries(${MPGame} ${MPGameLibraries})
+        target_link_libraries(${MPGame} ${MPGameLibraries} ${BULLET_LIBRARIES})
 endif(MPGameLibraries)

@@ -5,6 +5,8 @@ if(NOT InOpenJK)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InOpenJK)
 
+include(FindBullet)
+
 set(MPSharedDefines ${SharedDefines})
 
 #    Add Game Project
