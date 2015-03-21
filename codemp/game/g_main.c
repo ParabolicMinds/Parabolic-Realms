@@ -7,6 +7,8 @@
 #include "bg_saga.h"
 #include "b_local.h"
 
+#include "bg_phys.h"
+
 level_locals_t	level;
 
 int		eventClearTime = 0;
@@ -231,6 +233,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	G_InitWorldSession();
 
+	BG_InitializeSimulation();
+
 	// initialize all entities for this game
 	memset( g_entities, 0, MAX_GENTITIES * sizeof(g_entities[0]) );
 	level.gentities = g_entities;
@@ -410,6 +414,8 @@ G_ShutdownGame
 void G_ShutdownGame( int restart ) {
 	int i = 0;
 	gentity_t *ent;
+
+	BG_ShutdownSimulation();
 
 //	trap->Print ("==== ShutdownGame ====\n");
 
@@ -3030,6 +3036,8 @@ void G_RunFrame( int levelTime ) {
 
 	// get any cvar changes
 	G_UpdateCvars();
+
+	BG_RunSimulation(levelTime);
 
 	pse_import->Event_Frame(levelTime);
 

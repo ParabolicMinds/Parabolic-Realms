@@ -208,7 +208,6 @@ set_target_properties(${MPGame} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${MPGame
 set_target_properties(${MPGame} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${MPGameDefines};${DebugDefines}")
 set_target_properties(${MPGame} PROPERTIES INCLUDE_DIRECTORIES "${MPGameIncludeDirectories}")
 set_target_properties(${MPGame} PROPERTIES PROJECT_LABEL "MP Game Library")
-# no libraries used
-if(MPGameLibraries)
-        target_link_libraries(${MPGame} ${MPGameLibraries} ${BULLET_LIBRARIES})
-endif(MPGameLibraries)
+
+set(MPGameLibraries ${MPGameLibraries} ${BULLET_LIBRARIES})
+target_link_libraries(${MPGame} ${MPGameLibraries})
