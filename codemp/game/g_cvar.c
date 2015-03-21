@@ -26,6 +26,7 @@ typedef struct cvarTable_s {
 
 #define XCVAR_DECL
 	#include "g_xcvar.h"
+	#include "para/para_xcvar.h"
 #undef XCVAR_DECL
 
 static const cvarTable_t gameCvarTable[] = {
@@ -35,11 +36,23 @@ static const cvarTable_t gameCvarTable[] = {
 };
 static const size_t gameCvarTableSize = ARRAY_LEN( gameCvarTable );
 
+static const cvarTable_t gameParaCvarTable[] = {
+	#define XCVAR_LIST
+		#include "para/para_xcvar.h"
+	#undef XCVAR_LIST
+};
+static const size_t gameParaCvarTableSize = ARRAY_LEN( gameParaCvarTable );
+
 void G_RegisterCvars( void ) {
 	size_t i = 0;
 	const cvarTable_t *cv = NULL;
 
 	for ( i=0, cv=gameCvarTable; i<gameCvarTableSize; i++, cv++ ) {
+		trap->Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
+		if ( cv->update )
+			cv->update();
+	}
+	for ( i=0, cv=gameParaCvarTable; i<gameParaCvarTableSize; i++, cv++ ) {
 		trap->Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
 		if ( cv->update )
 			cv->update();
@@ -51,6 +64,20 @@ void G_UpdateCvars( void ) {
 	const cvarTable_t *cv = NULL;
 
 	for ( i=0, cv=gameCvarTable; i<gameCvarTableSize; i++, cv++ ) {
+		if ( cv->vmCvar ) {
+			int modCount = cv->vmCvar->modificationCount;
+			trap->Cvar_Update( cv->vmCvar );
+			if ( cv->vmCvar->modificationCount != modCount ) {
+				if ( cv->update )
+					cv->update();
+
+				if ( cv->trackChange )
+					trap->SendServerCommand( -1, va("print \"Server: %s changed to %s\n\"", cv->cvarName, cv->vmCvar->string ) );
+			}
+		}
+	}
+
+	for ( i=0, cv=gameParaCvarTable; i<gameParaCvarTableSize; i++, cv++ ) {
 		if ( cv->vmCvar ) {
 			int modCount = cv->vmCvar->modificationCount;
 			trap->Cvar_Update( cv->vmCvar );

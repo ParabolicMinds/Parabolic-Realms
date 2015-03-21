@@ -9,6 +9,8 @@
 #include "bg_vehicles.h"
 #include "g_public.h"
 
+#include "g_para.h"
+
 typedef struct gentity_s gentity_t;
 typedef struct gclient_s gclient_t;
 
@@ -1498,6 +1500,7 @@ void Svcmd_ToggleAllowVote_f( void );
 // g_cvar.c
 #define XCVAR_PROTO
 	#include "g_xcvar.h"
+	#include "para/para_xcvar.h"
 #undef XCVAR_PROTO
 void G_RegisterCvars( void );
 void G_UpdateCvars( void );

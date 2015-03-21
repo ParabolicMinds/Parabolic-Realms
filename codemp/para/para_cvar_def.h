@@ -5,5 +5,6 @@
 #define QUOTE(x) Q(x)
 
 #define PCVAR_CG_TTS				pcg_tts
+#define PCVAR_G_GOLF				pg_golf
 
 #endif

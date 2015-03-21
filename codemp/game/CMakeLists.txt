@@ -120,6 +120,8 @@ set(MPGameGameFiles
 	"${MPDir}/game/surfaceflags.h"
 	"${MPDir}/game/teams.h"
 	"${MPDir}/game/w_saber.h"
+        "${MPDir}/game/g_para.h"
+        "${MPDir}/game/g_para.c"
 	)
 source_group("game" FILES ${MPGameGameFiles})
 set(MPGameFiles ${MPGameFiles} ${MPGameGameFiles})

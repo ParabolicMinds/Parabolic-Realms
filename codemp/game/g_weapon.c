@@ -1993,6 +1993,7 @@ THERMAL DETONATOR
 #define TD_ALT_TIME			3000
 
 void thermalThinkStandard(gentity_t *ent);
+void thermalThinkGolfball(gentity_t *ent);
 
 //---------------------------------------------------------
 void thermalDetonatorExplode( gentity_t *ent )
@@ -2044,6 +2045,12 @@ void thermalThinkStandard(gentity_t *ent)
 	ent->nextthink = level.time;
 }
 
+void thermalThinkGolfball(gentity_t *ent)
+{
+	G_RunObject(ent);
+	ent->nextthink = level.time;
+}
+
 //---------------------------------------------------------
 gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean altFire )
 //---------------------------------------------------------
@@ -2051,84 +2058,142 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean altFire )
 	gentity_t	*bolt;
 	vec3_t		dir, start;
 	float chargeAmount = 1.0f; // default of full charge
-
 	VectorCopy( forward, dir );
 	VectorCopy( muzzle, start );
 
 	bolt = G_Spawn();
-
 	bolt->physicsObject = qtrue;
 
-	bolt->classname = "thermal_detonator";
-	bolt->think = thermalThinkStandard;
-	bolt->nextthink = level.time;
-	bolt->touch = touch_NULL;
+	if (PCVAR_G_GOLF.integer && ent->client) {
+		bolt->classname = "golf_ball";
+		bolt->think = thermalThinkGolfball;
+		bolt->nextthink = level.time;
+		bolt->touch = touch_NULL;
 
-	// How 'bout we give this thing a size...
-	VectorSet( bolt->r.mins, -3.0f, -3.0f, -3.0f );
-	VectorSet( bolt->r.maxs, 3.0f, 3.0f, 3.0f );
-	bolt->clipmask = MASK_SHOT;
+		gentity_t * from = NULL;
+		while ( (from = G_Find( from, FOFS(classname), "golf_ball" )) != NULL ) {
+			if (from->genericValue8 == ent->s.number && from->genericValue7)
+				G_FreeEntity(from);
+		}
+		bolt->genericValue7 = 1;
+		bolt->genericValue8 = ent->s.number;
 
-	W_TraceSetStart( ent, start, bolt->r.mins, bolt->r.maxs );//make sure our start point isn't on the other side of a wall
+		VectorSet( bolt->r.mins, -3.0f, -3.0f, -3.0f );
+		VectorSet( bolt->r.maxs, 3.0f, 3.0f, 3.0f );
+		bolt->clipmask = MASK_SHOT;
 
-	if ( ent->client )
-	{
-		chargeAmount = level.time - ent->client->ps.weaponChargeTime;
+		W_TraceSetStart( ent, start, bolt->r.mins, bolt->r.maxs );//make sure our start point isn't on the other side of a wall
+
+		if ( ent->client ) {
+			chargeAmount = level.time - ent->client->ps.weaponChargeTime;
+		}
+
+		chargeAmount = chargeAmount / (float)TD_VELOCITY;
+
+		if ( chargeAmount > 1.0f ) {
+			chargeAmount = 1.0f;
+		}
+		else if ( chargeAmount < TD_MIN_CHARGE ) {
+			chargeAmount = TD_MIN_CHARGE;
+		}
+
+		bolt->s.pos.trType = TR_GRAVITY;
+		bolt->parent = ent;
+		bolt->r.ownerNum = ent->s.number;
+		VectorScale( dir, TD_VELOCITY * chargeAmount, bolt->s.pos.trDelta );
+
+		if ( ent->health >= 0 ) {
+			bolt->s.pos.trDelta[2] += 120;
+		}
+
+		bolt->s.eType = ET_MISSILE;
+		bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+		bolt->s.weapon = WP_THERMAL;
+
+		bolt->methodOfDeath = MOD_THERMAL;
+		bolt->splashMethodOfDeath = MOD_THERMAL_SPLASH;
+
+		bolt->s.pos.trTime = level.time;		// move a bit on the very first frame
+		VectorCopy( start, bolt->s.pos.trBase );
+
+		SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
+		VectorCopy (start, bolt->r.currentOrigin);
+
+		VectorCopy( start, bolt->pos2 );
+
+		bolt->bounceCount = -5;
+	} else {
+		bolt->classname = "thermal_detonator";
+		bolt->think = thermalThinkStandard;
+		bolt->nextthink = level.time;
+		bolt->touch = touch_NULL;
+
+		// How 'bout we give this thing a size...
+		VectorSet( bolt->r.mins, -3.0f, -3.0f, -3.0f );
+		VectorSet( bolt->r.maxs, 3.0f, 3.0f, 3.0f );
+		bolt->clipmask = MASK_SHOT;
+
+		W_TraceSetStart( ent, start, bolt->r.mins, bolt->r.maxs );//make sure our start point isn't on the other side of a wall
+
+		if ( ent->client )
+		{
+			chargeAmount = level.time - ent->client->ps.weaponChargeTime;
+		}
+
+		// get charge amount
+		chargeAmount = chargeAmount / (float)TD_VELOCITY;
+
+		if ( chargeAmount > 1.0f )
+		{
+			chargeAmount = 1.0f;
+		}
+		else if ( chargeAmount < TD_MIN_CHARGE )
+		{
+			chargeAmount = TD_MIN_CHARGE;
+		}
+
+		// normal ones bounce, alt ones explode on impact
+		bolt->genericValue5 = level.time + TD_TIME; // How long 'til she blows
+		bolt->s.pos.trType = TR_GRAVITY;
+		bolt->parent = ent;
+		bolt->r.ownerNum = ent->s.number;
+		VectorScale( dir, TD_VELOCITY * chargeAmount, bolt->s.pos.trDelta );
+
+		if ( ent->health >= 0 )
+		{
+			bolt->s.pos.trDelta[2] += 120;
+		}
+
+		if ( !altFire )
+		{
+			bolt->flags |= FL_BOUNCE_HALF;
+		}
+
+		bolt->s.loopSound = G_SoundIndex( "sound/weapons/thermal/thermloop.wav" );
+		bolt->s.loopIsSoundset = qfalse;
+
+		bolt->damage = TD_DAMAGE;
+		bolt->dflags = 0;
+		bolt->splashDamage = TD_SPLASH_DAM;
+		bolt->splashRadius = TD_SPLASH_RAD;
+
+		bolt->s.eType = ET_MISSILE;
+		bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+		bolt->s.weapon = WP_THERMAL;
+
+		bolt->methodOfDeath = MOD_THERMAL;
+		bolt->splashMethodOfDeath = MOD_THERMAL_SPLASH;
+
+		bolt->s.pos.trTime = level.time;		// move a bit on the very first frame
+		VectorCopy( start, bolt->s.pos.trBase );
+
+		SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
+		VectorCopy (start, bolt->r.currentOrigin);
+
+		VectorCopy( start, bolt->pos2 );
+
+		bolt->bounceCount = -5;
 	}
-
-	// get charge amount
-	chargeAmount = chargeAmount / (float)TD_VELOCITY;
-
-	if ( chargeAmount > 1.0f )
-	{
-		chargeAmount = 1.0f;
-	}
-	else if ( chargeAmount < TD_MIN_CHARGE )
-	{
-		chargeAmount = TD_MIN_CHARGE;
-	}
-
-	// normal ones bounce, alt ones explode on impact
-	bolt->genericValue5 = level.time + TD_TIME; // How long 'til she blows
-	bolt->s.pos.trType = TR_GRAVITY;
-	bolt->parent = ent;
-	bolt->r.ownerNum = ent->s.number;
-	VectorScale( dir, TD_VELOCITY * chargeAmount, bolt->s.pos.trDelta );
-
-	if ( ent->health >= 0 )
-	{
-		bolt->s.pos.trDelta[2] += 120;
-	}
-
-	if ( !altFire )
-	{
-		bolt->flags |= FL_BOUNCE_HALF;
-	}
-
-	bolt->s.loopSound = G_SoundIndex( "sound/weapons/thermal/thermloop.wav" );
-	bolt->s.loopIsSoundset = qfalse;
-
-	bolt->damage = TD_DAMAGE;
-	bolt->dflags = 0;
-	bolt->splashDamage = TD_SPLASH_DAM;
-	bolt->splashRadius = TD_SPLASH_RAD;
-
-	bolt->s.eType = ET_MISSILE;
-	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	bolt->s.weapon = WP_THERMAL;
-
-	bolt->methodOfDeath = MOD_THERMAL;
-	bolt->splashMethodOfDeath = MOD_THERMAL_SPLASH;
-
-	bolt->s.pos.trTime = level.time;		// move a bit on the very first frame
-	VectorCopy( start, bolt->s.pos.trBase );
-
-	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
-	VectorCopy (start, bolt->r.currentOrigin);
-
-	VectorCopy( start, bolt->pos2 );
-
-	bolt->bounceCount = -5;
 
 	return bolt;
 }
