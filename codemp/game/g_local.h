@@ -154,6 +154,8 @@ extern void *g2SaberInstance;
 extern qboolean gEscaping;
 extern int gEscapeTime;
 
+extern pseOutgoingImport_t * pse_import;
+
 struct gentity_s {
 	//rww - entstate must be first, to correspond with the bg shared entity structure
 	entityState_t	s;				// communicated by server to clients
@@ -1479,6 +1481,7 @@ int BotAIStartFrame( int time );
 
 extern	level_locals_t	level;
 extern	gentity_t		g_entities[MAX_GENTITIES];
+extern	gclient_t		g_clients[MAX_CLIENTS];
 
 #define	FOFS(x) offsetof(gentity_t, x)
 
@@ -1504,5 +1507,10 @@ void Svcmd_ToggleAllowVote_f( void );
 #undef XCVAR_PROTO
 void G_RegisterCvars( void );
 void G_UpdateCvars( void );
+
+#define _XPSEGAMEEXPORTPROTO
+#include "para/pse_xincoming.h"
+#undef _XPSEGAMEEXPORTPROTO
+
 
 extern gameImport_t *trap;

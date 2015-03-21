@@ -18,6 +18,8 @@ int killPlayerTimer = 0;
 gentity_t		g_entities[MAX_GENTITIES];
 gclient_t		g_clients[MAX_CLIENTS];
 
+pseOutgoingImport_t * pse_import;
+
 qboolean gDuelExit = qfalse;
 
 void G_InitGame					( int levelTime, int randomSeed, int restart );
@@ -146,6 +148,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	vmCvar_t	mapname;
 	vmCvar_t	ckSum;
 	char serverinfo[MAX_INFO_STRING] = {0};
+
+	if (!pse_import) pse_import = trap->PARA_CreateImport();
 
 	//Init RMG to 0, it will be autoset to 1 if there is terrain on the level.
 	trap->Cvar_Set("RMG", "0");
@@ -478,6 +482,9 @@ void G_ShutdownGame( int restart ) {
 	if ( trap->Cvar_VariableIntegerValue( "bot_enable" ) ) {
 		BotAIShutdown( restart );
 	}
+
+	if (pse_import) trap->PARA_DeleteImport(pse_import);
+	pse_import = 0;
 
 	B_CleanupAlloc(); //clean up all allocations made with B_Alloc
 }
@@ -3024,7 +3031,7 @@ void G_RunFrame( int levelTime ) {
 	// get any cvar changes
 	G_UpdateCvars();
 
-
+	pse_import->Event_Frame(levelTime);
 
 #ifdef _G_FRAME_PERFANAL
 	trap->PrecisionTimer_Start(&timer_ItemRun);
@@ -3519,6 +3526,43 @@ static qboolean	G_NAV_CheckNodeFailedForEnt( int entID, int nodeNum ) {
 	return NAV_CheckNodeFailedForEnt( &g_entities[entID], nodeNum );
 }
 
+void G_PSE_Say(char const * name, char const * msg) {
+	trap->SendServerCommand( -1, va("%s \"%s^7: %s\" %i","chat", name, msg, 0));
+}
+
+void G_PSE_KillPlayer(void * client) {
+	gentity_t * ent = (gentity_t *) client;
+	if (ent && ent->client) {
+		ent->flags &= ~FL_GODMODE;
+		ent->client->ps.stats[STAT_HEALTH] = ent->health = -999;
+		player_die (ent, ent, ent, 100000, MOD_SUICIDE);
+	}
+}
+
+char const * G_PSE_GetClientName(void * client) {
+	gentity_t * ent = (gentity_t *) client;
+	if (ent && ent->client) {
+		return ent->client->pers.netname;
+	}
+	return "\0";
+}
+
+int G_PSE_GetClientNum(void * client) {
+	gentity_t * ent = (gentity_t *) client;
+	if (ent && ent->client) {
+		return ent->s.number;
+	}
+	return -1;
+}
+
+pseIncomingExport_t * G_PSE_GetIncomingExport() {
+	pseIncomingExport_t * pseie = calloc(1, sizeof(pseIncomingExport_t));
+#define _XPSEGAMEEXPORTASSIGN
+#include "para/pse_xincoming.h"
+#undef _XPSEGAMEEXPORTASSIGN
+	return pseie;
+}
+
 /*
 ============
 GetModuleAPI
@@ -3583,6 +3627,7 @@ Q_EXPORT gameExport_t* QDECL GetModuleAPI( int apiVersion, gameImport_t *import 
 	ge.NAV_EntIsRemovableUsable			= G_EntIsRemovableUsable;
 	ge.NAV_FindCombatPointWaypoints		= CP_FindCombatPointWaypoints;
 	ge.BG_GetItemIndexByTag				= BG_GetItemIndexByTag;
+	ge.PSE_GetIncomingExport			= G_PSE_GetIncomingExport;
 
 	return &ge;
 }

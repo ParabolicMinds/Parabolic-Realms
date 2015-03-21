@@ -6,6 +6,8 @@
 // g_public.h -- game module information visible to server
 
 #include "qcommon/q_shared.h"
+#include "para/pse_incoming_export.h"
+#include "para/pse_outgoing_import.h"
 
 #define Q3_INFINITE			16777216
 
@@ -1073,6 +1075,10 @@ typedef struct gameImport_s {
 	void		(*G2API_CleanEntAttachments)			( void );
 	qboolean	(*G2API_OverrideServer)					( void *serverInstance );
 	void		(*G2API_GetSurfaceName)					( void *ghoul2, int surfNumber, int modelIndex, char *fillBuf );
+	void *		(*PARA_CreateScriptingContext)			( char const * manifestPath );
+	void        (*PARA_DeleteScriptingContext)          ( void * handle);
+	pseOutgoingImport_t * (*PARA_CreateImport)				( void );
+	void		(*PARA_DeleteImport)					( pseOutgoingImport_t * import );
 } gameImport_t;
 
 typedef struct gameExport_s {
@@ -1116,6 +1122,7 @@ typedef struct gameExport_s {
 	qboolean	(*NAV_EntIsRemovableUsable)			( int entNum );
 	void		(*NAV_FindCombatPointWaypoints)		( void );
 	int			(*BG_GetItemIndexByTag)				( int tag, int type );
+	pseIncomingExport_t * (*PSE_GetIncomingExport)	( void );
 } gameExport_t;
 
 

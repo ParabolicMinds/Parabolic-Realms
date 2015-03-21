@@ -1,4 +1,5 @@
 #include "para/para_cvar_def.h"
+#include "para/para_xcommon.h"
 
 #if defined(_CGAME)
 #ifdef XCVAR_PROTO

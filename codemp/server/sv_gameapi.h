@@ -1,5 +1,7 @@
 #pragma once
 
+#include "game/g_public.h"
+
 void		GVM_InitGame						( int levelTime, int randomSeed, int restart );
 void		GVM_ShutdownGame					( int restart );
 char *		GVM_ClientConnect					( int clientNum, qboolean firstTime, qboolean isBot );

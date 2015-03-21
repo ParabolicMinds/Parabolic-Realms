@@ -35,7 +35,7 @@ if(BuildMPEngine OR BuildMPDed)
 	#    Botlib
 	# the files could arguably just be put into the engine and dedicated projects without having a library for it.
 	set(MPBotlibDefines ${SharedDefines} "BOTLIB")
-	set(MPBotlibIncludeDirectories ${SharedDir} ${MPDir})
+        set(MPBotlibIncludeDirectories ${SharedDir} ${MPDir})
 	set(MPBotlibBotlibFiles
 		"${MPDir}/botlib/aasfile.h"
 		"${MPDir}/botlib/be_aas.h"
@@ -142,7 +142,7 @@ if(BuildMPEngine OR BuildMPDed)
 		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "winmm" "wsock32")
 	endif(WIN32)
 	# Include directories
-	set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir}) # codemp folder, since includes are not always relative in the files
+        set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir} ${ParaPSESharedDir}) # codemp folder, since includes are not always relative in the files
 
 	if(UseInternalZlib)
 		set(MPEngineAndDedZLibFiles
@@ -181,6 +181,24 @@ if(BuildMPEngine OR BuildMPDed)
 		set(MPEngineAndDedIncludeDirectories ${MPEngineAndDedIncludeDirectories} ${ZLIB_INCLUDE_DIR})
 		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} ${ZLIB_LIBRARY})
 	endif()
+
+        set(MPEngineAndDedParaFiles
+                "${ParaPSESharedDir}/para_scripting_engine_api.h"
+                "${ParaPSESharedDir}/pse_types.h"
+                "${MPDir}/para/scripting_engine.hpp"
+                "${MPDir}/para/scripting_engine.cpp"
+                "${MPDir}/para/pse_loader.h"
+                "${MPDir}/para/pse_loader.c"
+                "${MPDir}/para/pse_api.h"
+                "${MPDir}/para/para_xcommon.h"
+                "${MPDir}/para/pse_xincoming.h"
+                "${MPDir}/para/pse_incoming_export.h"
+                "${MPDir}/para/pse_xoutgoing.h"
+                "${MPDir}/para/pse_outgoing_import.h"
+                )
+        source_group("para" FILES ${MPEngineAndDedParaFiles})
+        set(MPEngineAndDedFiles ${MPEngineAndDedFiles} ${MPEngineAndDedParaFiles})
+        set(MPEngineAndDedIncludeDirectories ${MPEngineAndDedIncludeDirectories})
 
 	set(MPEngineAndDedCgameFiles
 		"${MPDir}/cgame/cg_public.h"
