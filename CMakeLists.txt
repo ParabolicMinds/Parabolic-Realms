@@ -17,6 +17,7 @@ option(BuildMPDed "Whether to create projects for the MP dedicated server (openj
 option(BuildMPGame "Whether to create projects for the MP server-side gamecode (jampgamex86.dll)" ON)
 option(BuildMPCGame "Whether to create projects for the MP clientside gamecode (cgamex86.dll)" ON)
 option(BuildMPUI "Whether to create projects for the MP UI code (uix86.dll)" ON)
+option(BuildScriptingLibraries "" ON)
 
 # Customizable libraries
 if(WIN32)
@@ -97,7 +98,9 @@ set(SharedLib "shared")
 
 # Paths
 set(MPDir "${CMAKE_SOURCE_DIR}/codemp")
-set(SharedDir ${CMAKE_SOURCE_DIR}/shared)
+set(SharedDir "${CMAKE_SOURCE_DIR}/shared")
+set(ParaDir "${CMAKE_SOURCE_DIR}/codepara")
+set(ParaPSESharedDir "${ParaDir}/scripting/shared")
 
 # Common settings
 if(WIN32)
@@ -144,6 +147,8 @@ else()
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment")
@@ -182,6 +187,7 @@ else()
 	endif()
 endif()
 
+set(CMAKE_BUILD_TYPE "DEBUG")
 if (NOT CMAKE_BUILD_TYPE)
 	message("No build type selected, default to RELEASE")
 	set(CMAKE_BUILD_TYPE "RELEASE")
@@ -211,6 +217,7 @@ set(ReleaseDefines "FINAL_BUILD")
 
 # Add projects
 add_subdirectory(${MPDir})
+add_subdirectory(${ParaDir})
 
 # CPack for installer creation
 # TODO: Which version are we?

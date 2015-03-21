@@ -1117,7 +1117,13 @@ void	Swap_Init (void);
 
 int FloatAsInt( float f );
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 char	* QDECL va(const char *format, ...);
+#ifdef __cplusplus
+}
+#endif
 
 #define TRUNCATE_LENGTH	64
 void Com_TruncateLongString( char *buffer, const char *s );
@@ -1139,6 +1145,9 @@ qboolean Info_NextPair( const char **s, char *key, char *value );
 #if defined( _GAME ) || defined( _CGAME ) || defined( _UI )
 	void (*Com_Error)( int level, const char *error, ... );
 	void (*Com_Printf)( const char *msg, ... );
+#elif defined(__cplusplus)
+	extern "C" void NORETURN QDECL Com_Error( int level, const char *error, ... );
+	extern "C" void QDECL Com_Printf( const char *msg, ... );
 #else
 	void NORETURN QDECL Com_Error( int level, const char *error, ... );
 	void QDECL Com_Printf( const char *msg, ... );
