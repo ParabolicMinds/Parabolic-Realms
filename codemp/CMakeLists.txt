@@ -232,6 +232,7 @@ if(BuildMPEngine OR BuildMPDed)
 		"${MPDir}/qcommon/cm_local.h"
 		"${MPDir}/qcommon/cm_patch.cpp"
 		"${MPDir}/qcommon/cm_patch.h"
+                "${MPDir}/qcommon/cm_phys.cpp"
 		"${MPDir}/qcommon/cm_polylib.cpp"
 		"${MPDir}/qcommon/cm_polylib.h"
 		"${MPDir}/qcommon/cm_public.h"

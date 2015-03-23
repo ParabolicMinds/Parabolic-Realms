@@ -3344,6 +3344,31 @@ int cmdcmp( const void *a, const void *b ) {
 	return Q_stricmp( (const char *)a, ((command_t*)b)->name );
 }
 
+#include "bg_phys.h"
+
+void Cmd_PhysTest(gentity_t *ent) {
+	gentity_t * pb = G_Spawn();
+	pb->s.eType = ET_GENERAL;
+	pb->s.modelindex = G_ModelIndex("models/items/a_pwr_converter.md3");
+	BG_RegisterBPhysEntity(&pb->s);
+	trap->LinkEntity((sharedEntity_t *) pb);
+}
+static int b;
+void Cmd_PhysTest2(gentity_t *ent) {
+	vec3_t points[512];
+	char argbuf[32];
+	int i;
+	if (trap->Argc() > 1) {
+		trap->Argv(1, argbuf, 32);
+		b = strtol(argbuf, NULL, 10);
+	} else b++;
+	int num = trap->CM_CalculateHull(b, points, 512);
+	Com_Printf("Points for brush %i: \n", b);
+	for (i = 0; i < num; i++) {
+		Com_Printf("(%f, %f, %f)\n", points[i][0], points[i][1], points[i][2]);
+	}
+}
+
 /* This array MUST be sorted correctly by alphabetical name field */
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
@@ -3371,6 +3396,8 @@ command_t commands[] = {
 	{ "noclip",				Cmd_Noclip_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "notarget",			Cmd_Notarget_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "npc",				Cmd_NPC_f,					CMD_CHEAT|CMD_ALIVE },
+	{ "phys",				Cmd_PhysTest,				CMD_ALIVE },
+	{ "phys2",				Cmd_PhysTest2,				CMD_ALIVE },
 	{ "say",				Cmd_Say_f,					0 },
 	{ "say_team",			Cmd_SayTeam_f,				0 },
 	{ "score",				Cmd_Score_f,				0 },
