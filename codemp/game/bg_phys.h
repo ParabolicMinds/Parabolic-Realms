@@ -15,4 +15,6 @@ void BG_RunSimulation(int leveltime);
 void BG_RegisterBPhysEntity(entityState_t * ent);
 void BG_UnregisterBPhysEntity(entityState_t * ent);
 
+void BG_ApplyImpulse(entityState_t * ent, vec3_t impulse);
+
 #endif //BG_PHYS_H

@@ -24,11 +24,11 @@ void CM_NumData(int * brushes, int * brushsides, int * planes) {
 	*brushes = cmg.numBrushes;
 	*brushsides = cmg.numBrushSides;
 	*planes = cmg.numPlanes;
+}
 
-	for (int i = 0; i < cmg.numPlanes; i++) {
-		cplane_t * p = cmg.planes + i;
-		Com_Printf("Plane %i: Normal: (%f, %f, %f) Dist: %f\n", i, p->normal[0], p->normal[1], p->normal[2], p->dist);
-	}
+int CM_BrushContentFlags(int brushnum) {
+	if (brushnum > cmg.numBrushes) return 0;
+	return cmg.brushes[brushnum].contents;
 }
 
 int CM_CalculateHull(int brushnum, vec3_t * points, int points_size) {
