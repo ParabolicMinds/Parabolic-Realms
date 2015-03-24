@@ -32,6 +32,8 @@ endif(BuildMPRdVanilla)
 #    Common things between Engine and Dedicated Server
 if(BuildMPEngine OR BuildMPDed)
 
+set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "-lassimp")
+
 	#    Botlib
 	# the files could arguably just be put into the engine and dedicated projects without having a library for it.
 	set(MPBotlibDefines ${SharedDefines} "BOTLIB")
@@ -136,7 +138,7 @@ if(BuildMPEngine OR BuildMPDed)
 	#    Common files/libraries/defines of both Engine and Dedicated Server
 
 	# libraries: Botlib
-	set(MPEngineAndDedLibraries ${MPBotLib})
+        set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} ${MPBotLib})
 	# Platform-specific libraries
 	if(WIN32)
 		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "winmm" "wsock32")
@@ -230,6 +232,7 @@ if(BuildMPEngine OR BuildMPDed)
 		"${MPDir}/qcommon/q_platform.h"
 		"${MPDir}/qcommon/cm_load.cpp"
 		"${MPDir}/qcommon/cm_local.h"
+                "${MPDir}/qcommon/cm_model.cpp"
 		"${MPDir}/qcommon/cm_patch.cpp"
 		"${MPDir}/qcommon/cm_patch.h"
                 "${MPDir}/qcommon/cm_phys.cpp"

@@ -10,6 +10,7 @@ extern "C" {
 typedef struct bulletObject_s {
 	btScalar									mass;
 	btVector3									inertia;
+	btVector3									offset;
 	btCollisionShape *							shape;
 	btDefaultMotionState *						motionState;
 	btRigidBody::btRigidBodyConstructionInfo *	CI;
@@ -31,11 +32,6 @@ static btDiscreteDynamicsWorld * bworld;
 static std::vector<bulletObject_t *> map_statics;
 static std::vector<bulletEntity_t> active_states;
 
-static btCollisionShape * testPlane;
-static btDefaultMotionState * testPlaneState;
-static btRigidBody::btRigidBodyConstructionInfo * testPlaneRigidInfo;
-static btRigidBody * testPlaneRigidBody;
-
 static int cm_brushes, cm_brushsides, cm_planes;
 
 #define BP_POINTS_SIZE 512
@@ -48,11 +44,34 @@ static void B_ConfigureStateRem(entityState_t * ent) {
 	ent->eFlags &= ~EF_BULLET_PHYS;
 }
 
-static bulletObject_t * B_CreateObject(entityState_t * ent, btScalar mass = 0) {
+static bulletObject_t * B_CreateSphereObject(entityState_t * ent, btScalar mass, btScalar radius) {
 	bulletObject_t * obj = new bulletObject_t;
 	obj->mass = mass;
 	obj->inertia = {0, 0, 0};
-	obj->shape = new btSphereShape(1);
+	obj->shape = new btSphereShape(radius);
+	obj->motionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3 {ent->origin[0], ent->origin[1], ent->origin[2]}));
+	obj->shape->calculateLocalInertia(mass, obj->inertia);
+	obj->CI = new btRigidBody::btRigidBodyConstructionInfo(mass, obj->motionState, obj->shape, obj->inertia);
+	obj->rigidBody = new btRigidBody(*obj->CI);
+	bworld->addRigidBody(obj->rigidBody);
+	return obj;
+}
+
+static bulletObject_t * B_CreateModelHullObject(entityState_t * ent, btScalar mass, char const * model) {
+	bulletObject_t * obj = new bulletObject_t;
+	obj->mass = mass;
+	obj->inertia = {0, 0, 0};
+	vec3_t points[BP_POINTS_SIZE];
+	int vnum = trap->CM_GetModelVerticies(model, points, BP_POINTS_SIZE);
+	btConvexHullShape * chs = new btConvexHullShape();
+	for (int i = 0; i < vnum; i++) {
+		btVector3 cp {points[i][0], points[i][1], points[i][2]};
+		chs->addPoint(cp, false);
+		obj->offset += cp;
+	}
+	obj->offset /= vnum;
+	chs->recalcLocalAabb();
+	obj->shape = chs;
 	obj->motionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3 {ent->origin[0], ent->origin[1], ent->origin[2]}));
 	obj->shape->calculateLocalInertia(mass, obj->inertia);
 	obj->CI = new btRigidBody::btRigidBodyConstructionInfo(mass, obj->motionState, obj->shape, obj->inertia);
@@ -100,24 +119,16 @@ void BG_InitializeSimulation() {
 	solver = new btSequentialImpulseConstraintSolver;
 	bworld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config);
 
-	bworld->setGravity(btVector3(0, 0, -10));
-
-	/*
-	testPlane = new btStaticPlaneShape (btVector3(0, 0, 1), 1);
-	testPlaneState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, -1)));
-	testPlaneRigidInfo = new btRigidBody::btRigidBodyConstructionInfo(0, testPlaneState, testPlane, btVector3(0, 0, 0));
-	testPlaneRigidBody = new btRigidBody(*testPlaneRigidInfo);
-	bworld->addRigidBody(testPlaneRigidBody);
-	*/
+	bworld->setGravity(btVector3(0, 0, -100));
 
 	init = true;
 
 	trap->CM_NumData(&cm_brushes, &cm_brushsides, &cm_planes);
 
+	vec3_t points[BP_POINTS_SIZE];
 	for (int i = 0; i < cm_brushes; i++) {
 		if (trap->CM_BrushContentFlags(i) & CONTENTS_SOLID) {
 			Com_Printf("Adding Brush %i...\n", i);
-			vec3_t points[BP_POINTS_SIZE];
 			int num = trap->CM_CalculateHull(i, points, BP_POINTS_SIZE);
 			map_statics.push_back(B_CreateMapObject(points, num));
 		}
@@ -167,8 +178,9 @@ void BG_RunSimulation(int leveltime) {
 		i++;
 		btTransform trans;
 		bent.physobj->motionState->getWorldTransform(trans);
-		VectorSet(bent.ent->origin, trans.getOrigin().x(), trans.getOrigin().y(), trans.getOrigin().z());
-		VectorSet(bent.ent->pos.trBase, trans.getOrigin().x(), trans.getOrigin().y(), trans.getOrigin().z());
+		btVector3 pos = trans.getOrigin() + bent.physobj->offset;
+		VectorSet(bent.ent->origin, pos.x(), pos.y(), pos.z());
+		VectorSet(bent.ent->pos.trBase, pos.x(), pos.y(), pos.z());
 		btMatrix3x3 rotmat {trans.getRotation()};
 		rotmat.getEulerYPR(bent.ent->apos.trBase[1], bent.ent->apos.trBase[0], bent.ent->apos.trBase[2]);
 		VectorScale(bent.ent->apos.trBase, amult, bent.ent->apos.trBase);
@@ -178,7 +190,7 @@ void BG_RunSimulation(int leveltime) {
 	}
 }
 
-void BG_RegisterBPhysEntity(entityState_t * ent) {
+void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius = 50.0f) {
 	if (!init) return;
 
 	auto iterator = active_states.begin();
@@ -187,9 +199,21 @@ void BG_RegisterBPhysEntity(entityState_t * ent) {
 			return;
 		}
 	}
-
 	B_ConfigureStateAdd(ent);
-	active_states.push_back( {B_CreateObject(ent, 1), ent} );
+	active_states.push_back( {B_CreateSphereObject(ent, 1, radius), ent} );
+}
+
+void BG_RegisterBPhysModelHullEntity(entityState_t * ent, char const * model) {
+	if (!init) return;
+
+	auto iterator = active_states.begin();
+	for (size_t i = 0; i < active_states.size(); i++, iterator++) {
+		if ((*iterator).ent == ent) {
+			return;
+		}
+	}
+	B_ConfigureStateAdd(ent);
+	active_states.push_back( {B_CreateModelHullObject(ent, 1, model), ent} );
 }
 
 void BG_UnregisterBPhysEntity(entityState_t * ent) {

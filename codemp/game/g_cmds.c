@@ -3351,9 +3351,18 @@ void Cmd_PhysTest(gentity_t *ent) {
 	VectorCopy(ent->r.currentOrigin, pb->s.origin);
 	pb->s.eType = ET_GENERAL;
 	pb->s.modelindex = G_ModelIndex("models/items/a_pwr_converter.md3");
-	BG_RegisterBPhysEntity(&pb->s);
+	BG_RegisterBPhysModelHullEntity(&pb->s, "models/items/a_pwr_converter.md3");
+	Com_Printf("Player Roll: %f Pitch: %f Yaw: %f \n", ent->playerState->viewangles[ROLL], ent->playerState->viewangles[PITCH], ent->playerState->viewangles[YAW]);
 	vec3_t impulse;
-	VectorSet(impulse, 10.0f, 10.0f, 5.0f);
+	float az, el;
+	el = ent->playerState->viewangles[PITCH] / 57.2957795f;
+	az = ent->playerState->viewangles[YAW] / 57.2957795f;
+	int mag = 200.0f;
+	VectorSet(impulse,
+			  mag * cos(el) * cos(az),
+			  mag * cos(el) * sin(az),
+			  mag * -sin(el)
+			  );
 	BG_ApplyImpulse(&pb->s, impulse);
 	pb->r.svFlags |= SVF_BROADCAST;
 	trap->LinkEntity((sharedEntity_t *) pb);

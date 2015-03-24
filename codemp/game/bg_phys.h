@@ -12,7 +12,8 @@ typedef enum physShape_s {
 void BG_InitializeSimulation();
 void BG_ShutdownSimulation();
 void BG_RunSimulation(int leveltime);
-void BG_RegisterBPhysEntity(entityState_t * ent);
+void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius);
+void BG_RegisterBPhysModelHullEntity(entityState_t * ent, char const * model);
 void BG_UnregisterBPhysEntity(entityState_t * ent);
 
 void BG_ApplyImpulse(entityState_t * ent, vec3_t impulse);
