@@ -3357,7 +3357,7 @@ void Cmd_PhysTest(gentity_t *ent) {
 	float az, el;
 	el = ent->playerState->viewangles[PITCH] / 57.2957795f;
 	az = ent->playerState->viewangles[YAW] / 57.2957795f;
-	int mag = 200.0f;
+	int mag = 800.0f;
 	VectorSet(impulse,
 			  mag * cos(el) * cos(az),
 			  mag * cos(el) * sin(az),

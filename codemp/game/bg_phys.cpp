@@ -10,7 +10,8 @@ extern "C" {
 typedef struct bulletObject_s {
 	btScalar									mass;
 	btVector3									inertia;
-	btVector3									offset;
+	btVector3									mins;
+	btVector3									maxs;
 	btCollisionShape *							shape;
 	btDefaultMotionState *						motionState;
 	btRigidBody::btRigidBodyConstructionInfo *	CI;
@@ -59,23 +60,36 @@ static bulletObject_t * B_CreateSphereObject(entityState_t * ent, btScalar mass,
 
 static bulletObject_t * B_CreateModelHullObject(entityState_t * ent, btScalar mass, char const * model) {
 	bulletObject_t * obj = new bulletObject_t;
-	obj->mass = mass;
 	obj->inertia = {0, 0, 0};
 	vec3_t points[BP_POINTS_SIZE];
 	int vnum = trap->CM_GetModelVerticies(model, points, BP_POINTS_SIZE);
 	btConvexHullShape * chs = new btConvexHullShape();
 	for (int i = 0; i < vnum; i++) {
 		btVector3 cp {points[i][0], points[i][1], points[i][2]};
+		if (i == 0) {
+			obj->mins = cp;
+			obj->maxs = cp;
+		} else {
+			obj->mins.setX(minimum(obj->mins.x(), cp.x()));
+			obj->mins.setY(minimum(obj->mins.y(), cp.y()));
+			obj->mins.setZ(minimum(obj->mins.z(), cp.z()));
+			obj->maxs.setX(maximum(obj->maxs.x(), cp.x()));
+			obj->maxs.setY(maximum(obj->maxs.y(), cp.y()));
+			obj->maxs.setZ(maximum(obj->maxs.z(), cp.z()));
+		}
 		chs->addPoint(cp, false);
-		obj->offset += cp;
 	}
-	obj->offset /= vnum;
+	if (mass >= 0) obj->mass = mass;
+	else {
+		obj->mass = (obj->maxs.x() - obj->mins.x()) * (obj->maxs.y() - obj->mins.y()) * (obj->maxs.z() - obj->mins.z());
+	}
 	chs->recalcLocalAabb();
 	obj->shape = chs;
 	obj->motionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3 {ent->origin[0], ent->origin[1], ent->origin[2]}));
-	obj->shape->calculateLocalInertia(mass, obj->inertia);
-	obj->CI = new btRigidBody::btRigidBodyConstructionInfo(mass, obj->motionState, obj->shape, obj->inertia);
+	obj->shape->calculateLocalInertia(obj->mass, obj->inertia);
+	obj->CI = new btRigidBody::btRigidBodyConstructionInfo(obj->mass, obj->motionState, obj->shape, obj->inertia);
 	obj->rigidBody = new btRigidBody(*obj->CI);
+	obj->rigidBody->setDamping(0.125f, 0.125f);
 	bworld->addRigidBody(obj->rigidBody);
 	return obj;
 }
@@ -111,7 +125,7 @@ static void B_DeleteObject(bulletObject_t *& obj) {
 void BG_InitializeSimulation() {
 	if (init) return;
 
-	Com_Printf("Starting Physics Simulation...\n");
+	Com_Printf("Physics: Initializing Simulation...\n");
 
 	broadphase = new btDbvtBroadphase;
 	config = new btDefaultCollisionConfiguration;
@@ -119,16 +133,16 @@ void BG_InitializeSimulation() {
 	solver = new btSequentialImpulseConstraintSolver;
 	bworld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config);
 
-	bworld->setGravity(btVector3(0, 0, -100));
+	bworld->setGravity(btVector3(0, 0, -400));
 
 	init = true;
 
 	trap->CM_NumData(&cm_brushes, &cm_brushsides, &cm_planes);
 
 	vec3_t points[BP_POINTS_SIZE];
+	Com_Printf("Physics: Adding Brushes...\n");
 	for (int i = 0; i < cm_brushes; i++) {
 		if (trap->CM_BrushContentFlags(i) & CONTENTS_SOLID) {
-			Com_Printf("Adding Brush %i...\n", i);
 			int num = trap->CM_CalculateHull(i, points, BP_POINTS_SIZE);
 			map_statics.push_back(B_CreateMapObject(points, num));
 		}
@@ -178,7 +192,7 @@ void BG_RunSimulation(int leveltime) {
 		i++;
 		btTransform trans;
 		bent.physobj->motionState->getWorldTransform(trans);
-		btVector3 pos = trans.getOrigin() + bent.physobj->offset;
+		btVector3 pos = trans.getOrigin();
 		VectorSet(bent.ent->origin, pos.x(), pos.y(), pos.z());
 		VectorSet(bent.ent->pos.trBase, pos.x(), pos.y(), pos.z());
 		btMatrix3x3 rotmat {trans.getRotation()};
@@ -213,7 +227,7 @@ void BG_RegisterBPhysModelHullEntity(entityState_t * ent, char const * model) {
 		}
 	}
 	B_ConfigureStateAdd(ent);
-	active_states.push_back( {B_CreateModelHullObject(ent, 1, model), ent} );
+	active_states.push_back( {B_CreateModelHullObject(ent, -1, model), ent} );
 }
 
 void BG_UnregisterBPhysEntity(entityState_t * ent) {
@@ -233,7 +247,7 @@ void BG_UnregisterBPhysEntity(entityState_t * ent) {
 void BG_ApplyImpulse(entityState_t * ent, vec3_t impulse) {
 	for (bulletEntity_t & bent : active_states) {
 		if (bent.ent == ent) {
-			bent.physobj->rigidBody->applyImpulse({impulse[0], impulse[1], impulse[2]}, {0, 0, 0});
+			bent.physobj->rigidBody->applyImpulse({impulse[0] * bent.physobj->mass, impulse[1] * bent.physobj->mass, impulse[2] * bent.physobj->mass}, {0, 0, 0});
 			break;
 		}
 	}
