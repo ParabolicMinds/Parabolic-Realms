@@ -3037,7 +3037,7 @@ void G_RunFrame( int levelTime ) {
 	// get any cvar changes
 	G_UpdateCvars();
 
-	BG_RunSimulation(levelTime);
+	BG_UpdatePhysicsObjects();
 
 	pse_import->Event_Frame(levelTime);
 
@@ -3418,6 +3418,8 @@ void G_RunFrame( int levelTime ) {
 		iTimer_GameChecks,
 		iTimer_Queues);
 #endif
+
+	BG_AdvanceSimulationTarget(level.time - g_LastFrameTime);
 
 	g_LastFrameTime = level.time;
 }

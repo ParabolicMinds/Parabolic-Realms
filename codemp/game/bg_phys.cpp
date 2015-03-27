@@ -3,6 +3,9 @@ extern "C" {
 #include "bg_phys.h"
 }
 
+#include <atomic>
+#include <mutex>
+#include <thread>
 #include <vector>
 
 #include <btBulletDynamicsCommon.h>
@@ -122,6 +125,30 @@ static void B_DeleteObject(bulletObject_t *& obj) {
 	obj = nullptr;
 }
 
+// SIMULATION THREAD //
+std::atomic_bool run_sim {false};
+std::atomic_int run_advance {0};
+std::mutex sim_lock;
+#define SIM_SLEEP std::chrono::duration<float, std::ratio<1, 1000>>(1)
+constexpr int substep {80};
+constexpr btScalar sim_step {1.0f / substep};
+void BG_Run_Simulation() {
+	while (run_sim) {
+		if (run_advance) {
+			sim_lock.lock();
+			bworld->stepSimulation(run_advance.exchange(0) / 1000.0f, substep, sim_step);
+			sim_lock.unlock();
+		}
+		std::this_thread::sleep_for(SIM_SLEEP);
+	}
+}
+std::thread * sim_thread {nullptr};
+
+void BG_AdvanceSimulationTarget(int msec) {
+	run_advance += msec;
+}
+//---------------------
+
 void BG_InitializeSimulation() {
 	if (init) return;
 
@@ -147,10 +174,17 @@ void BG_InitializeSimulation() {
 			map_statics.push_back(B_CreateMapObject(points, num));
 		}
 	}
+
+	run_sim.store(true);
+	sim_thread = new std::thread(BG_Run_Simulation);
 }
 
 void BG_ShutdownSimulation() {
 	if (!init) return;
+
+	run_sim.store(false);
+	if (sim_thread->joinable()) sim_thread->join();
+	delete sim_thread; sim_thread = nullptr;
 
 	Com_Printf("Shutting Down Physics Simulation...\n");
 
@@ -173,20 +207,11 @@ void BG_ShutdownSimulation() {
 	init = false;
 }
 
-//static int leveltimeprev = 0;
-
-static btScalar simStep {1.0f / 40.0f};
-
 constexpr float amult {57.2957795f};
-
-static int lastleveltime = 0;
-void BG_RunSimulation(int leveltime) {
+void BG_UpdatePhysicsObjects() {
 	if (!init) return;
 
-	float adv = (leveltime - lastleveltime) / 1000.0f;
-	bworld->stepSimulation(adv, 4, simStep);
-	lastleveltime = leveltime;
-
+	//sim_lock.lock();
 	int i = 0;
 	for (bulletEntity_t & bent : active_states) {
 		i++;
@@ -202,6 +227,7 @@ void BG_RunSimulation(int leveltime) {
 		bent.ent->pos.trType = TR_STATIONARY;
 		bent.ent->apos.trType = TR_STATIONARY;
 	}
+	//sim_lock.unlock();
 }
 
 void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius = 50.0f) {
