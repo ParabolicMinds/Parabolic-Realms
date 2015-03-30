@@ -31,3 +31,7 @@ int CM_GetModelVerticies(char const * name, vec3_t * points, int points_num) {
 	FS_FCloseFile(file);
 	return p;
 }
+
+pObjSurface_t * CM_LoadPObj(char const * name) {
+	return nullptr;
+}

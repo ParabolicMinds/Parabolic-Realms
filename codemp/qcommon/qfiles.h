@@ -147,28 +147,26 @@ typedef struct md3Header_s {
 } md3Header_t;
 
 typedef struct pObjElement_s {
-	int					vi;
-	int					uvi;
-	int					ni;
+	float *				vertex;
+	float *				uv;
+	float *				normal;
 } pObjElement_t;
 
-typedef struct pObjSurface_s {
-	int					numElements;
-	pObjElement_t *		elements;
-} pObjSurface_t;
+typedef pObjElement_t pObjFace_t[3];
 
-typedef struct pObjModel_s {
+typedef struct pObjSurface_s {
+	int					ident;
 	char				name[MAX_QPATH];
 	int					numVerts;
 	int					numUVs;
 	int					numNormals;
-	int					numSurfaces;
+	int					numFaces;
 	vec3_t *			verts;
 	vec2_t *			UVs;
 	vec3_t *			normals;
-	pObjSurface_t *		surfaces;
+	pObjFace_t *		faces;
 
-} pObjModel_t;
+} pObjSurface_t;
 
 
 /*

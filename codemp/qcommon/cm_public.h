@@ -67,3 +67,4 @@ int CM_CalculateHull(int brushnum, vec3_t * points, int points_size);
 //cm_model.cpp
 
 int CM_GetModelVerticies(char const * name, vec3_t * points, int points_num);
+pObjSurface_t * CM_LoadPObj(char const * name);

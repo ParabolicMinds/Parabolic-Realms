@@ -282,6 +282,7 @@ typedef enum {
 	MOD_BAD,
 	MOD_BRUSH,
 	MOD_MESH,
+	MOD_POBJ,
 /*
 Ghoul2 Insert Start
 */
@@ -300,6 +301,7 @@ typedef struct model_s {
 	int			dataSize;			// just for listing purposes
 	struct bmodel_s	*bmodel;			// only if type == MOD_BRUSH
 	md3Header_t	*md3[MD3_MAX_LODS];	// only if type == MOD_MESH
+	pObjSurface_t *pobj;			// only if type == MOD_POBJ
 /*
 Ghoul2 Insert Start
 */
