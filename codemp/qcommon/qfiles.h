@@ -157,13 +157,15 @@ typedef pObjElement_t pObjFace_t[3];
 typedef struct pObjSurface_s {
 	int					ident;
 	char				name[MAX_QPATH];
+	char				shader[MAX_QPATH];
+	int					shaderIndex;
 	int					numVerts;
 	int					numUVs;
 	int					numNormals;
 	int					numFaces;
-	vec3_t *			verts;
-	vec2_t *			UVs;
-	vec3_t *			normals;
+	float *				verts;
+	float *				UVs;
+	float *				normals;
 	pObjFace_t *		faces;
 
 } pObjSurface_t;

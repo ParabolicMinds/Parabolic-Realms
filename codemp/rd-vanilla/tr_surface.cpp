@@ -1274,6 +1274,8 @@ void RB_SurfacePObj(pObjSurface_t * surf) {
 		tess.texCoords[vindex+0][0][1] = (*face)[0].uv[1];
 		tess.texCoords[vindex+1][0][0] = (*face)[1].uv[0];
 		tess.texCoords[vindex+1][0][1] = (*face)[1].uv[1];
+		tess.texCoords[vindex+2][0][0] = (*face)[2].uv[0];
+		tess.texCoords[vindex+2][0][1] = (*face)[2].uv[1];
 		VectorSet4(tess.normal[vindex+0], (*face)[0].normal[0], (*face)[0].normal[1], (*face)[0].normal[2], 0);
 		VectorSet4(tess.normal[vindex+1], (*face)[1].normal[0], (*face)[1].normal[1], (*face)[1].normal[2], 0);
 		VectorSet4(tess.normal[vindex+2], (*face)[2].normal[0], (*face)[2].normal[1], (*face)[2].normal[2], 0);

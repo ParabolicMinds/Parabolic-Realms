@@ -3350,8 +3350,8 @@ void Cmd_PhysTest(gentity_t *ent) {
 	gentity_t * pb = G_Spawn();
 	VectorCopy(ent->r.currentOrigin, pb->s.origin);
 	pb->s.eType = ET_GENERAL;
-	pb->s.modelindex = G_ModelIndex("models/items/a_pwr_converter.md3");
-	BG_RegisterBPhysModelHullEntity(&pb->s, "models/items/a_pwr_converter.md3");
+	pb->s.modelindex = G_ModelIndex("models/testboxt.obj");
+	BG_RegisterBPhysModelHullEntity(&pb->s, "models/testboxt.obj");
 	Com_Printf("Player Roll: %f Pitch: %f Yaw: %f \n", ent->playerState->viewangles[ROLL], ent->playerState->viewangles[PITCH], ent->playerState->viewangles[YAW]);
 	vec3_t impulse;
 	float az, el;

@@ -1614,6 +1614,13 @@ static qboolean R_LoadPObj (model_t *mod, char const * name) {
 	mod->type = MOD_POBJ;
 	mod->pobj = ri->CM_LoadPObj(name);
 	if (!mod->pobj) return qfalse;
+	mod->pobj->ident = SF_POBJ;
+	shader_t * sh = R_FindShader( mod->pobj->shader, lightmapsNone, stylesDefault, qtrue );
+	if ( sh->defaultShader ) {
+		mod->pobj->shaderIndex = 0;
+	} else {
+		mod->pobj->shaderIndex = sh->index;
+	}
 	return qtrue;
 }
 
