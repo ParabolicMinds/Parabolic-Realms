@@ -32,8 +32,6 @@ endif(BuildMPRdVanilla)
 #    Common things between Engine and Dedicated Server
 if(BuildMPEngine OR BuildMPDed)
 
-set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "-lassimp")
-
 	#    Botlib
 	# the files could arguably just be put into the engine and dedicated projects without having a library for it.
 	set(MPBotlibDefines ${SharedDefines} "BOTLIB")
