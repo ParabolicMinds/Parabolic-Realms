@@ -209,5 +209,5 @@ set_target_properties(${MPGame} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${MPGameDe
 set_target_properties(${MPGame} PROPERTIES INCLUDE_DIRECTORIES "${MPGameIncludeDirectories}")
 set_target_properties(${MPGame} PROPERTIES PROJECT_LABEL "MP Game Library")
 
-set(MPGameLibraries ${MPGameLibraries} ${BULLET_LIBRARIES} -lpthread)
+set(MPGameLibraries ${MPGameLibraries} ${BULLET_LIBRARIES})
 target_link_libraries(${MPGame} ${MPGameLibraries})

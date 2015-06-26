@@ -171,13 +171,12 @@ void BG_InitStaticBrushes_ThreadRun() {
 	vec3_t points[BP_POINTS_SIZE];
 	while (true) {
 		uint v = brush_index++;
-		if (v < (uint)cm_brushes) {
+		if (v >= (uint)cm_brushes) break;
 		if (trap->CM_BrushContentFlags(v) & CONTENTS_SOLID) {
 			int num = trap->CM_CalculateHull(v, points, BP_POINTS_SIZE);
 			stm.lock();
 			map_statics.push_back(B_CreateMapObject(points, num));
 			stm.unlock();
-		}
 		}
 	}
 }
