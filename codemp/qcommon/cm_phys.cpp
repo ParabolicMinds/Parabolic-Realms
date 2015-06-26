@@ -5,8 +5,8 @@
 
 #define VECBANY( vect ) ( vect.x || vect.y || vect.z )
 
-static glm::dvec3 CM_GetIntersectingPoint(cplane_t * a, cplane_t * b, cplane_t * c) {
-	glm::dmat3x3 sysmat;
+static glm::vec3 CM_GetIntersectingPoint(cplane_t * a, cplane_t * b, cplane_t * c) {
+	glm::mat3x3 sysmat;
 	sysmat[0][0] = a->normal[0];
 	sysmat[0][1] = b->normal[0];
 	sysmat[0][2] = c->normal[0];
@@ -16,14 +16,12 @@ static glm::dvec3 CM_GetIntersectingPoint(cplane_t * a, cplane_t * b, cplane_t *
 	sysmat[2][0] = a->normal[2];
 	sysmat[2][1] = b->normal[2];
 	sysmat[2][2] = c->normal[2];
-	glm::dmat3x3 sysmati = glm::inverse(sysmat);
-	return sysmati * glm::dvec3(a->dist, b->dist, c->dist);
+	return glm::inverse(sysmat) * glm::vec3(a->dist, b->dist, c->dist);
 }
 
-void CM_NumData(int * brushes, int * brushsides, int * planes) {
+void CM_NumData(int * brushes, int * patches) {
 	*brushes = cmg.numBrushes;
-	*brushsides = cmg.numBrushSides;
-	*planes = cmg.numPlanes;
+	*patches = cmg.numSurfaces;
 }
 
 int CM_BrushContentFlags(int brushnum) {
@@ -34,8 +32,10 @@ int CM_BrushContentFlags(int brushnum) {
 int CM_CalculateHull(int brushnum, vec3_t * points, int points_size) {
 	if (brushnum >= cmg.numBrushes) return -1;
 	std::vector<glm::vec3> points_vec;
+	points_vec.reserve(points_size);
 	cbrush_t * brush = cmg.brushes + brushnum;
 	int i, j, k, size;
+	size = 0;
 	for (i = 0; i < brush->numsides; i++) {
 		for (j = 0; j < i; j++) {
 			for (k = 0; k < j; k++) {
@@ -44,7 +44,6 @@ int CM_CalculateHull(int brushnum, vec3_t * points, int points_size) {
 				bool legal = true;
 				glm::vec3 vec = CM_GetIntersectingPoint((brush->sides + i)->plane, (brush->sides + j)->plane, (brush->sides + k)->plane);
 				if (VECBANY(glm::isinf(vec)) || VECBANY(glm::isnan(vec))) legal = false;
-				if (legal) for (glm::vec3 const & svec : points_vec) { if (vec == svec) { legal = false; break; } }
 				if (legal) for (int l = 0; l < brush->numsides; l++) {
 					if (l == i || l == j || l == k) continue;
 					if (glm::dot(glm::vec3{brush->sides[l].plane->normal[0], brush->sides[l].plane->normal[1], brush->sides[l].plane->normal[2]}, vec) > brush->sides[l].plane->dist + 0.01f) {

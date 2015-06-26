@@ -586,7 +586,7 @@ static inline bool R_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, f
 //used by RF_DISTORTION
 static inline bool R_WorldCoordToScreenCoord( vec3_t worldCoord, int *x, int *y )
 {
-	float	xF, yF;
+	float	xF = 0, yF = 0;
 	bool retVal = R_WorldCoordToScreenCoordFloat( worldCoord, &xF, &yF );
 	*x = (int)xF;
 	*y = (int)yF;

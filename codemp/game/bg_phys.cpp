@@ -3,6 +3,8 @@ extern "C" {
 #include "bg_phys.h"
 }
 
+#define BP_USE_FIXEDPOINT_INT_32 1
+
 #include <atomic>
 #include <mutex>
 #include <thread>
@@ -24,6 +26,8 @@ typedef struct bulletObject_s {
 typedef struct bulletEntity_s {
 	bulletObject_t * physobj;
 	entityState_t * ent;
+	vec3_t stored_pos;
+	vec3_t stored_ang;
 } bulletEntity_t;
 
 static bool init;
@@ -33,12 +37,12 @@ static btCollisionDispatcher * dispatcher;
 static btSequentialImpulseConstraintSolver * solver;
 static btDiscreteDynamicsWorld * bworld;
 
-static std::vector<bulletObject_t *> map_statics;
-static std::vector<bulletEntity_t> active_states;
+static std::vector<bulletObject_t *> map_statics {};
+static std::vector<bulletEntity_t> active_states {};
 
-static int cm_brushes, cm_brushsides, cm_planes;
+static int cm_brushes, cm_patches;
 
-#define BP_POINTS_SIZE 512
+#define BP_POINTS_SIZE 2048
 
 static void B_ConfigureStateAdd(entityState_t * ent) {
 	ent->eFlags |= EF_BULLET_PHYS;
@@ -130,13 +134,22 @@ std::atomic_bool run_sim {false};
 std::atomic_int run_advance {0};
 std::mutex sim_lock;
 #define SIM_SLEEP std::chrono::duration<float, std::ratio<1, 1000>>(1)
-constexpr int substep {80};
+constexpr int substep {160};
 constexpr btScalar sim_step {1.0f / substep};
 void BG_Run_Simulation() {
 	while (run_sim) {
 		if (run_advance) {
-			sim_lock.lock();
 			bworld->stepSimulation(run_advance.exchange(0) / 1000.0f, substep, sim_step);
+			sim_lock.lock();
+			for (bulletEntity_t & bent : active_states) {
+				btTransform trans;
+				bent.physobj->motionState->getWorldTransform(trans);
+				btVector3 pos = trans.getOrigin();
+				VectorSet(bent.stored_pos, pos.x(), pos.y(), pos.z());
+				btMatrix3x3 rotmat {trans.getRotation()};
+				rotmat.getEulerYPR(bent.stored_ang[1], bent.stored_ang[0], bent.stored_ang[2]);
+				VectorScale(bent.stored_ang, 57.2957795f, bent.stored_ang);
+			}
 			sim_lock.unlock();
 		}
 		std::this_thread::sleep_for(SIM_SLEEP);
@@ -149,12 +162,45 @@ void BG_AdvanceSimulationTarget(int msec) {
 }
 //---------------------
 
+std::atomic_uint brush_index;
+std::mutex stm;
+std::vector<std::thread *> sb_workers;
+
+// STATIC BRUSHES //
+void BG_InitStaticBrushes_ThreadRun() {
+	vec3_t points[BP_POINTS_SIZE];
+	while (true) {
+		uint v = brush_index++;
+		if (v < (uint)cm_brushes) {
+		if (trap->CM_BrushContentFlags(v) & CONTENTS_SOLID) {
+			int num = trap->CM_CalculateHull(v, points, BP_POINTS_SIZE);
+			stm.lock();
+			map_statics.push_back(B_CreateMapObject(points, num));
+			stm.unlock();
+		}
+		}
+	}
+}
+
+void BG_InitStaticBrushes() {
+	bworld->setForceUpdateAllAabbs(false);
+	brush_index = 0;
+	for (uint i = 0; i < std::thread::hardware_concurrency(); i++) {
+		sb_workers.push_back(new std::thread(BG_InitStaticBrushes_ThreadRun));
+	}
+	for (std::thread * th : sb_workers) {
+		if (th->joinable()) th->join();
+		delete th;
+	}
+}
+//---------------------
+
 void BG_InitializeSimulation() {
 	if (init) return;
 
 	Com_Printf("Physics: Initializing Simulation...\n");
 
-	broadphase = new btDbvtBroadphase;
+	broadphase = new btDbvtBroadphase();
 	config = new btDefaultCollisionConfiguration;
 	dispatcher = new btCollisionDispatcher (config);
 	solver = new btSequentialImpulseConstraintSolver;
@@ -164,16 +210,9 @@ void BG_InitializeSimulation() {
 
 	init = true;
 
-	trap->CM_NumData(&cm_brushes, &cm_brushsides, &cm_planes);
+	trap->CM_NumData(&cm_brushes, &cm_patches);
 
-	vec3_t points[BP_POINTS_SIZE];
-	Com_Printf("Physics: Adding Brushes...\n");
-	for (int i = 0; i < cm_brushes; i++) {
-		if (trap->CM_BrushContentFlags(i) & CONTENTS_SOLID) {
-			int num = trap->CM_CalculateHull(i, points, BP_POINTS_SIZE);
-			map_statics.push_back(B_CreateMapObject(points, num));
-		}
-	}
+	BG_InitStaticBrushes();
 
 	run_sim.store(true);
 	sim_thread = new std::thread(BG_Run_Simulation);
@@ -207,27 +246,19 @@ void BG_ShutdownSimulation() {
 	init = false;
 }
 
-constexpr float amult {57.2957795f};
 void BG_UpdatePhysicsObjects() {
 	if (!init) return;
 
-	//sim_lock.lock();
+	sim_lock.lock();
 	int i = 0;
 	for (bulletEntity_t & bent : active_states) {
 		i++;
-		btTransform trans;
-		bent.physobj->motionState->getWorldTransform(trans);
-		btVector3 pos = trans.getOrigin();
-		VectorSet(bent.ent->origin, pos.x(), pos.y(), pos.z());
-		VectorSet(bent.ent->pos.trBase, pos.x(), pos.y(), pos.z());
-		btMatrix3x3 rotmat {trans.getRotation()};
-		rotmat.getEulerYPR(bent.ent->apos.trBase[1], bent.ent->apos.trBase[0], bent.ent->apos.trBase[2]);
-		VectorScale(bent.ent->apos.trBase, amult, bent.ent->apos.trBase);
-		VectorCopy(bent.ent->apos.trBase, bent.ent->angles);
-		bent.ent->pos.trType = TR_STATIONARY;
-		bent.ent->apos.trType = TR_STATIONARY;
+		VectorCopy(bent.stored_pos, bent.ent->pos.trBase);
+		VectorCopy(bent.stored_pos, bent.ent->origin);
+		VectorCopy(bent.stored_ang, bent.ent->apos.trBase);
+		VectorCopy(bent.stored_ang, bent.ent->angles);
 	}
-	//sim_lock.unlock();
+	sim_lock.unlock();
 }
 
 void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius = 50.0f) {
@@ -253,7 +284,10 @@ void BG_RegisterBPhysModelHullEntity(entityState_t * ent, char const * model) {
 		}
 	}
 	B_ConfigureStateAdd(ent);
-	active_states.push_back( {B_CreateModelHullObject(ent, -1, model), ent} );
+	bulletEntity_t bent {B_CreateModelHullObject(ent, -1, model), ent};
+	VectorCopy(bent.ent->origin, bent.stored_pos);
+	VectorCopy(bent.ent->origin, bent.stored_ang);
+	active_states.push_back( bent );
 }
 
 void BG_UnregisterBPhysEntity(entityState_t * ent) {

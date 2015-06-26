@@ -1079,7 +1079,7 @@ typedef struct gameImport_s {
 	void        (*PARA_DeleteScriptingContext)          ( void * handle);
 	pseOutgoingImport_t * (*PARA_CreateImport)				( void );
 	void		(*PARA_DeleteImport)					( pseOutgoingImport_t * import );
-	void		(*CM_NumData)							(int * brushes, int * brushsides, int * planes);
+	void		(*CM_NumData)							(int * brushes, int * patches);
 	int			(*CM_BrushContentFlags)					(int brushnum);
 	int			(*CM_CalculateHull)						(int brushnum, vec3_t * points, int points_size);
 	int			(*CM_GetModelVerticies)					(char const * name, vec3_t * points, int points_num);

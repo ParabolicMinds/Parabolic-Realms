@@ -140,7 +140,9 @@ if(BuildMPEngine OR BuildMPDed)
 	# Platform-specific libraries
 	if(WIN32)
 		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "winmm" "wsock32")
-	endif(WIN32)
+	else()
+		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "pthread")
+	endif()
 	# Include directories
         set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir} ${ParaPSESharedDir}) # codemp folder, since includes are not always relative in the files
 

@@ -60,7 +60,7 @@ bool CM_CullWorldBox (const cplane_t *frustum, const vec3pair_t bounds);
 
 // cm_phys.cpp
 
-void CM_NumData(int * brushes, int * brushsides, int * planes);
+void CM_NumData(int * brushes, int * patches);
 int CM_BrushContentFlags(int brushnum);
 int CM_CalculateHull(int brushnum, vec3_t * points, int points_size);
 

@@ -17,22 +17,26 @@ int CM_GetModelVerticies(char const * name, vec3_t * points, int points_num) {
 }
 
 static void CM_FreePObj(pObjSurface_t * surf) {
-	if (surf->verts) delete[] surf->verts;
-	if (surf->UVs) delete[] surf->UVs;
-	if (surf->normals) delete[] surf->normals;
+	if (surf->numVerts) delete[] surf->verts;
+	if (surf->numUVs) delete[] surf->UVs;
+	if (surf->numNormals) delete[] surf->normals;
 	if (surf->faces) delete[] surf->faces;
 }
 
-float testVerts[] = {
+float nullVerts[] = {
 	0.0f, 0.0f, 0.0f,
-	100.0f, 0.0f, 0.0f,
-	100.0f, 100.0f, 0.0f
+	0.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 0.0f
 };
-
-float testUVs[] = {
+float nullUVs[] = {
 	0.0f, 0.0f,
-	1.0f, 0.0f,
-	1.0f, 1.0f,
+	0.0f, 0.0f,
+	0.0f, 0.0f,
+};
+float nullNormals[] = {
+	0.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 0.0f
 };
 
 #define OBJ_MAX_INDICIES 1024
@@ -40,9 +44,9 @@ float testUVs[] = {
 #define FLOAT_BUF_LEN 15
 
 typedef struct objIndex_s{
-	int vi = -1;
-	int uvi = -1;
-	int ni = -1;
+	int vi = 0;
+	int uvi = 0;
+	int ni = 0;
 } objIndex_t;
 
 char const defaultShader[] = "textures/imperial/basic";
@@ -271,11 +275,11 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 		return nullptr;
 	}
 
-	surf->verts = verts;
+	if (verts_index) surf->verts = verts; else surf->verts = nullVerts;
 	surf->numVerts = verts_index;
-	surf->UVs = uvs;
+	if (uvs_index) surf->UVs = uvs; else surf->UVs = nullUVs;
 	surf->numUVs = uvs_index;
-	surf->normals = normals;
+	if (normals_index) surf->normals = normals; else surf->normals = nullNormals;
 	surf->numNormals = normals_index;
 	surf->numFaces = indicies.size() / 3;
 	pObjFace_t * faces = new pObjFace_t[surf->numFaces];
