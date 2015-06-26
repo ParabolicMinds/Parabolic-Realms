@@ -5,6 +5,8 @@ if(NOT InOpenJK)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InOpenJK)
 
+include(FindBullet)
+
 set(MPSharedDefines ${SharedDefines})
 
 #    Add Game Project
@@ -134,11 +136,13 @@ if(BuildMPEngine OR BuildMPDed)
 	#    Common files/libraries/defines of both Engine and Dedicated Server
 
 	# libraries: Botlib
-	set(MPEngineAndDedLibraries ${MPBotLib})
+        set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} ${MPBotLib})
 	# Platform-specific libraries
 	if(WIN32)
 		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "winmm" "wsock32")
-	endif(WIN32)
+	else()
+		set(MPEngineAndDedLibraries ${MPEngineAndDedLibraries} "pthread")
+	endif()
 	# Include directories
         set(MPEngineAndDedIncludeDirectories ${MPDir} ${SharedDir} ${OpenJKLibDir} ${ParaPSESharedDir}) # codemp folder, since includes are not always relative in the files
 
@@ -228,8 +232,10 @@ if(BuildMPEngine OR BuildMPDed)
 		"${MPDir}/qcommon/q_platform.h"
 		"${MPDir}/qcommon/cm_load.cpp"
 		"${MPDir}/qcommon/cm_local.h"
+                "${MPDir}/qcommon/cm_model.cpp"
 		"${MPDir}/qcommon/cm_patch.cpp"
 		"${MPDir}/qcommon/cm_patch.h"
+                "${MPDir}/qcommon/cm_phys.cpp"
 		"${MPDir}/qcommon/cm_polylib.cpp"
 		"${MPDir}/qcommon/cm_polylib.h"
 		"${MPDir}/qcommon/cm_public.h"

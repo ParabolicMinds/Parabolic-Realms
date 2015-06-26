@@ -3184,6 +3184,10 @@ void SV_BindGame( void ) {
 		gi.PARA_DeleteScriptingContext			= PARA_CloseManifest;
 		gi.PARA_CreateImport					= PARA_GenerateImport;
 		gi.PARA_DeleteImport					= PARA_DeleteImport;
+		gi.CM_NumData							= CM_NumData;
+		gi.CM_BrushContentFlags					= CM_BrushContentFlags;
+		gi.CM_CalculateHull						= CM_CalculateHull;
+		gi.CM_GetModelVerticies					= CM_GetModelVerticies;
 
 		GetGameAPI = (GetGameAPI_t)gvm->GetModuleAPI;
 		ret = GetGameAPI( GAME_API_VERSION, &gi );

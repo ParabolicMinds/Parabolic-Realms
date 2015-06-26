@@ -3344,6 +3344,30 @@ int cmdcmp( const void *a, const void *b ) {
 	return Q_stricmp( (const char *)a, ((command_t*)b)->name );
 }
 
+#include "bg_phys.h"
+
+void Cmd_PhysTest(gentity_t *ent) {
+	gentity_t * pb = G_Spawn();
+	VectorCopy(ent->r.currentOrigin, pb->s.origin);
+	pb->s.eType = ET_GENERAL;
+	pb->s.modelindex = G_ModelIndex("models/testboxt.obj");
+	BG_RegisterBPhysModelHullEntity(&pb->s, "models/testboxt.obj");
+	Com_Printf("Player Roll: %f Pitch: %f Yaw: %f \n", ent->playerState->viewangles[ROLL], ent->playerState->viewangles[PITCH], ent->playerState->viewangles[YAW]);
+	vec3_t impulse;
+	float az, el;
+	el = ent->playerState->viewangles[PITCH] / 57.2957795f;
+	az = ent->playerState->viewangles[YAW] / 57.2957795f;
+	int mag = 800.0f;
+	VectorSet(impulse,
+			  mag * cos(el) * cos(az),
+			  mag * cos(el) * sin(az),
+			  mag * -sin(el)
+			  );
+	BG_ApplyImpulse(&pb->s, impulse);
+	pb->r.svFlags |= SVF_BROADCAST;
+	trap->LinkEntity((sharedEntity_t *) pb);
+}
+
 /* This array MUST be sorted correctly by alphabetical name field */
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
@@ -3371,6 +3395,7 @@ command_t commands[] = {
 	{ "noclip",				Cmd_Noclip_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "notarget",			Cmd_Notarget_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "npc",				Cmd_NPC_f,					CMD_CHEAT|CMD_ALIVE },
+	{ "phys",				Cmd_PhysTest,				CMD_ALIVE },
 	{ "say",				Cmd_Say_f,					0 },
 	{ "say_team",			Cmd_SayTeam_f,				0 },
 	{ "score",				Cmd_Score_f,				0 },

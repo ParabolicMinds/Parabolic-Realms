@@ -2428,6 +2428,8 @@ void CL_InitRef( void ) {
 	ri.PD_Store = PD_Store;
 	ri.PD_Load = PD_Load;
 
+	ri.CM_LoadPObj = CM_LoadPObj;
+
 	ret = GetRefAPI( REF_API_VERSION, &ri );
 
 //	Com_Printf( "-------------------------------\n");

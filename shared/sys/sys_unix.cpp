@@ -468,28 +468,30 @@ char *Sys_DefaultHomePath(void)
 #endif
 
 void Sys_SetProcessorAffinity( void ) {
-#if defined(__linux__)
-	uint32_t cores;
+	/* wtf is this shit absolutely not
+	#if defined(__linux__)
+		uint32_t cores;
 
-	if ( sscanf( com_affinity->string, "%X", &cores ) != 1 )
-		cores = 1; // set to first core only
+		if ( sscanf( com_affinity->string, "%X", &cores ) != 1 )
+			cores = 1; // set to first core only
 
-	if ( !cores )
-		return;
+		if ( !cores )
+			return;
 
-	const long numCores = sysconf( _SC_NPROCESSORS_ONLN );
-	cpu_set_t set;
-	CPU_ZERO( &set );
-	for ( int i = 0; i < numCores; i++ ) {
-		if ( cores & (1<<i) ) {
-			CPU_SET( i, &set );
+		const long numCores = sysconf( _SC_NPROCESSORS_ONLN );
+		cpu_set_t set;
+		CPU_ZERO( &set );
+		for ( int i = 0; i < numCores; i++ ) {
+			if ( cores & (1<<i) ) {
+				CPU_SET( i, &set );
+			}
 		}
-	}
 
-	sched_setaffinity( 0, sizeof( set ), &set );
-#elif defined(MACOS_X)
-	//TODO: Apple's APIs for this are weird but exist on a per-thread level. Good enough for us.
-#endif
+		sched_setaffinity( 0, sizeof( set ), &set );
+	#elif defined(MACOS_X)
+		//TODO: Apple's APIs for this are weird but exist on a per-thread level. Good enough for us.
+	#endif
+	*/
 }
 
 bool Sys_UnpackDLL(const char *name)

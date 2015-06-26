@@ -954,6 +954,7 @@ netField_t	entityStateFields[] =
 { NETF(boneAngles4[2]), 0 },
 
 //rww - for use by mod authors only
+	/*
 { NETF(userInt1), 1 },
 { NETF(userInt2), 1 },
 { NETF(userInt3), 1 },
@@ -966,6 +967,7 @@ netField_t	entityStateFields[] =
 { NETF(userVec2[0]), 1 },
 { NETF(userVec2[1]), 1 },
 { NETF(userVec2[2]), 1 }
+	*/
 };
 
 // if (int)f == f and (int)f + ( 1<<(FLOAT_INT_BITS-1) ) < ( 1 << FLOAT_INT_BITS )
@@ -1391,6 +1393,7 @@ netField_t	playerStateFields[] =
 //{ PSF(hyperSpaceAngles[2]), 0 },//only used by vehicle?
 
 //rww - for use by mod authors only
+	/*
 { PSF(userInt1), 1 },
 { PSF(userInt2), 1 },
 { PSF(userInt3), 1 },
@@ -1403,6 +1406,7 @@ netField_t	playerStateFields[] =
 { PSF(userVec2[0]), 1 },
 { PSF(userVec2[1]), 1 },
 { PSF(userVec2[2]), 1 }
+	*/
 };
 
 netField_t	pilotPlayerStateFields[] =
@@ -1555,6 +1559,7 @@ netField_t	pilotPlayerStateFields[] =
 //{ PSF(hyperSpaceAngles[2]), 0 },//only used by vehicle?
 
 //rww - for use by mod authors only
+	/*
 { PSF(userInt1), 1 },
 { PSF(userInt2), 1 },
 { PSF(userInt3), 1 },
@@ -1567,6 +1572,7 @@ netField_t	pilotPlayerStateFields[] =
 { PSF(userVec2[0]), 1 },
 { PSF(userVec2[1]), 1 },
 { PSF(userVec2[2]), 1 }
+	*/
 };
 
 netField_t	vehPlayerStateFields[] =
@@ -1641,6 +1647,7 @@ netField_t	vehPlayerStateFields[] =
 { PSF(hyperSpaceAngles[2]), 0 },
 
 //rww - for use by mod authors only
+	/*
 { PSF(userInt1), 1 },
 { PSF(userInt2), 1 },
 { PSF(userInt3), 1 },
@@ -1653,6 +1660,7 @@ netField_t	vehPlayerStateFields[] =
 { PSF(userVec2[0]), 1 },
 { PSF(userVec2[1]), 1 },
 { PSF(userVec2[2]), 1 }
+	*/
 };
 
 //=====_OPTIMIZED_VEHICLE_NETWORKING=======================================================================
@@ -1804,6 +1812,7 @@ netField_t	playerStateFields[] =
 { PSF(hyperSpaceAngles[2]), 0 },
 
 //rww - for use by mod authors only
+	/*
 { PSF(userInt1), 1 },
 { PSF(userInt2), 1 },
 { PSF(userInt3), 1 },
@@ -1816,6 +1825,7 @@ netField_t	playerStateFields[] =
 { PSF(userVec2[0]), 1 },
 { PSF(userVec2[1]), 1 },
 { PSF(userVec2[2]), 1 }
+	*/
 };
 
 //=====_OPTIMIZED_VEHICLE_NETWORKING=======================================================================

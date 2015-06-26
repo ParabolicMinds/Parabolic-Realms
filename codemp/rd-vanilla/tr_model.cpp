@@ -20,6 +20,7 @@
 #define	LF(x) x=LittleFloat(x)
 
 static qboolean R_LoadMD3 (model_t *mod, int lod, void *buffer, const char *name, qboolean &bAlreadyCached );
+static qboolean R_LoadPObj (model_t *mod, char const * name);
 /*
 Ghoul2 Insert Start
 */
@@ -1266,6 +1267,13 @@ Ghoul2 Insert End
 	// make sure the render thread is stopped
 	R_IssuePendingRenderCommands();
 
+	if (strlen(name) > 4 && !strcmp(".obj", name + strlen(name) - 4)) {
+		loaded = R_LoadPObj( mod, name );
+		if (!loaded) return 0;
+		RE_InsertModelIntoHash(name, mod);
+		return mod->index;
+	}
+
 	int iLODStart = 0;
 	if (strstr (name, ".md3")) {
 		iLODStart = MD3_MAX_LODS-1;	// this loads the md3s in reverse so they can be biased
@@ -1305,13 +1313,11 @@ Ghoul2 Insert End
 		//	internal caching...
 		//
 		ident = *(unsigned *)buf;
-		if (!bAlreadyCached)
-		{
+		if (!bAlreadyCached) {
 			LL(ident);
 		}
 
-		switch (ident)
-		{
+		switch (ident) {
 			// if you add any new types of model load in this switch-case, tell me,
 			//	or copy what I've done with the cache scheme (-ste).
 			//
@@ -1601,6 +1607,20 @@ static qboolean R_LoadMD3 (model_t *mod, int lod, void *buffer, const char *mod_
 		surf = (md3Surface_t *)( (byte *)surf + surf->ofsEnd );
 	}
 
+	return qtrue;
+}
+
+static qboolean R_LoadPObj (model_t *mod, char const * name) {
+	mod->type = MOD_POBJ;
+	mod->pobj = ri->CM_LoadPObj(name);
+	if (!mod->pobj) return qfalse;
+	mod->pobj->ident = SF_POBJ;
+	shader_t * sh = R_FindShader( mod->pobj->shader, lightmapsNone, stylesDefault, qtrue );
+	if ( sh->defaultShader ) {
+		mod->pobj->shaderIndex = 0;
+	} else {
+		mod->pobj->shaderIndex = sh->index;
+	}
 	return qtrue;
 }
 

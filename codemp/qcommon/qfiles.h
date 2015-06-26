@@ -146,6 +146,30 @@ typedef struct md3Header_s {
 	int			ofsEnd;				// end of file
 } md3Header_t;
 
+typedef struct pObjElement_s {
+	float *				vertex;
+	float *				uv;
+	float *				normal;
+} pObjElement_t;
+
+typedef pObjElement_t pObjFace_t[3];
+
+typedef struct pObjSurface_s {
+	int					ident;
+	char				name[MAX_QPATH];
+	char				shader[MAX_QPATH];
+	int					shaderIndex;
+	int					numVerts;
+	int					numUVs;
+	int					numNormals;
+	int					numFaces;
+	float *				verts;
+	float *				UVs;
+	float *				normals;
+	pObjFace_t *		faces;
+
+} pObjSurface_t;
+
 
 /*
 ==============================================================================
