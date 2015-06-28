@@ -103,7 +103,9 @@ set(ParaDir "${CMAKE_SOURCE_DIR}/codepara")
 set(ParaPSESharedDir "${ParaDir}/scripting/shared")
 
 # Common settings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
 if(WIN32)
 	set(SharedDefines "NOMINMAX")
 	if(MSVC)

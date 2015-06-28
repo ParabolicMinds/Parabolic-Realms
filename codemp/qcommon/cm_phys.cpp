@@ -24,6 +24,53 @@ void CM_NumData(int * brushes, int * patches) {
 	*patches = cmg.numSurfaces;
 }
 
+void CM_FWBRecurse (cNode_t * node, int & i, int * brushes) {
+	if (node->children[0] < 0) {
+		cLeaf_t * leaf = &cmg.leafs[-1-node->children[0]];
+		for (int j = 0; j < leaf->numLeafBrushes; j++) {
+			bool good = true;
+			for (int k = 0; k < i && good; k++) {
+				if (brushes[k] == cmg.leafbrushes[leaf->firstLeafBrush + j]) good = false;
+			}
+			if (good) {
+				brushes[i] = cmg.leafbrushes[leaf->firstLeafBrush + j];
+				i++;
+			}
+		}
+	} else {
+		CM_FWBRecurse(&cmg.nodes[node->children[0]], i, brushes);
+	}
+	if (node->children[1] < 0) {
+		cLeaf_t * leaf = &cmg.leafs[-1-node->children[1]];
+		for (int j = 0; j < leaf->numLeafBrushes; j++) {
+			bool good = true;
+			for (int k = 0; k < i && good; k++) {
+				if (brushes[k] == cmg.leafbrushes[leaf->firstLeafBrush + j]) good = false;
+			}
+			if (good) {
+				brushes[i] = cmg.leafbrushes[leaf->firstLeafBrush + j];
+				i++;
+			}
+		}
+	} else {
+		CM_FWBRecurse(&cmg.nodes[node->children[1]], i, brushes);
+	}
+}
+
+int CM_SubmodelIndicies(int submodel, int * brushes) {
+	cmodel_t * wmod = &cmg.cmodels[submodel];
+	int i = 0;
+	if (wmod->firstNode < 0) {
+		for (int j = 0; j < wmod->leaf.numLeafBrushes; j++, i++) {
+			brushes[i] = cmg.leafbrushes[wmod->leaf.firstLeafBrush + j];
+		}
+	} else {
+		cNode_t * node = &cmg.nodes[wmod->firstNode];
+		CM_FWBRecurse(node, i, brushes);
+	}
+	return i;
+}
+
 int CM_BrushContentFlags(int brushnum) {
 	if (brushnum > cmg.numBrushes) return 0;
 	return cmg.brushes[brushnum].contents;
@@ -67,3 +114,4 @@ int CM_CalculateHull(int brushnum, vec3_t * points, int points_size) {
 	}
 	return index;
 }
+

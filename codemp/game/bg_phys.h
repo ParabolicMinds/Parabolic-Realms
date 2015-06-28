@@ -10,6 +10,9 @@ typedef enum physShape_s {
 } physShape_t;
 
 void BG_InitializeSimulation();
+void BG_InitializeSimulationStatics();
+void BG_InitializeSimulationDynamics();
+void BG_StartSimulation();
 void BG_ShutdownSimulation();
 void BG_AdvanceSimulationTarget(int msec);
 void BG_UpdatePhysicsObjects();

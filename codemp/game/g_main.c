@@ -234,6 +234,7 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	G_InitWorldSession();
 
 	BG_InitializeSimulation();
+	BG_InitializeSimulationStatics();
 
 	// initialize all entities for this game
 	memset( g_entities, 0, MAX_GENTITIES * sizeof(g_entities[0]) );
@@ -295,6 +296,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	// parse the key/value pairs and spawn gentities
 	G_SpawnEntitiesFromString(qfalse);
+
+	BG_InitializeSimulationDynamics();
 
 	// general initialization
 	G_FindTeams();
@@ -402,6 +405,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 			SP_info_jedimaster_start( ent );
 		}
 	}
+
+	BG_StartSimulation();
 }
 
 

@@ -4,6 +4,7 @@
 
 #include "g_local.h"
 #include "bg_saga.h"
+#include "bg_phys.h"
 #include "qcommon/q_shared.h"
 
 typedef struct shaderRemap_s {
@@ -924,6 +925,10 @@ void G_FreeEntity( gentity_t *ed ) {
 		Com_Printf("Tried to remove JM saber!\n");
 #endif
 		return;
+	}
+
+	if (ed->s.eFlags & EF_BULLET_PHYS) {
+		BG_UnregisterBPhysEntity(&ed->s);
 	}
 
 	trap->UnlinkEntity ((sharedEntity_t *)ed);		// unlink from world

@@ -3188,6 +3188,7 @@ void SV_BindGame( void ) {
 		gi.CM_BrushContentFlags					= CM_BrushContentFlags;
 		gi.CM_CalculateHull						= CM_CalculateHull;
 		gi.CM_GetModelVerticies					= CM_GetModelVerticies;
+		gi.CM_SubmodelIndicies					= CM_SubmodelIndicies;
 
 		GetGameAPI = (GetGameAPI_t)gvm->GetModuleAPI;
 		ret = GetGameAPI( GAME_API_VERSION, &gi );

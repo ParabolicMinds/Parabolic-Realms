@@ -1304,6 +1304,12 @@ Ghoul2 Insert End
 */
 } trace_t;
 
+typedef struct cmphys_iterator_s {
+		void * bhandle;
+		int contents;
+} cmphys_iterator_t;
+
+
 // trace->entityNum can also be 0 to (MAX_GENTITIES-1)
 // or ENTITYNUM_NONE, ENTITYNUM_WORLD
 

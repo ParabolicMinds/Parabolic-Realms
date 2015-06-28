@@ -8,6 +8,7 @@
 #include "bg_saga.h"
 #include "ghoul2/G2.h"
 #include "qcommon/q_shared.h"
+#include "bg_phys.h"
 
 static vec3_t forward, vright, up;
 static vec3_t muzzle;
@@ -2062,7 +2063,7 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean altFire )
 	VectorCopy( muzzle, start );
 
 	bolt = G_Spawn();
-	bolt->physicsObject = qtrue;
+	bolt->physicsObject = qfalse;
 
 	if (PCVAR_G_GOLF.integer && ent->client) {
 		bolt->classname = "golf_ball";
@@ -2097,14 +2098,14 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean altFire )
 			chargeAmount = TD_MIN_CHARGE;
 		}
 
-		bolt->s.pos.trType = TR_GRAVITY;
+		//bolt->s.pos.trType = TR_GRAVITY;
 		bolt->parent = ent;
 		bolt->r.ownerNum = ent->s.number;
-		VectorScale( dir, TD_VELOCITY * chargeAmount, bolt->s.pos.trDelta );
+		//VectorScale( dir, TD_VELOCITY * chargeAmount, bolt->s.pos.trDelta );
 
-		if ( ent->health >= 0 ) {
-			bolt->s.pos.trDelta[2] += 120;
-		}
+		//if ( ent->health >= 0 ) {
+		//	bolt->s.pos.trDelta[2] += 120;
+		//}
 
 		bolt->s.eType = ET_MISSILE;
 		bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
@@ -2121,7 +2122,7 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean altFire )
 
 		VectorCopy( start, bolt->pos2 );
 
-		bolt->bounceCount = -5;
+		BG_RegisterBPhysSphereEntity(&bolt->s, 4);
 	} else {
 		bolt->classname = "thermal_detonator";
 		bolt->think = thermalThinkStandard;

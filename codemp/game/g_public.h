@@ -1083,6 +1083,7 @@ typedef struct gameImport_s {
 	int			(*CM_BrushContentFlags)					(int brushnum);
 	int			(*CM_CalculateHull)						(int brushnum, vec3_t * points, int points_size);
 	int			(*CM_GetModelVerticies)					(char const * name, vec3_t * points, int points_num);
+	int			(*CM_SubmodelIndicies)					(int submodel, int * brushes);
 } gameImport_t;
 
 typedef struct gameExport_s {

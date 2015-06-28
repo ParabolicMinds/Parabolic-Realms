@@ -63,6 +63,7 @@ bool CM_CullWorldBox (const cplane_t *frustum, const vec3pair_t bounds);
 void CM_NumData(int * brushes, int * patches);
 int CM_BrushContentFlags(int brushnum);
 int CM_CalculateHull(int brushnum, vec3_t * points, int points_size);
+int CM_SubmodelIndicies(int submodel, int * brushes);
 
 //cm_model.cpp
 

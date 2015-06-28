@@ -30,6 +30,13 @@ typedef struct bulletEntity_s {
 	vec3_t stored_ang;
 } bulletEntity_t;
 
+typedef struct bulletEntity2_s {
+	bulletObject_t * physobj;
+	gentity_t * gent;
+	vec3_t stored_pos;
+	vec3_t stored_ang;
+} bulletEntity2_t;
+
 static bool init;
 static btBroadphaseInterface * broadphase;
 static btDefaultCollisionConfiguration * config;
@@ -38,6 +45,7 @@ static btSequentialImpulseConstraintSolver * solver;
 static btDiscreteDynamicsWorld * bworld;
 
 static std::vector<bulletObject_t *> map_statics {};
+static std::vector<bulletEntity2_t> map_dynamics {};
 static std::vector<bulletEntity_t> active_states {};
 
 static int cm_brushes, cm_patches;
@@ -139,8 +147,16 @@ constexpr btScalar sim_step {1.0f / substep};
 void BG_Run_Simulation() {
 	while (run_sim) {
 		if (run_advance) {
-			bworld->stepSimulation(run_advance.exchange(0) / 1000.0f, substep, sim_step);
 			sim_lock.lock();
+			bworld->stepSimulation(run_advance.exchange(0) / 1000.0f, substep, sim_step);
+			for (bulletEntity2_t & bent : map_dynamics) {
+				btTransform trans = bent.physobj->rigidBody->getWorldTransform();
+				trans.setOrigin( {bent.stored_pos[0], bent.stored_pos[1], bent.stored_pos[2]} );
+				bent.physobj->rigidBody->setWorldTransform(trans);
+				//btMatrix3x3 rotmat {trans.getRotation()};
+				//rotmat.getEulerYPR(bent.stored_ang[1], bent.stored_ang[0], bent.stored_ang[2]);
+				//VectorScale(bent.stored_ang, 57.2957795f, bent.stored_ang);
+			}
 			for (bulletEntity_t & bent : active_states) {
 				btTransform trans;
 				bent.physobj->motionState->getWorldTransform(trans);
@@ -162,20 +178,23 @@ void BG_AdvanceSimulationTarget(int msec) {
 }
 //---------------------
 
-std::atomic_uint brush_index;
+std::atomic_int brush_index;
 std::mutex stm;
 std::vector<std::thread *> sb_workers;
 
 // STATIC BRUSHES //
+int * brushes = nullptr;
 void BG_InitStaticBrushes_ThreadRun() {
 	vec3_t points[BP_POINTS_SIZE];
 	while (true) {
-		uint v = brush_index++;
-		if (v >= (uint)cm_brushes) break;
+		int v = brush_index--;
+		if (v < 0) break;
+		v = brushes[v];
 		if (trap->CM_BrushContentFlags(v) & CONTENTS_SOLID) {
 			int num = trap->CM_CalculateHull(v, points, BP_POINTS_SIZE);
 			stm.lock();
-			map_statics.push_back(B_CreateMapObject(points, num));
+			bulletObject_t * bob = B_CreateMapObject(points, num);
+			map_statics.push_back(bob);
 			stm.unlock();
 		}
 	}
@@ -183,7 +202,8 @@ void BG_InitStaticBrushes_ThreadRun() {
 
 void BG_InitStaticBrushes() {
 	bworld->setForceUpdateAllAabbs(false);
-	brush_index = 0;
+	brushes = new int [cm_brushes];
+	brush_index = trap->CM_SubmodelIndicies(0, brushes) - 1;
 	for (uint i = 0; i < std::thread::hardware_concurrency(); i++) {
 		sb_workers.push_back(new std::thread(BG_InitStaticBrushes_ThreadRun));
 	}
@@ -191,6 +211,7 @@ void BG_InitStaticBrushes() {
 		if (th->joinable()) th->join();
 		delete th;
 	}
+	delete [] brushes;
 }
 //---------------------
 
@@ -205,14 +226,43 @@ void BG_InitializeSimulation() {
 	solver = new btSequentialImpulseConstraintSolver;
 	bworld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config);
 
-	bworld->setGravity(btVector3(0, 0, -400));
+	bworld->setGravity(btVector3(0, 0, -500));
 
 	init = true;
+}
+
+void BG_InitializeSimulationStatics() {
+	if (!init) return;
 
 	trap->CM_NumData(&cm_brushes, &cm_patches);
-
 	BG_InitStaticBrushes();
+}
 
+void BG_InitializeSimulationDynamics() {
+	if (!init) return;
+	/*
+	gentity_t * gent = g_entities;
+	for (int g = 0; g < MAX_GENTITIES; g++, gent++) {
+		if (!gent->r.bmodel) continue;
+		 int * gbrushes = new int [cm_brushes];
+		 int gi = strtol(gent->model + 1, nullptr, 10);
+		 assert(gi > 0);
+		 int gbrushsize = trap->CM_SubmodelIndicies(gi, gbrushes);
+		 if (gbrushsize > 0) {
+			 vec3_t points[BP_POINTS_SIZE];
+			 int num = trap->CM_CalculateHull(gbrushes[0], points, BP_POINTS_SIZE);
+			 bulletEntity2_t bent {B_CreateMapObject(points, num), gent};
+			 VectorCopy(bent.gent->s.origin, bent.stored_pos);
+			 VectorCopy(bent.gent->s.angles, bent.stored_ang);
+			 map_dynamics.push_back(bent);
+		 }
+		 delete [] gbrushes;
+	}
+	*/
+}
+
+void BG_StartSimulation() {
+	if (!init) return;
 	run_sim.store(true);
 	sim_thread = new std::thread(BG_Run_Simulation);
 }
@@ -226,16 +276,22 @@ void BG_ShutdownSimulation() {
 
 	Com_Printf("Shutting Down Physics Simulation...\n");
 
-	for (bulletObject_t * obj : map_statics) {
-		B_DeleteObject(obj);
-	}
-	map_statics.clear();
-
 	for (bulletEntity_t & es : active_states) {
 		B_ConfigureStateRem(es.ent);
 		B_DeleteObject(es.physobj);
 	}
 	active_states.clear();
+
+	for (bulletEntity2_t & es : map_dynamics) {
+		B_ConfigureStateRem(&es.gent->s);
+		B_DeleteObject(es.physobj);
+	}
+	map_dynamics.clear();
+
+	for (bulletObject_t * obj : map_statics) {
+		B_DeleteObject(obj);
+	}
+	map_statics.clear();
 
 	delete bworld; bworld = nullptr;
 	delete solver; solver = nullptr;
@@ -249,9 +305,11 @@ void BG_UpdatePhysicsObjects() {
 	if (!init) return;
 
 	sim_lock.lock();
-	int i = 0;
+	for (bulletEntity2_t & bent : map_dynamics) {
+		VectorCopy(bent.gent->r.currentOrigin, bent.stored_pos);
+		//VectorCopy(bent.gent->angles2, bent.stored_ang );
+	}
 	for (bulletEntity_t & bent : active_states) {
-		i++;
 		VectorCopy(bent.stored_pos, bent.ent->pos.trBase);
 		VectorCopy(bent.stored_pos, bent.ent->origin);
 		VectorCopy(bent.stored_ang, bent.ent->apos.trBase);
@@ -263,6 +321,7 @@ void BG_UpdatePhysicsObjects() {
 void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius = 50.0f) {
 	if (!init) return;
 
+	sim_lock.lock();
 	auto iterator = active_states.begin();
 	for (size_t i = 0; i < active_states.size(); i++, iterator++) {
 		if ((*iterator).ent == ent) {
@@ -270,12 +329,17 @@ void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius = 50.0f) {
 		}
 	}
 	B_ConfigureStateAdd(ent);
-	active_states.push_back( {B_CreateSphereObject(ent, 1, radius), ent} );
+	bulletEntity_t bent {B_CreateSphereObject(ent, 1, radius), ent};
+	VectorCopy(bent.ent->origin, bent.stored_pos);
+	VectorCopy(bent.ent->origin, bent.stored_ang);
+	active_states.push_back( bent );
+	sim_lock.unlock();
 }
 
 void BG_RegisterBPhysModelHullEntity(entityState_t * ent, char const * model) {
 	if (!init) return;
 
+	sim_lock.lock();
 	auto iterator = active_states.begin();
 	for (size_t i = 0; i < active_states.size(); i++, iterator++) {
 		if ((*iterator).ent == ent) {
@@ -287,11 +351,13 @@ void BG_RegisterBPhysModelHullEntity(entityState_t * ent, char const * model) {
 	VectorCopy(bent.ent->origin, bent.stored_pos);
 	VectorCopy(bent.ent->origin, bent.stored_ang);
 	active_states.push_back( bent );
+	sim_lock.unlock();
 }
 
 void BG_UnregisterBPhysEntity(entityState_t * ent) {
 	if (!init) return;
 
+	sim_lock.lock();
 	auto iterator = active_states.begin();
 	for (size_t i = 0; i < active_states.size(); i++, iterator++) {
 		if ((*iterator).ent == ent) {
@@ -301,13 +367,16 @@ void BG_UnregisterBPhysEntity(entityState_t * ent) {
 			break;
 		}
 	}
+	sim_lock.unlock();
 }
 
 void BG_ApplyImpulse(entityState_t * ent, vec3_t impulse) {
+	sim_lock.lock();
 	for (bulletEntity_t & bent : active_states) {
 		if (bent.ent == ent) {
 			bent.physobj->rigidBody->applyImpulse({impulse[0] * bent.physobj->mass, impulse[1] * bent.physobj->mass, impulse[2] * bent.physobj->mass}, {0, 0, 0});
 			break;
 		}
 	}
+	sim_lock.unlock();
 }
