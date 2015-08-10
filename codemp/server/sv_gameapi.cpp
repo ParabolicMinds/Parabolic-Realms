@@ -3186,7 +3186,9 @@ void SV_BindGame( void ) {
 		gi.PARA_DeleteImport					= PARA_DeleteImport;
 		gi.CM_NumData							= CM_NumData;
 		gi.CM_BrushContentFlags					= CM_BrushContentFlags;
+		gi.CM_PatchContentFlags					= CM_PatchContentFlags;
 		gi.CM_CalculateHull						= CM_CalculateHull;
+		gi.CM_PatchMeshPoints					= CM_PatchMeshPoints;
 		gi.CM_GetModelVerticies					= CM_GetModelVerticies;
 		gi.CM_SubmodelIndicies					= CM_SubmodelIndicies;
 

@@ -50,7 +50,7 @@ static std::vector<bulletEntity_t> active_states {};
 
 static int cm_brushes, cm_patches;
 
-#define BP_POINTS_SIZE 2048
+#define BP_POINTS_SIZE 8192
 
 static void B_ConfigureStateAdd(entityState_t * ent) {
 	ent->eFlags |= EF_BULLET_PHYS;
@@ -127,6 +127,30 @@ static bulletObject_t * B_CreateMapObject(vec3_t * points, int points_num) {
 	return obj;
 }
 
+static std::vector<bulletObject_t *> B_CreateMapPatchObjects(vec3_t * points, int width, int height) {
+	std::vector<bulletObject_t *> objs;
+	for (int x = 0; x < width - 1; x++) {
+		for (int y = 0; y < height - 1; y++) {
+			bulletObject_t * obj = new bulletObject_t;
+			obj->mass = 0;
+			obj->inertia = {0, 0, 0};
+			btConvexHullShape * chs = new btConvexHullShape();
+			chs->addPoint(btVector3 {points[((y + 0) * width) + (x + 0)][0], points[((y + 0) * width) + (x + 0)][1], points[((y + 0) * width) + (x + 0)][2]}, false);
+			chs->addPoint(btVector3 {points[((y + 1) * width) + (x + 0)][0], points[((y + 1) * width) + (x + 0)][1], points[((y + 1) * width) + (x + 0)][2]}, false);
+			chs->addPoint(btVector3 {points[((y + 0) * width) + (x + 1)][0], points[((y + 0) * width) + (x + 1)][1], points[((y + 0) * width) + (x + 1)][2]}, false);
+			chs->addPoint(btVector3 {points[((y + 1) * width) + (x + 1)][0], points[((y + 1) * width) + (x + 1)][1], points[((y + 1) * width) + (x + 1)][2]}, false);
+			chs->recalcLocalAabb();
+			obj->shape = chs;
+			obj->motionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, -1 )));
+			obj->CI = new btRigidBody::btRigidBodyConstructionInfo(obj->mass, obj->motionState, obj->shape, obj->inertia);
+			obj->rigidBody = new btRigidBody(*obj->CI);
+			bworld->addRigidBody(obj->rigidBody);
+			objs.push_back(obj);
+		}
+	}
+	return objs;
+}
+
 static void B_DeleteObject(bulletObject_t *& obj) {
 	bworld->removeRigidBody(obj->rigidBody);
 	delete obj->rigidBody;
@@ -136,6 +160,8 @@ static void B_DeleteObject(bulletObject_t *& obj) {
 	delete obj;
 	obj = nullptr;
 }
+
+static constexpr float d2r_mult = 0.0174532925f;
 
 // SIMULATION THREAD //
 std::atomic_bool run_sim {false};
@@ -148,15 +174,14 @@ void BG_Run_Simulation() {
 	while (run_sim) {
 		if (run_advance) {
 			sim_lock.lock();
-			bworld->stepSimulation(run_advance.exchange(0) / 1000.0f, substep, sim_step);
 			for (bulletEntity2_t & bent : map_dynamics) {
 				btTransform trans = bent.physobj->rigidBody->getWorldTransform();
 				trans.setOrigin( {bent.stored_pos[0], bent.stored_pos[1], bent.stored_pos[2]} );
-				bent.physobj->rigidBody->setWorldTransform(trans);
-				//btMatrix3x3 rotmat {trans.getRotation()};
-				//rotmat.getEulerYPR(bent.stored_ang[1], bent.stored_ang[0], bent.stored_ang[2]);
-				//VectorScale(bent.stored_ang, 57.2957795f, bent.stored_ang);
+				trans.setRotation(btQuaternion(bent.stored_ang[2] * d2r_mult, bent.stored_ang[0] * d2r_mult, bent.stored_ang[1] * d2r_mult));
+				bent.physobj->motionState->setWorldTransform(trans);
+				bent.physobj->rigidBody->activate(true);
 			}
+			bworld->stepSimulation(run_advance.exchange(0) / 1000.0f, substep, sim_step);
 			for (bulletEntity_t & bent : active_states) {
 				btTransform trans;
 				bent.physobj->motionState->getWorldTransform(trans);
@@ -179,31 +204,72 @@ void BG_AdvanceSimulationTarget(int msec) {
 //---------------------
 
 std::atomic_int brush_index;
+std::atomic_int patch_index;
+std::atomic_int ibmode;
 std::mutex stm;
 std::vector<std::thread *> sb_workers;
 
 // STATIC BRUSHES //
 int * brushes = nullptr;
+int * patches = nullptr;
 void BG_InitStaticBrushes_ThreadRun() {
 	vec3_t points[BP_POINTS_SIZE];
 	while (true) {
-		int v = brush_index--;
-		if (v < 0) break;
-		v = brushes[v];
-		if (trap->CM_BrushContentFlags(v) & CONTENTS_SOLID) {
-			int num = trap->CM_CalculateHull(v, points, BP_POINTS_SIZE);
-			stm.lock();
-			bulletObject_t * bob = B_CreateMapObject(points, num);
-			map_statics.push_back(bob);
-			stm.unlock();
+		switch (ibmode) {
+		case 0:
+		{
+			int v = brush_index--;
+			if (v < 0) {
+				ibmode = 1;
+				continue;
+			}
+			v = brushes[v];
+			if (trap->CM_BrushContentFlags(v) & CONTENTS_SOLID) {
+				int num = trap->CM_CalculateHull(v, points, BP_POINTS_SIZE);
+				if (num < 4) continue;
+				stm.lock();
+				bulletObject_t * bob = B_CreateMapObject(points, num);
+				map_statics.push_back(bob);
+				stm.unlock();
+			}
 		}
+			continue;
+		case 1:
+		{
+			int v = patch_index--;
+			if (v < 0) {
+				ibmode = 2;
+				continue;
+			}
+			v = patches[v];
+			if (trap->CM_PatchContentFlags(v) & CONTENTS_SOLID) {
+				int width, height;
+				trap->CM_PatchMeshPoints(v, points, BP_POINTS_SIZE, &width, &height);
+				if (width * height < 4) continue;
+				stm.lock();
+				std::vector<bulletObject_t *> bobs = B_CreateMapPatchObjects(points, width, height);
+				for (auto i : bobs) {
+					map_statics.push_back(i);
+				}
+				stm.unlock();
+			}
+		}
+			continue;
+		default:
+			break;
+		}
+		break;
 	}
 }
 
 void BG_InitStaticBrushes() {
 	bworld->setForceUpdateAllAabbs(false);
 	brushes = new int [cm_brushes];
-	brush_index = trap->CM_SubmodelIndicies(0, brushes) - 1;
+	patches = new int [cm_patches];
+	int brushsize, patchsize;
+	trap->CM_SubmodelIndicies(0, brushes, patches, &brushsize, &patchsize);
+	brush_index = brushsize - 1;
+	patch_index = patchsize - 1;
 	for (uint i = 0; i < std::thread::hardware_concurrency(); i++) {
 		sb_workers.push_back(new std::thread(BG_InitStaticBrushes_ThreadRun));
 	}
@@ -212,6 +278,7 @@ void BG_InitStaticBrushes() {
 		delete th;
 	}
 	delete [] brushes;
+	delete [] patches;
 }
 //---------------------
 
@@ -240,25 +307,44 @@ void BG_InitializeSimulationStatics() {
 
 void BG_InitializeSimulationDynamics() {
 	if (!init) return;
-	/*
 	gentity_t * gent = g_entities;
 	for (int g = 0; g < MAX_GENTITIES; g++, gent++) {
 		if (!gent->r.bmodel) continue;
 		 int * gbrushes = new int [cm_brushes];
+		 int * gpatches = new int [cm_patches];
 		 int gi = strtol(gent->model + 1, nullptr, 10);
 		 assert(gi > 0);
-		 int gbrushsize = trap->CM_SubmodelIndicies(gi, gbrushes);
-		 if (gbrushsize > 0) {
+		 int gbrushsize, gpatchsize;
+		 trap->CM_SubmodelIndicies(gi, gbrushes, gpatches, &gbrushsize, &gpatchsize);
+		 for (int i = 0; i < gbrushsize; i++) {
+			 if (!(trap->CM_BrushContentFlags(gbrushes[i]) & CONTENTS_SOLID)) continue;
 			 vec3_t points[BP_POINTS_SIZE];
-			 int num = trap->CM_CalculateHull(gbrushes[0], points, BP_POINTS_SIZE);
+			 int num = trap->CM_CalculateHull(gbrushes[i], points, BP_POINTS_SIZE);
 			 bulletEntity2_t bent {B_CreateMapObject(points, num), gent};
 			 VectorCopy(bent.gent->s.origin, bent.stored_pos);
 			 VectorCopy(bent.gent->s.angles, bent.stored_ang);
+			 bent.physobj->rigidBody->setCollisionFlags(bent.physobj->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+			 bent.physobj->rigidBody->setActivationState(DISABLE_DEACTIVATION);
 			 map_dynamics.push_back(bent);
+		 }
+		 for (int i = 0; i < gpatchsize; i++) {
+			 if (!(trap->CM_PatchContentFlags(gpatches[i]) & CONTENTS_SOLID)) continue;
+			 vec3_t points[BP_POINTS_SIZE];
+			 int width, height;
+			 trap->CM_PatchMeshPoints(gpatches[i], points, BP_POINTS_SIZE, &width, &height);
+			 if (width * height < 4) continue;
+			 std::vector<bulletObject_t *> bobs = B_CreateMapPatchObjects(points, width, height);
+			 for (auto bob : bobs) {
+				 bulletEntity2_t bent {bob, gent};
+				 VectorCopy(bent.gent->s.origin, bent.stored_pos);
+				 VectorCopy(bent.gent->s.angles, bent.stored_ang);
+				 bent.physobj->rigidBody->setCollisionFlags(bent.physobj->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+				 bent.physobj->rigidBody->setActivationState(DISABLE_DEACTIVATION);
+				 map_dynamics.push_back(bent);
+			 }
 		 }
 		 delete [] gbrushes;
 	}
-	*/
 }
 
 void BG_StartSimulation() {
@@ -307,7 +393,7 @@ void BG_UpdatePhysicsObjects() {
 	sim_lock.lock();
 	for (bulletEntity2_t & bent : map_dynamics) {
 		VectorCopy(bent.gent->r.currentOrigin, bent.stored_pos);
-		//VectorCopy(bent.gent->angles2, bent.stored_ang );
+		VectorCopy(bent.gent->r.currentAngles, bent.stored_ang );
 	}
 	for (bulletEntity_t & bent : active_states) {
 		VectorCopy(bent.stored_pos, bent.ent->pos.trBase);

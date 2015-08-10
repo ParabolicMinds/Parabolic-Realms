@@ -1081,9 +1081,11 @@ typedef struct gameImport_s {
 	void		(*PARA_DeleteImport)					( pseOutgoingImport_t * import );
 	void		(*CM_NumData)							(int * brushes, int * patches);
 	int			(*CM_BrushContentFlags)					(int brushnum);
+	int			(*CM_PatchContentFlags)					(int patchnum);
 	int			(*CM_CalculateHull)						(int brushnum, vec3_t * points, int points_size);
+	void		(*CM_PatchMeshPoints)					(int patchnum, vec3_t * points, int points_size, int * width, int * height);
 	int			(*CM_GetModelVerticies)					(char const * name, vec3_t * points, int points_num);
-	int			(*CM_SubmodelIndicies)					(int submodel, int * brushes);
+	void		(*CM_SubmodelIndicies)					(int submodel, int * brushes, int * patches, int * brushes_num, int * patches_num);
 } gameImport_t;
 
 typedef struct gameExport_s {
