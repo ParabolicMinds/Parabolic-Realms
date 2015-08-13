@@ -2046,12 +2046,6 @@ void thermalThinkStandard(gentity_t *ent)
 	ent->nextthink = level.time;
 }
 
-void thermalThinkGolfball(gentity_t *ent)
-{
-	G_RunObject(ent);
-	ent->nextthink = level.time;
-}
-
 //---------------------------------------------------------
 gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean altFire )
 //---------------------------------------------------------
@@ -2066,6 +2060,40 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean altFire )
 	bolt->physicsObject = qfalse;
 
 	if (PCVAR_G_GOLF.integer && ent->client) {
+		bolt->classname = "golf_ball";
+		gentity_t * from = NULL;
+		while ( (from = G_Find( from, FOFS(classname), "golf_ball" )) != NULL ) {
+			if (from->genericValue8 == ent->s.number && from->genericValue7)
+				G_FreeEntity(from);
+		}
+		bolt->genericValue7 = 1;
+		bolt->genericValue8 = ent->s.number;
+
+		chargeAmount = level.time - ent->client->ps.weaponChargeTime;
+		chargeAmount = chargeAmount / 5000;
+		if ( chargeAmount > 1.0f ) {
+			chargeAmount = 1.0f;
+		}
+
+		VectorCopy(ent->r.currentOrigin, bolt->s.origin);
+		bolt->s.eType = ET_GENERAL;
+		bolt->s.modelindex = G_ModelIndex("models/golfball.obj");
+		BG_RegisterBPhysSphereEntity(&bolt->s, 5);
+		Com_Printf("Player Roll: %f Pitch: %f Yaw: %f \n", ent->playerState->viewangles[ROLL], ent->playerState->viewangles[PITCH], ent->playerState->viewangles[YAW]);
+		vec3_t impulse;
+		float az, el;
+		el = ent->playerState->viewangles[PITCH] / 57.2957795f;
+		az = ent->playerState->viewangles[YAW] / 57.2957795f;
+		int mag = chargeAmount * 5000.0f;
+		VectorSet(impulse,
+				  mag * cos(el) * cos(az),
+				  mag * cos(el) * sin(az),
+				  mag * -sin(el)
+				  );
+		BG_ApplyImpulse(&bolt->s, impulse);
+		bolt->r.svFlags |= SVF_BROADCAST;
+		trap->LinkEntity((sharedEntity_t *) bolt);
+		/*
 		bolt->classname = "golf_ball";
 		bolt->think = thermalThinkGolfball;
 		bolt->nextthink = level.time;
@@ -2107,22 +2135,34 @@ gentity_t *WP_FireThermalDetonator( gentity_t *ent, qboolean altFire )
 		//	bolt->s.pos.trDelta[2] += 120;
 		//}
 
-		bolt->s.eType = ET_MISSILE;
-		bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+		bolt->s.eType = ET_GENERAL;
+		bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN | SVF_BROADCAST;
 		bolt->s.weapon = WP_THERMAL;
-
-		bolt->methodOfDeath = MOD_THERMAL;
-		bolt->splashMethodOfDeath = MOD_THERMAL_SPLASH;
 
 		bolt->s.pos.trTime = level.time;		// move a bit on the very first frame
 		VectorCopy( start, bolt->s.pos.trBase );
 
 		SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
+		VectorCopy (start, bolt->s.origin);
 		VectorCopy (start, bolt->r.currentOrigin);
 
 		VectorCopy( start, bolt->pos2 );
 
 		BG_RegisterBPhysSphereEntity(&bolt->s, 4);
+		vec3_t impulse;
+		float az, el;
+		el = ent->playerState->viewangles[PITCH] / 57.2957795f;
+		az = ent->playerState->viewangles[YAW] / 57.2957795f;
+		int mag = 400.0f;
+		VectorSet(impulse,
+				  mag * cos(el) * cos(az),
+				  mag * cos(el) * sin(az),
+				  mag * -sin(el)
+				  );
+		BG_ApplyImpulse(&bolt->s, impulse);
+
+		trap->LinkEntity((sharedEntity_t *)bolt);
+		*/
 	} else {
 		bolt->classname = "thermal_detonator";
 		bolt->think = thermalThinkStandard;

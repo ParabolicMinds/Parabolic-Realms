@@ -5,6 +5,7 @@ struct ImageLoaderMap
 {
 	const char *extension;
 	ImageLoaderFn loader;
+	ImageLoaderMemFn loader_mem;
 } imageLoaders[MAX_IMAGE_LOADERS];
 int numImageLoaders;
 
@@ -32,7 +33,7 @@ Adds a new image loader to load the specified image file extension.
 The 'extension' string should not begin with a period (full stop).
 =================
 */
-qboolean R_ImageLoader_Add ( const char *extension, ImageLoaderFn imageLoader )
+qboolean R_ImageLoader_Add ( const char *extension, ImageLoaderFn imageLoader, ImageLoaderMemFn imageLoaderM )
 {
 	if ( numImageLoaders >= MAX_IMAGE_LOADERS )
 	{
@@ -49,6 +50,7 @@ qboolean R_ImageLoader_Add ( const char *extension, ImageLoaderFn imageLoader )
 	ImageLoaderMap *newImageLoader = &imageLoaders[numImageLoaders];
 	newImageLoader->extension = extension;
 	newImageLoader->loader = imageLoader;
+	newImageLoader->loader_mem = imageLoaderM;
 
 	numImageLoaders++;
 
@@ -66,9 +68,9 @@ void R_ImageLoader_Init()
 	Com_Memset (imageLoaders, 0, sizeof (imageLoaders));
 	numImageLoaders = 0;
 
-	R_ImageLoader_Add ("jpg", LoadJPG);
-	R_ImageLoader_Add ("png", LoadPNG);
-	R_ImageLoader_Add ("tga", LoadTGA);
+	R_ImageLoader_Add ("jpg", LoadJPG, LoadJPG_M);
+	R_ImageLoader_Add ("png", LoadPNG, LoadPNG_M);
+	R_ImageLoader_Add ("tga", LoadTGA ,LoadTGA_M);
 }
 
 /*
@@ -108,6 +110,43 @@ void R_LoadImage( const char *shortname, byte **pic, int *width, int *height ) {
 
 		const char *name = va ("%s.%s", extensionlessName, tryLoader->extension);
 		tryLoader->loader (name, pic, width, height);
+		if ( *pic )
+		{
+			return;
+		}
+	}
+}
+
+void R_LoadImageFromMemory( char const * shortname, byte * buf, size_t bufflen, byte **pic, int *width, int *height ) {
+	*pic = NULL;
+	*width = 0;
+	*height = 0;
+
+	// Try loading the image with the original extension (if possible).
+	const char *extension = COM_GetExtension (shortname);
+	const ImageLoaderMap *imageLoader = FindImageLoader (extension);
+	if ( imageLoader != NULL )
+	{
+		imageLoader->loader_mem (buf, bufflen, pic, width, height);
+		if ( *pic )
+		{
+			return;
+		}
+	}
+
+	// Loop through all the image loaders trying to load this image.
+	char extensionlessName[MAX_QPATH];
+	COM_StripExtension(shortname, extensionlessName, sizeof( extensionlessName ));
+	for ( int i = 0; i < numImageLoaders; i++ )
+	{
+		const ImageLoaderMap *tryLoader = &imageLoaders[i];
+		if ( tryLoader == imageLoader )
+		{
+			// Already tried this one.
+			continue;
+		}
+
+		tryLoader->loader_mem (buf, bufflen, pic, width, height);
 		if ( *pic )
 		{
 			return;

@@ -287,3 +287,8 @@ void LoadPNG ( const char *filename, byte **data, int *width, int *height )
 	reader.Read (data, width, height);
 }
 
+void LoadPNG_M ( byte * buf, size_t bufflen, byte **data, int *width, int *height )
+{
+	PNGFileReader reader ((char *)buf);
+	reader.Read (data, width, height);
+}

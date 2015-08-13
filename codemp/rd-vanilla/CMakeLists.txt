@@ -93,7 +93,7 @@ if(UseInternalJPEG)
 else()
 	find_package(JPEG REQUIRED)
 	set(MPVanillaRendererIncludeDirectories ${MPVanillaRendererIncludeDirectories} ${JPEG_INCLUDE_DIR})
-	set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} ${JPEG_LIBRARIES})
+	set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} ${JPEG_LIBRARIES} "-lcurl")
 endif()
 
 if(UseInternalPNG)

@@ -3357,6 +3357,34 @@ most world construction surfaces.
 
 ===============
 */
+
+#include <curl/curl.h>
+
+struct MemoryStruct {
+  byte * memory;
+  size_t size;
+};
+
+static size_t
+WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+  size_t realsize = size * nmemb;
+  struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+
+  mem->memory = (byte *)realloc((void *)mem->memory, mem->size + realsize + 1);
+  if(mem->memory == NULL) {
+	/* out of memory! */
+	printf("not enough memory (realloc returned NULL)\n");
+	return 0;
+  }
+
+  memcpy(&(mem->memory[mem->size]), contents, realsize);
+  mem->size += realsize;
+  mem->memory[mem->size] = 0;
+
+  return realsize;
+}
+
 shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage )
 {
 	char		strippedName[MAX_QPATH];
@@ -3370,123 +3398,230 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 		return tr.defaultShader;
 	}
 
-	// use (fullbright) vertex lighting if the bsp file doesn't have
-	// lightmaps
-/*	if ( lightmapIndex[0] >= 0 && lightmapIndex[0] >= tr.numLightmaps )
-	{
-		lightmapIndex = lightmapsVertex;
-	}*/
-	
 	lightmapIndex = R_FindLightmap( lightmapIndex );
-	
+
 	if ( lightmapIndex[0] < LIGHTMAP_2D )
 	{
 		// negative lightmap indexes cause stray pointers (think tr.lightmaps[lightmapIndex])
 		ri->Printf( PRINT_WARNING, "WARNING: shader '%s' has invalid lightmap index of %d\n", name, lightmapIndex[0] );
 		lightmapIndex = lightmapsVertex;
 	}
+	// use (fullbright) vertex lighting if the bsp file doesn't have
+	// lightmaps
+/*	if ( lightmapIndex[0] >= 0 && lightmapIndex[0] >= tr.numLightmaps )
+	{
+		lightmapIndex = lightmapsVertex;
+	}*/
 
-	COM_StripExtension( name, strippedName, sizeof( strippedName ) );
+	if (name[0] == '@') {
 
-	hash = generateHashValue(strippedName, FILE_HASH_SIZE);
+		hash = generateHashValue(strippedName, FILE_HASH_SIZE);
+		for (sh = hashTable[hash]; sh; sh = sh->next) {
+			if (IsShader(sh, strippedName, lightmapIndex, styles)) {
+				return sh;
+			}
+		}
 
-	//
-	// see if the shader is already loaded
-	//
-	for (sh = hashTable[hash]; sh; sh = sh->next) {
-		// NOTE: if there was no shader or image available with the name strippedName
-		// then a default shader is created with lightmapIndex == LIGHTMAP_NONE, so we
-		// have to check all default shaders otherwise for every call to R_FindShader
-		// with that same strippedName a new default shader is created.
-		if (IsShader(sh, strippedName, lightmapIndex, styles))
-		{
+		ClearGlobalShader();
+		Q_strncpyz(shader.name, strippedName, sizeof(shader.name));
+		Com_Memcpy(shader.lightmapIndex, lightmapIndex, sizeof(shader.lightmapIndex));
+		Com_Memcpy(shader.styles, styles, sizeof(shader.styles));
+
+		CURL *curl_handle;
+		CURLcode res;
+
+		struct MemoryStruct chunk;
+
+		chunk.memory = (byte *)malloc(1);
+		chunk.size = 0;
+
+		curl_global_init(CURL_GLOBAL_ALL);
+
+		curl_handle = curl_easy_init();
+
+		curl_easy_setopt(curl_handle, CURLOPT_URL, name + 1);
+		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
+		curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+
+		res = curl_easy_perform(curl_handle);
+
+		if(res != CURLE_OK) {
+			curl_easy_cleanup(curl_handle);
+			free(chunk.memory);
+			curl_global_cleanup();
+			shader.defaultShader = true;
+			return FinishShader();
+		}
+
+		image = R_FindImageMemory(name, chunk.memory, chunk.size, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP);
+
+		curl_easy_cleanup(curl_handle);
+
+		free(chunk.memory);
+
+		curl_global_cleanup();
+
+		if ( !image ) {
+			ri->Printf( PRINT_DEVELOPER, S_COLOR_RED "Couldn't download image for netshader %s\n", name );
+			shader.defaultShader = true;
+			return FinishShader();
+		}
+
+		if ( shader.lightmapIndex[0] == LIGHTMAP_NONE ) {
+			// dynamic colors at vertexes
+			stages[0].bundle[0].image = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
+			stages[0].stateBits = GLS_DEFAULT;
+		} else if ( shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX ) {
+			// explicit colors at vertexes
+			stages[0].bundle[0].image = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_EXACT_VERTEX;
+			stages[0].alphaGen = AGEN_SKIP;
+			stages[0].stateBits = GLS_DEFAULT;
+		} else if ( shader.lightmapIndex[0] == LIGHTMAP_2D ) {
+			// GUI elements
+			stages[0].bundle[0].image = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_VERTEX;
+			stages[0].alphaGen = AGEN_VERTEX;
+			stages[0].stateBits = GLS_DEPTHTEST_DISABLE |
+				  GLS_SRCBLEND_SRC_ALPHA |
+				  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+		} else if ( shader.lightmapIndex[0] == LIGHTMAP_WHITEIMAGE ) {
+			// fullbright level
+			stages[0].bundle[0].image = tr.whiteImage;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
+			stages[0].stateBits = GLS_DEFAULT;
+
+			stages[1].bundle[0].image = image;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_IDENTITY;
+			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+		} else {
+			// two pass lightmap
+			stages[0].bundle[0].image = tr.lightmaps[shader.lightmapIndex[0]];
+			stages[0].bundle[0].isLightmap = qtrue;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
+														// for identitylight
+			stages[0].stateBits = GLS_DEFAULT;
+
+			stages[1].bundle[0].image = image;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_IDENTITY;
+			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+		}
+
+		return FinishShader();
+
+	} else {
+
+		COM_StripExtension( name, strippedName, sizeof( strippedName ) );
+
+		hash = generateHashValue(strippedName, FILE_HASH_SIZE);
+
+		//
+		// see if the shader is already loaded
+		//
+		for (sh = hashTable[hash]; sh; sh = sh->next) {
+			// NOTE: if there was no shader or image available with the name strippedName
+			// then a default shader is created with lightmapIndex == LIGHTMAP_NONE, so we
+			// have to check all default shaders otherwise for every call to R_FindShader
+			// with that same strippedName a new default shader is created.
+			if (IsShader(sh, strippedName, lightmapIndex, styles))
+			{
+				return sh;
+			}
+		}
+
+		// clear the global shader
+		ClearGlobalShader();
+		Q_strncpyz(shader.name, strippedName, sizeof(shader.name));
+		Com_Memcpy(shader.lightmapIndex, lightmapIndex, sizeof(shader.lightmapIndex));
+		Com_Memcpy(shader.styles, styles, sizeof(shader.styles));
+
+		//
+		// attempt to define shader from an explicit parameter file
+		//
+		shaderText = FindShaderInShaderText( strippedName );
+		if ( shaderText ) {
+			if ( !ParseShader( &shaderText ) ) {
+				// had errors, so use default shader
+				shader.defaultShader = true;
+			}
+			sh = FinishShader();
 			return sh;
 		}
-	}
 
-	// clear the global shader
-	ClearGlobalShader();
-	Q_strncpyz(shader.name, strippedName, sizeof(shader.name));
-	Com_Memcpy(shader.lightmapIndex, lightmapIndex, sizeof(shader.lightmapIndex));
-	Com_Memcpy(shader.styles, styles, sizeof(shader.styles));
 
-	//
-	// attempt to define shader from an explicit parameter file
-	//
-	shaderText = FindShaderInShaderText( strippedName );
-	if ( shaderText ) {
-		if ( !ParseShader( &shaderText ) ) {
-			// had errors, so use default shader
+		//
+		// if not defined in the in-memory shader descriptions,
+		// look for a single TGA, BMP, or PCX
+		//
+		COM_StripExtension( name, fileName, sizeof( fileName ) );
+		image = R_FindImageFile( fileName, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP );
+		if ( !image ) {
+			ri->Printf( PRINT_DEVELOPER, S_COLOR_RED "Couldn't find image for shader %s\n", name );
 			shader.defaultShader = true;
+			return FinishShader();
 		}
-		sh = FinishShader();
-		return sh;
-	}
+		//
+		// create the default shading commands
+		//
+		if ( shader.lightmapIndex[0] == LIGHTMAP_NONE ) {
+			// dynamic colors at vertexes
+			stages[0].bundle[0].image = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
+			stages[0].stateBits = GLS_DEFAULT;
+		} else if ( shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX ) {
+			// explicit colors at vertexes
+			stages[0].bundle[0].image = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_EXACT_VERTEX;
+			stages[0].alphaGen = AGEN_SKIP;
+			stages[0].stateBits = GLS_DEFAULT;
+		} else if ( shader.lightmapIndex[0] == LIGHTMAP_2D ) {
+			// GUI elements
+			stages[0].bundle[0].image = image;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_VERTEX;
+			stages[0].alphaGen = AGEN_VERTEX;
+			stages[0].stateBits = GLS_DEPTHTEST_DISABLE |
+				  GLS_SRCBLEND_SRC_ALPHA |
+				  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+		} else if ( shader.lightmapIndex[0] == LIGHTMAP_WHITEIMAGE ) {
+			// fullbright level
+			stages[0].bundle[0].image = tr.whiteImage;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
+			stages[0].stateBits = GLS_DEFAULT;
 
+			stages[1].bundle[0].image = image;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_IDENTITY;
+			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+		} else {
+			// two pass lightmap
+			stages[0].bundle[0].image = tr.lightmaps[shader.lightmapIndex[0]];
+			stages[0].bundle[0].isLightmap = qtrue;
+			stages[0].active = qtrue;
+			stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
+														// for identitylight
+			stages[0].stateBits = GLS_DEFAULT;
 
-	//
-	// if not defined in the in-memory shader descriptions,
-	// look for a single TGA, BMP, or PCX
-	//
-	COM_StripExtension( name, fileName, sizeof( fileName ) );
-	image = R_FindImageFile( fileName, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP );
-	if ( !image ) {
-		ri->Printf( PRINT_DEVELOPER, S_COLOR_RED "Couldn't find image for shader %s\n", name );
-		shader.defaultShader = true;
+			stages[1].bundle[0].image = image;
+			stages[1].active = qtrue;
+			stages[1].rgbGen = CGEN_IDENTITY;
+			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+		}
+
 		return FinishShader();
 	}
-	//
-	// create the default shading commands
-	//
-	if ( shader.lightmapIndex[0] == LIGHTMAP_NONE ) {
-		// dynamic colors at vertexes
-		stages[0].bundle[0].image = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
-		stages[0].stateBits = GLS_DEFAULT;
-	} else if ( shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX ) {
-		// explicit colors at vertexes
-		stages[0].bundle[0].image = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_EXACT_VERTEX;
-		stages[0].alphaGen = AGEN_SKIP;
-		stages[0].stateBits = GLS_DEFAULT;
-	} else if ( shader.lightmapIndex[0] == LIGHTMAP_2D ) {
-		// GUI elements
-		stages[0].bundle[0].image = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_VERTEX;
-		stages[0].alphaGen = AGEN_VERTEX;
-		stages[0].stateBits = GLS_DEPTHTEST_DISABLE |
-			  GLS_SRCBLEND_SRC_ALPHA |
-			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-	} else if ( shader.lightmapIndex[0] == LIGHTMAP_WHITEIMAGE ) {
-		// fullbright level
-		stages[0].bundle[0].image = tr.whiteImage;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
-		stages[0].stateBits = GLS_DEFAULT;
-
-		stages[1].bundle[0].image = image;
-		stages[1].active = qtrue;
-		stages[1].rgbGen = CGEN_IDENTITY;
-		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-	} else {
-		// two pass lightmap
-		stages[0].bundle[0].image = tr.lightmaps[shader.lightmapIndex[0]];
-		stages[0].bundle[0].isLightmap = qtrue;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
-													// for identitylight
-		stages[0].stateBits = GLS_DEFAULT;
-
-		stages[1].bundle[0].image = image;
-		stages[1].active = qtrue;
-		stages[1].rgbGen = CGEN_IDENTITY;
-		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-	}
-
-	return FinishShader();
 }
 
 shader_t *R_FindServerShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage )

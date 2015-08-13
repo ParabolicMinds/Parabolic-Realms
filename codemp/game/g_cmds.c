@@ -3368,6 +3368,43 @@ void Cmd_PhysTest(gentity_t *ent) {
 	trap->LinkEntity((sharedEntity_t *) pb);
 }
 
+void Cmd_Spray(gentity_t *ent) {
+	trace_t pos;
+	vec3_t start, mins, maxs, dir, end;
+	VectorCopy(ent->client->ps.origin, start);
+	start[2] += ent->client->ps.viewheight;
+	float boxs = 0.5f;
+	VectorSet(mins, -boxs, -boxs, -boxs);
+	VectorSet(maxs, boxs, boxs, boxs);
+
+	dir[0] = cos(ent->client->ps.viewangles[PITCH] * (M_PI*2 / 360)) * cos(ent->client->ps.viewangles[YAW] * (M_PI*2 / 360));
+	dir[1] = cos(ent->client->ps.viewangles[PITCH] * (M_PI*2 / 360)) * sin(ent->client->ps.viewangles[YAW] * (M_PI*2 / 360));
+	dir[2] = -sin(ent->client->ps.viewangles[PITCH] * (M_PI*2 / 360));
+
+	float az, el;
+	el = ent->playerState->viewangles[PITCH];
+	az = ent->playerState->viewangles[YAW];
+	VectorSet(end, cos(el) * cos(az), cos(el) * sin(az), sin(el));
+
+	VectorMA(start, 100, dir, end);
+	trap->Trace(&pos, start, mins, maxs, end, ent->s.number, MASK_SOLID, qfalse, 0, 0);
+	if (VectorCompare(pos.endpos, end)) return;
+	Com_Printf("PLACE SPRAY!\n");
+
+	vec3_t ang;
+	vectoangles(pos.plane.normal, ang);
+
+	gentity_t * pb = G_Spawn();
+	VectorCopy(pos.endpos, pb->s.origin);
+	VectorCopy(pos.endpos, pb->s.pos.trBase);
+	VectorCopy(ang, pb->s.angles);
+	VectorCopy(ang, pb->s.apos.trBase);
+	pb->s.eType = ET_GENERAL;
+	pb->s.modelindex = G_ModelIndex("models/spray.obj");
+	pb->r.svFlags |= SVF_BROADCAST;
+	trap->LinkEntity((sharedEntity_t *) pb);
+}
+
 /* This array MUST be sorted correctly by alphabetical name field */
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
@@ -3395,12 +3432,13 @@ command_t commands[] = {
 	{ "noclip",				Cmd_Noclip_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "notarget",			Cmd_Notarget_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "npc",				Cmd_NPC_f,					CMD_CHEAT|CMD_ALIVE },
-	{ "phys",				Cmd_PhysTest,				CMD_ALIVE },
+	{ "phys",				Cmd_PhysTest,				CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "say",				Cmd_Say_f,					0 },
 	{ "say_team",			Cmd_SayTeam_f,				0 },
 	{ "score",				Cmd_Score_f,				0 },
 	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
 	{ "siegeclass",			Cmd_SiegeClass_f,			CMD_NOINTERMISSION },
+	{ "spray",				Cmd_Spray,					CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "team",				Cmd_Team_f,					CMD_NOINTERMISSION },
 //	{ "teamtask",			Cmd_TeamTask_f,				CMD_NOINTERMISSION },
 	{ "teamvote",			Cmd_TeamVote_f,				CMD_NOINTERMISSION },

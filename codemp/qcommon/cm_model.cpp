@@ -79,6 +79,7 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 	bool all_good = true;
 	long i = 0;
 	bool seekline = false;
+	char * shader = nullptr;
 	while (i < len && all_good) {
 		switch (buf[i]) {
 		case '\r':
@@ -243,6 +244,38 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 			i-=2;
 			seekline = true;
 			continue;
+		} else if (!strcmp(cmd_buf, "shader")) {
+			char nam_buf[MAX_QPATH];
+			memset(nam_buf, '\0', MAX_QPATH);
+			int ci = 0;
+			while (true) {
+				switch(buf[i]) {
+				case '\r':
+				case '\n':
+				case ' ':
+					nam_buf[ci++] = '\0';
+					i++;
+					break;
+				case '\\':
+					nam_buf[ci++] = '\0';
+					i++;
+					break;
+				default:
+					nam_buf[ci++] = buf[i];
+					i++;
+					continue;
+				}
+				break;
+			}
+
+			if (shader) delete [] shader;
+			shader = new char [strlen(nam_buf)];
+			strcpy(shader, nam_buf);
+			shader[strlen(nam_buf)] = '\0';
+
+			i-=2;
+			seekline = true;
+			continue;
 		} else {
 			seekline = true;
 			continue;
@@ -250,6 +283,7 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 	}
 	delete[] buf;
 	if (all_good) {
+		/*
 		Com_Printf("Obj Load Successful.");
 		Com_Printf("Verts: %i\n", verts_index);
 		for (size_t vs = 0; vs < verts_index; vs+=3) {
@@ -264,6 +298,7 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 			Com_Printf("%i: (%f, %f, %f)\n", vs/3, normals[vs+0], normals[vs+1], normals[vs+2]);
 		}
 		Com_Printf("Faces: %i\n", (int)indicies.size());
+		*/
 		int fi = 0;
 		for (objIndex_t const & face : indicies) {
 			Com_Printf("%i: (%i, %i, %i)\n", fi, face.vi, face.uvi, face.ni);
@@ -283,7 +318,7 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 	surf->numNormals = normals_index;
 	surf->numFaces = indicies.size() / 3;
 	pObjFace_t * faces = new pObjFace_t[surf->numFaces];
-	assert(surf->numFaces % 3 == 0);
+	//assert(surf->numFaces % 3 == 0);
 	for (int f = 0; f < surf->numFaces; f++) {
 		for (int fi = 0; fi < 3; fi++) {
 			objIndex_t const & index = indicies.at((3 *f)+ (2 - fi));
@@ -293,8 +328,14 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 		}
 	}
 	surf->faces = faces;
-	memcpy(surf->shader, defaultShader, sizeof(defaultShader));
 	memcpy(surf->name, name, strlen(name) + 1);
 	loaded_surfaces.push_back(surf);
+	if (shader) strcpy(surf->shader, shader);
+	else memcpy(surf->shader, defaultShader, sizeof(defaultShader));
+
+	if (shader) {
+		Com_Printf("%s", shader);
+	}
+
 	return surf;
 }

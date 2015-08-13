@@ -983,11 +983,6 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 		}
 	}
 
-	if ( (width&(width-1)) || (height&(height-1)) )
-	{
-		Com_Error( ERR_FATAL, "R_CreateImage: %s dimensions (%i x %i) not power of 2!\n",name,width,height);
-	}
-
 	image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
 	if (image) {
 		return image;
@@ -1102,6 +1097,41 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	{
 		ri->Printf( PRINT_ALL, "Refusing to load non-power-2-dims(%d,%d) pic \"%s\"...\n", width,height,name );
 		return NULL;
+	}
+
+	image = R_CreateImage( ( char * ) name, pic, width, height, GL_RGBA, mipmap, allowPicmip, allowTC, glWrapClampMode );
+	Z_Free( pic );
+	return image;
+}
+
+image_t	*R_FindImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode ) {
+	image_t	*image;
+	int		width, height;
+	byte	*pic;
+
+	if (!name || ri->Cvar_VariableIntegerValue( "dedicated" ) )	// stop ghoul2 horribleness as regards image loading from server
+	{
+		return NULL;
+	}
+
+	// need to do this here as well as in R_CreateImage, or R_FindImageFile_NoLoad() may complain about
+	//	different clamp parms used...
+	//
+	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP) {
+		glWrapClampMode = GL_CLAMP_TO_EDGE;
+	}
+
+	image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
+	if (image) {
+		return image;
+	}
+
+	//
+	// load the pic from disk
+	//
+	R_LoadImageFromMemory( name, buf, bufflen, &pic, &width, &height );
+	if ( pic == NULL ) {                                    // if we dont get a successful load
+		return NULL;                                        // bail
 	}
 
 	image = R_CreateImage( ( char * ) name, pic, width, height, GL_RGBA, mipmap, allowPicmip, allowTC, glWrapClampMode );

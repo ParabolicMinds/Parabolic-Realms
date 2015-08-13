@@ -50,7 +50,7 @@ static std::vector<bulletEntity_t> active_states {};
 
 static int cm_brushes, cm_patches;
 
-#define BP_POINTS_SIZE 8192
+#define BP_POINTS_SIZE (2048*4)
 
 static void B_ConfigureStateAdd(entityState_t * ent) {
 	ent->eFlags |= EF_BULLET_PHYS;
@@ -168,8 +168,8 @@ std::atomic_bool run_sim {false};
 std::atomic_int run_advance {0};
 std::mutex sim_lock;
 #define SIM_SLEEP std::chrono::duration<float, std::ratio<1, 1000>>(1)
-constexpr int substep {160};
-constexpr btScalar sim_step {1.0f / substep};
+constexpr int substep {1600};
+constexpr btScalar sim_step {2.0f / substep};
 void BG_Run_Simulation() {
 	while (run_sim) {
 		if (run_advance) {
@@ -417,7 +417,7 @@ void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius = 50.0f) {
 	B_ConfigureStateAdd(ent);
 	bulletEntity_t bent {B_CreateSphereObject(ent, 1, radius), ent};
 	VectorCopy(bent.ent->origin, bent.stored_pos);
-	VectorCopy(bent.ent->origin, bent.stored_ang);
+	VectorCopy(bent.ent->angles, bent.stored_ang);
 	active_states.push_back( bent );
 	sim_lock.unlock();
 }
@@ -435,7 +435,7 @@ void BG_RegisterBPhysModelHullEntity(entityState_t * ent, char const * model) {
 	B_ConfigureStateAdd(ent);
 	bulletEntity_t bent {B_CreateModelHullObject(ent, -1, model), ent};
 	VectorCopy(bent.ent->origin, bent.stored_pos);
-	VectorCopy(bent.ent->origin, bent.stored_ang);
+	VectorCopy(bent.ent->angles, bent.stored_ang);
 	active_states.push_back( bent );
 	sim_lock.unlock();
 }

@@ -1322,6 +1322,7 @@ model_t		*R_AllocModel( void );
 void    	R_Init( void );
 
 image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
+image_t		*R_FindImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
 
 image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, GLenum format, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int wrapClampMode, bool bRectangle = false );
 
