@@ -699,30 +699,6 @@ static void Upload32( unsigned *data,
 			R_LightScaleTexture (data, width, height, qfalse);
 			qglGenerateMipmap ( uiTarget );
 		}
-
-		/*if (mipmap) {
-			int		miplevel;
-
-			miplevel = 0;
-			while (width > 1 || height > 1)
-			{
-				R_MipMap( (byte *)data, width, height );
-				width >>= 1;
-				height >>= 1;
-				if (width < 1)
-					width = 1;
-				if (height < 1)
-					height = 1;
-				miplevel++;
-
-				if ( r_colorMipLevels->integer )
-				{
-					R_BlendOverTexture( (byte *)data, width * height, mipBlendColors[miplevel] );
-				}
-
-				qglTexImage2D( uiTarget, miplevel, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-			}
-		}*/
 	}
 	else
 	{
