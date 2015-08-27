@@ -457,7 +457,6 @@ R_BlendOverTexture
 
 Apply a color blend over a set of pixels
 ==================
-*/
 static void R_BlendOverTexture( byte *data, int pixelCount, byte blend[4] ) {
 	int		i;
 	int		inverseAlpha;
@@ -474,6 +473,7 @@ static void R_BlendOverTexture( byte *data, int pixelCount, byte blend[4] ) {
 		data[2] = ( data[2] * inverseAlpha + premult[2] ) >> 9;
 	}
 }
+*/
 
 byte	mipBlendColors[16][4] = {
 	{0,0,0,0},
@@ -693,18 +693,12 @@ static void Upload32( unsigned *data,
 		*pUploadWidth = width;
 		*pUploadHeight = height;
 
-		// copy or resample data as appropriate for first MIP level
-		if (!mipmap)
-		{
-			qglTexImage2D( uiTarget, 0, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-			goto done;
-		}
-
-		R_LightScaleTexture (data, width, height, (qboolean)!mipmap );
-
 		qglTexImage2D( uiTarget, 0, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
 
-		if (mipmap) qglGenerateMipmap ( uiTarget );
+		if (mipmap) {
+			R_LightScaleTexture (data, width, height, qfalse);
+			qglGenerateMipmap ( uiTarget );
+		}
 
 		/*if (mipmap) {
 			int		miplevel;
@@ -733,8 +727,6 @@ static void Upload32( unsigned *data,
 	else
 	{
 	}
-
-done:
 
 	if (mipmap)
 	{
