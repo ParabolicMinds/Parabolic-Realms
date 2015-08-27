@@ -43,7 +43,7 @@ properly.
 
 
 #define	MAX_FACETS			1024
-#define	MAX_PATCH_PLANES	2048
+#define	MAX_PATCH_PLANES	16384
 
 typedef struct patchPlane_s {
 	float	plane[4];

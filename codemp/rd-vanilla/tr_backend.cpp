@@ -1,7 +1,4 @@
 #include "tr_local.h"
-#ifdef _WIN32
-#include "glext.h"
-#endif
 
 #if !defined __TR_WORLDEFFECTS_H
 	#include "tr_WorldEffects.h"

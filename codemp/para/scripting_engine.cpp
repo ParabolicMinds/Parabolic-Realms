@@ -1,6 +1,7 @@
 #include "scripting_engine.hpp"
 #include "sys/sys_loadlib.h"
 
+#include <string>
 #include <vector>
 #include <unordered_map>
 
@@ -17,16 +18,21 @@ void PARA_ScriptingInit() {
 	int fnum;
 	char * * files = FS_ListFiles("para-plugins/", ".so", &fnum);
 
+	std::vector<std::string> identities;
+
 	for (int i = 0; i < fnum; i++) {
 		if (!strncmp("PSE_", files[i], 4)) {
 			pseImport_t * pse = PSE_LoadLibrary(va("base/para-plugins/%s", files[i]));
 			if (!pse) continue;
 			pse_libs.push_back(pse);
+			for (std::string & str : identities) {
+				if (!strcmp(str.c_str(), pse->Identify())) Com_Error(ERR_FATAL, "PARA_ScriptingInit: Two or more plugins have the same identity!");
+			}
+			identities.push_back({pse->Identify()});
 			Com_Printf("Successfully Loaded: %s\n", pse->Identify());
 
 			if (!strcmp(pse->Identify(), "dummy")) {
-				void * dummy_test = PARA_LoadManifest("dummy.psm");
-				if (dummy_test) PARA_CloseManifest(dummy_test);
+				PARA_LoadManifest("dummy.psm");
 			}
 		}
 	}
@@ -62,12 +68,14 @@ void * PARA_LoadManifest(char const * path) {
 	long size = 0;
 	char * data;
 	size = FS_ReadFile(va("%s%s", para_script_dir, path), reinterpret_cast<void * *>(&data));
-	if (!size) {
+	if (size <= 0) {
 		Com_Printf("Failed to read manifest at: \"%s\"\n", va("%s%s", para_script_dir, path));
+		return nullptr;
 	}
 
 	if (data[0] != '#') {
-		return NULL;
+		Com_Printf("file at: \"%s\" is not a manifest.\n", va("%s%s", para_script_dir, path));
+		return nullptr;
 	}
 	long i = 1;
 	for (;i < size; i++) {
@@ -86,18 +94,28 @@ void * PARA_LoadManifest(char const * path) {
 		break;
 	}
 
-	void * handle;
+	void * handle = nullptr;
 	for (pseImport_t * pse : pse_libs) {
 		if (!strcmp(data + 1, pse->Identify())) {
 			handle = pse->OpenManifest(data + i + 1);
 			if (handle) {
+				if (active_manifests.find(handle) != active_manifests.end()) {
+					Com_Error(ERR_DROP, "PARA_LoadManifest: Duplicate handle ID generated. (A plugin is being very naughty)");
+				}
 				active_manifests[handle] = pse;
+			} else {
+				Com_Error(ERR_DROP, "PARA_LoadManifest: plugin returned null!");
 			}
 			break;
 		}
 	}
 
 	FS_FreeFile(reinterpret_cast<void *>(data));
+
+	if (!handle) {
+		Com_Printf("manifest at \"%s\" wants a plugin we don't have: %s.\n", va("%s%s", para_script_dir, path), data+1);
+	}
+
 	return handle;
 }
 

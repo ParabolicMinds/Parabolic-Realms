@@ -1,9 +1,6 @@
 // tr_image.c
 #include "tr_local.h"
 #include "../rd-common/tr_common.h"
-#ifdef _WIN32
-#include "glext.h"
-#endif
 
 #ifdef _MSC_VER
 #pragma warning (push, 3)	//go back down to 3 for the stl include
@@ -707,8 +704,9 @@ static void Upload32( unsigned *data,
 
 		qglTexImage2D( uiTarget, 0, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
 
-		if (mipmap)
-		{
+		if (mipmap) qglGenerateMipmap ( uiTarget );
+
+		/*if (mipmap) {
 			int		miplevel;
 
 			miplevel = 0;
@@ -730,7 +728,7 @@ static void Upload32( unsigned *data,
 
 				qglTexImage2D( uiTarget, miplevel, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
 			}
-		}
+		}*/
 	}
 	else
 	{

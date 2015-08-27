@@ -12,7 +12,7 @@ char const * PSE_Identify() {
 
 void * PSE_OpenManifest(char const * manifest) {
 	psex.Printf(manifest);
-	return 0;
+	return (void *)(9001);
 }
 
 void PSE_CloseManifest(void * uid) {

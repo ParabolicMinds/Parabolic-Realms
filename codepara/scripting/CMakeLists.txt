@@ -15,4 +15,5 @@ set(ParaScriptingFiles
 option(BuildDummyLibrary "Whether to build the dummy (test) library." ON)
 if(BuildDummyLibrary)
         add_subdirectory("${ParaScriptingDir}/dummy")
+	add_subdirectory("${ParaScriptingDir}/lua")
 endif(BuildDummyLibrary)

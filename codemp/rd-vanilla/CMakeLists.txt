@@ -16,7 +16,7 @@ set(MPVanillaRendererIncludeDirectories
 	)
 
 set(MPVanillaRendererFiles
-	"${MPDir}/rd-vanilla/glext.h"
+#	"${MPDir}/rd-vanilla/glext.h"
 	"${MPDir}/rd-vanilla/qgl.h"
 	"${MPDir}/rd-vanilla/G2_API.cpp"
 	"${MPDir}/rd-vanilla/G2_bolts.cpp"
@@ -93,7 +93,7 @@ if(UseInternalJPEG)
 else()
 	find_package(JPEG REQUIRED)
 	set(MPVanillaRendererIncludeDirectories ${MPVanillaRendererIncludeDirectories} ${JPEG_INCLUDE_DIR})
-	set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} ${JPEG_LIBRARIES} "-lcurl")
+	set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} ${JPEG_LIBRARIES} "-lcurl -lGLEW")
 endif()
 
 if(UseInternalPNG)

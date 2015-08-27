@@ -741,6 +741,7 @@ static void InitOpenGL( void )
 	//		- r_gamma
 	//
 
+
 	if ( glConfig.vidWidth == 0 )
 	{
 		memset(&glConfig, 0, sizeof(glConfig));
@@ -776,6 +777,8 @@ static void InitOpenGL( void )
 		// set default state
 		GL_SetDefaultState();
 	}
+
+	if (glewInit() != GLEW_OK) Com_Error(ERR_FATAL, "GLEW failed to initialize!\n");
 }
 
 /*

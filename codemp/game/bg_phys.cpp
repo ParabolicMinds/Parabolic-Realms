@@ -35,6 +35,9 @@ typedef struct bulletEntity2_s {
 	gentity_t * gent;
 	vec3_t stored_pos;
 	vec3_t stored_ang;
+	int stored_contents;
+	bool stored_solid;
+	bool bworld_enabled;
 } bulletEntity2_t;
 
 static bool init;
@@ -175,11 +178,22 @@ void BG_Run_Simulation() {
 		if (run_advance) {
 			sim_lock.lock();
 			for (bulletEntity2_t & bent : map_dynamics) {
-				btTransform trans = bent.physobj->rigidBody->getWorldTransform();
-				trans.setOrigin( {bent.stored_pos[0], bent.stored_pos[1], bent.stored_pos[2]} );
-				trans.setRotation(btQuaternion(bent.stored_ang[2] * d2r_mult, bent.stored_ang[0] * d2r_mult, bent.stored_ang[1] * d2r_mult));
-				bent.physobj->motionState->setWorldTransform(trans);
-				bent.physobj->rigidBody->activate(true);
+				if (bent.stored_solid) {
+					if (!bent.bworld_enabled) {
+						bworld->addRigidBody(bent.physobj->rigidBody);
+						bent.bworld_enabled = true;
+					}
+					btTransform trans = bent.physobj->rigidBody->getWorldTransform();
+					trans.setOrigin( {bent.stored_pos[0], bent.stored_pos[1], bent.stored_pos[2]} );
+					trans.setRotation(btQuaternion(bent.stored_ang[0] * d2r_mult, bent.stored_ang[2] * d2r_mult, bent.stored_ang[1] * d2r_mult));
+					bent.physobj->motionState->setWorldTransform(trans);
+					bent.physobj->rigidBody->activate(true);
+				} else {
+					if (bent.bworld_enabled) {
+						bworld->removeRigidBody(bent.physobj->rigidBody);
+						bent.bworld_enabled = false;
+					}
+				}
 			}
 			bworld->stepSimulation(run_advance.exchange(0) / 1000.0f, substep, sim_step);
 			for (bulletEntity_t & bent : active_states) {
@@ -321,8 +335,11 @@ void BG_InitializeSimulationDynamics() {
 			 vec3_t points[BP_POINTS_SIZE];
 			 int num = trap->CM_CalculateHull(gbrushes[i], points, BP_POINTS_SIZE);
 			 bulletEntity2_t bent {B_CreateMapObject(points, num), gent};
+			 bent.bworld_enabled = true;
 			 VectorCopy(bent.gent->s.origin, bent.stored_pos);
 			 VectorCopy(bent.gent->s.angles, bent.stored_ang);
+			 bent.stored_contents = gent->r.contents;
+			 bent.stored_solid = gent->s.solid;
 			 bent.physobj->rigidBody->setCollisionFlags(bent.physobj->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
 			 bent.physobj->rigidBody->setActivationState(DISABLE_DEACTIVATION);
 			 map_dynamics.push_back(bent);
@@ -336,8 +353,11 @@ void BG_InitializeSimulationDynamics() {
 			 std::vector<bulletObject_t *> bobs = B_CreateMapPatchObjects(points, width, height);
 			 for (auto bob : bobs) {
 				 bulletEntity2_t bent {bob, gent};
+				 bent.bworld_enabled = true;
 				 VectorCopy(bent.gent->s.origin, bent.stored_pos);
 				 VectorCopy(bent.gent->s.angles, bent.stored_ang);
+				 bent.stored_contents = gent->r.contents;
+				 bent.stored_solid = gent->s.solid;
 				 bent.physobj->rigidBody->setCollisionFlags(bent.physobj->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
 				 bent.physobj->rigidBody->setActivationState(DISABLE_DEACTIVATION);
 				 map_dynamics.push_back(bent);
@@ -394,6 +414,8 @@ void BG_UpdatePhysicsObjects() {
 	for (bulletEntity2_t & bent : map_dynamics) {
 		VectorCopy(bent.gent->r.currentOrigin, bent.stored_pos);
 		VectorCopy(bent.gent->r.currentAngles, bent.stored_ang );
+		bent.stored_contents = bent.gent->r.contents;
+		bent.stored_solid = bent.gent->s.solid;
 	}
 	for (bulletEntity_t & bent : active_states) {
 		VectorCopy(bent.stored_pos, bent.ent->pos.trBase);

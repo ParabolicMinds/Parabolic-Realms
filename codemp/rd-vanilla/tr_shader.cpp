@@ -14,10 +14,10 @@ static	texModInfo_t	texMods[MAX_SHADER_STAGES][TR_MAX_TEXMODS];
 // retail JKA shader for gfx/2d/wedge.
 #define RETAIL_ROCKET_WEDGE_SHADER_HASH (1217042)
 
-#define FILE_HASH_SIZE		1024
+#define FILE_HASH_SIZE		4096
 static	shader_t*		hashTable[FILE_HASH_SIZE];
 
-#define MAX_SHADERTEXT_HASH		2048
+#define MAX_SHADERTEXT_HASH		8192
 static char **shaderTextHashTable[MAX_SHADERTEXT_HASH] = { 0 };
 
 void KillTheShaderHashTable(void)

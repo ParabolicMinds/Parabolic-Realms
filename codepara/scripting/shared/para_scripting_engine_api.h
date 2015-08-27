@@ -30,10 +30,7 @@
 ============================ NOTES =============================
 ================================================================
 
-1.	PSE_Init and PSE_Identify are the only two functions plugins
-		are REQUIRED to implement.
-
-2.	Do not save returned pointers:   <-------- HEY YOU, READ THIS, IT'S VERY VERY IMPORTANT.
+1.	Do not save returned pointers:   <-------- HEY YOU, READ THIS, IT'S VERY VERY IMPORTANT.
 		(void *, char *, char const *)
 		It's not even remotely safe.
 	If you need them for later, make your own copy.
@@ -42,13 +39,13 @@
 	In other words, always assume you're dealing with
 		volatile memory, because you are in many cases.
 
-3.	Do not use the Export functions in a separate thread,
+2.	Do not use the Export functions in a separate thread,
 		they are not even remotely thread-safe.
 		(unless otherwise noted.)
 
-4.	PSE_OpenManifest should return a very unique instance ID.
+3.	PSE_OpenManifest should return a very unique instance ID.
 	If it's something like 1, 2, 3, etc., there will
-		potentially be collision with other plugins.
+		potentially be colission with other plugins.
 	A good idea (and also the reason tyhe type is void *),
 		is to return a pointer to the actual internal
 		instance object.
@@ -80,7 +77,7 @@ in this library.
 //REQUIRED
 EXPORT void			PSE_Init(pseExport_t pse); //Save this parameter, you need it to communicate with the Parabolic Realms runtime.
 EXPORT char const *	PSE_Identify(); //Short (one word) string. Named on manifests to be loaded by the proper plugin.
-EXPORT void *		PSE_OpenManifest(char const * manifest); //Create instances here, return a unique identifier that the CloseManifest function will recognize. Return 0 as a failure state.
+EXPORT void *		PSE_OpenManifest(char const * manifest); //Create instances here, return a unique identifier that the CloseManifest function will recognize. Return nullptr as a failure state.
 EXPORT void			PSE_CloseManifest(void * uid);
 EXPORT void			PSE_Shutdown();
 

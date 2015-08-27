@@ -73,16 +73,10 @@ if(NOT WIN32)
 	set_target_properties(${MPUI} PROPERTIES PREFIX "")
 endif(NOT WIN32)
 
-if(WIN32)
-	install(TARGETS ${MPUI} RUNTIME DESTINATION "OpenJK")
-else(WIN32)
-	if(MakeApplicationBundles AND BuildMPEngine)
-		install(TARGETS ${MPUI} LIBRARY DESTINATION "${MPEngine}.app/Contents/MacOS/OpenJK")
-		install(TARGETS ${MPUI} LIBRARY DESTINATION "${MPEngine}.app/Contents/MacOS/base")
-	else(MakeApplicationBundles AND BuildMPEngine)
-		install(TARGETS ${MPUI} LIBRARY DESTINATION "OpenJK")
-	endif(MakeApplicationBundles AND BuildMPEngine)
-endif(WIN32)
+install(
+    TARGETS ${MPUI}
+    LIBRARY DESTINATION "./base/"
+)
 set_target_properties(${MPUI} PROPERTIES COMPILE_DEFINITIONS_RELWITHDEBINFO "${MPUIDefines};${ReleaseDefines}")
 set_target_properties(${MPUI} PROPERTIES COMPILE_DEFINITIONS_MINSIZEREL "${MPUIDefines};${ReleaseDefines}")
 set_target_properties(${MPUI} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${MPUIDefines};${ReleaseDefines}")

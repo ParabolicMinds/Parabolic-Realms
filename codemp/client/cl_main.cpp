@@ -2572,6 +2572,18 @@ static void CL_AddFavorite_f( void ) {
 	}
 }
 
+/*
+===============
+CL_Spray_f
+===============
+*/
+
+cvar_t * cl_sprayshader;
+
+void CL_Spray_f( void ) {
+	CL_AddReliableCommand(va("svspray %s", cl_sprayshader->string), qfalse);
+}
+
 #define G2_VERT_SPACE_CLIENT_SIZE 256
 
 /*
@@ -2693,6 +2705,8 @@ void CL_Init( void ) {
 
 	cl_serverStatusResendTime = Cvar_Get ("cl_serverStatusResendTime", "750", 0);
 
+	cl_sprayshader = Cvar_Get("cl_sprayshader", "textures/imperial/basic", CVAR_ARCHIVE);
+
 	// init autoswitch so the ui will have it correctly even
 	// if the cgame hasn't been started
 	Cvar_Get ("cg_autoswitch", "1", CVAR_ARCHIVE);
@@ -2777,6 +2791,7 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("forcepowers", CL_SetForcePowers_f );
 	Cmd_AddCommand ("video", CL_Video_f );
 	Cmd_AddCommand ("stopvideo", CL_StopVideo_f );
+	Cmd_AddCommand ("spray", CL_Spray_f );
 
 	CL_InitRef();
 

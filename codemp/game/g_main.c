@@ -7,6 +7,7 @@
 #include "bg_saga.h"
 #include "b_local.h"
 
+#include "g_para.h"
 #include "bg_phys.h"
 
 level_locals_t	level;
@@ -419,6 +420,8 @@ G_ShutdownGame
 void G_ShutdownGame( int restart ) {
 	int i = 0;
 	gentity_t *ent;
+
+	G_PSE_PurgeManifests();
 
 	BG_ShutdownSimulation();
 

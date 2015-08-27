@@ -1809,6 +1809,7 @@ typedef struct playerState_s {
 	//rww - spare values specifically for use by mod authors.
 	//See psf_overrides.txt if you want to increase the send
 	//amount of any of these above 1 bit.
+	/*
 	int			userInt1;
 	int			userInt2;
 	int			userInt3;
@@ -1817,6 +1818,7 @@ typedef struct playerState_s {
 	float		userFloat3;
 	vec3_t		userVec1;
 	vec3_t		userVec2;
+	*/
 
 #ifdef _ONEBIT_COMBO
 	int			deltaOneBits;

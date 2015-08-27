@@ -5,6 +5,8 @@
 
 #include "ui/menudef.h"			// for the voice chats
 
+#include "g_para.h"
+
 //rww - for getting bot commands...
 int AcceptBotCommand(char *cmd, gentity_t *pl);
 //end rww
@@ -3405,6 +3407,29 @@ void Cmd_Spray(gentity_t *ent) {
 	trap->LinkEntity((sharedEntity_t *) pb);
 }
 
+void Cmd_PSE_Load(gentity_t *ent) {
+	if (trap->Argc() != 2) {
+		trap->SendServerCommand(ent->playerState->clientNum, "print \"pseload takes no more or less than 2 arguments.\n\"");
+	}
+	char path[MAX_QPATH];
+	trap->Argv(1, path, MAX_QPATH);
+	switch(G_PSE_LoadManifest(path)) {
+	case G_PSM_OK:
+		trap->Print("PSE Manifest \"%s\" has been loaded.\n", path);
+		break;
+	case G_PSM_FNF_NOPLUG:
+		trap->SendServerCommand(ent->playerState->clientNum, "print \"that manifest was not found, or wants a plugin the server doesn't have.\n\"");
+		break;
+	case G_PSM_LIMIT:
+		trap->SendServerCommand(ent->playerState->clientNum, "print \"the maximum number of active manifests has been reached.\n\"");
+		break;
+	}
+}
+
+void Cmd_PSE_Purge(gentity_t *ent) {
+	G_PSE_PurgeManifests();
+}
+
 /* This array MUST be sorted correctly by alphabetical name field */
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
@@ -3433,12 +3458,14 @@ command_t commands[] = {
 	{ "notarget",			Cmd_Notarget_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "npc",				Cmd_NPC_f,					CMD_CHEAT|CMD_ALIVE },
 	{ "phys",				Cmd_PhysTest,				CMD_ALIVE|CMD_NOINTERMISSION },
+	{ "pseload",			Cmd_PSE_Load,				CMD_CHEAT },
+	{ "psepurge",			Cmd_PSE_Purge,				CMD_CHEAT },
 	{ "say",				Cmd_Say_f,					0 },
 	{ "say_team",			Cmd_SayTeam_f,				0 },
 	{ "score",				Cmd_Score_f,				0 },
 	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
 	{ "siegeclass",			Cmd_SiegeClass_f,			CMD_NOINTERMISSION },
-	{ "spray",				Cmd_Spray,					CMD_ALIVE|CMD_NOINTERMISSION },
+	{ "svspray",			Cmd_Spray,					CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "team",				Cmd_Team_f,					CMD_NOINTERMISSION },
 //	{ "teamtask",			Cmd_TeamTask_f,				CMD_NOINTERMISSION },
 	{ "teamvote",			Cmd_TeamVote_f,				CMD_NOINTERMISSION },

@@ -8,6 +8,8 @@ project(${ProjectName})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install/")
+
 # Customizable options
 option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" ON)
 

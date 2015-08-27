@@ -1,5 +1,7 @@
 #pragma once
 
+/*
+
 #if defined( __LINT__ )
 #	include <GL/gl.h>
 #elif defined( _WIN32 )
@@ -27,6 +29,9 @@
 #endif
 
 #include "glext.h"
+*/
+
+#include <GL/glew.h>
 
 #define qglAccum glAccum
 #define qglAlphaFunc glAlphaFunc
@@ -328,6 +333,7 @@
 #define qglTexGeniv glTexGeniv
 #define qglTexImage1D glTexImage1D
 #define qglTexImage2D glTexImage2D
+#define qglGenerateMipmap glGenerateMipmap
 #define qglTexParameterf glTexParameterf
 #define qglTexParameterfv glTexParameterfv
 #define qglTexParameteri glTexParameteri
