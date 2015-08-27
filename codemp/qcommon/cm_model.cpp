@@ -249,6 +249,7 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 			memset(nam_buf, '\0', MAX_QPATH);
 			int ci = 0;
 			while (true) {
+				if (ci >= MAX_QPATH) Com_Error(ERR_DROP, "Obj model shader field exceeds MAX_QPATH(%i)", int(MAX_QPATH));
 				switch(buf[i]) {
 				case '\r':
 				case '\n':
@@ -332,10 +333,6 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 	loaded_surfaces.push_back(surf);
 	if (shader) strcpy(surf->shader, shader);
 	else memcpy(surf->shader, defaultShader, sizeof(defaultShader));
-
-	if (shader) {
-		Com_Printf("%s", shader);
-	}
 
 	return surf;
 }

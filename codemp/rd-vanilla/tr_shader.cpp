@@ -3391,7 +3391,7 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	char		fileName[MAX_QPATH];
 	int			hash;
 	const char	*shaderText;
-	image_t		*image;
+	image_t		*image = NULL;
 	shader_t	*sh;
 
 	if ( name[0] == 0 ) {
@@ -3427,40 +3427,49 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 		Com_Memcpy(shader.lightmapIndex, lightmapIndex, sizeof(shader.lightmapIndex));
 		Com_Memcpy(shader.styles, styles, sizeof(shader.styles));
 
-		CURL *curl_handle;
-		CURLcode res;
+		image = R_FindImageFile_NoLoad(name, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP );
+		if (!image) {
 
-		struct MemoryStruct chunk;
+			CURL *curl_handle;
+			CURLcode res;
 
-		chunk.memory = (byte *)malloc(1);
-		chunk.size = 0;
+			struct MemoryStruct chunk;
 
-		curl_global_init(CURL_GLOBAL_ALL);
+			chunk.memory = (byte *)malloc(1);
+			chunk.size = 0;
 
-		curl_handle = curl_easy_init();
+			curl_global_init(CURL_GLOBAL_ALL);
 
-		curl_easy_setopt(curl_handle, CURLOPT_URL, name + 1);
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
-		curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+			curl_handle = curl_easy_init();
 
-		res = curl_easy_perform(curl_handle);
+			curl_easy_setopt(curl_handle, CURLOPT_URL, name + 1);
+			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
+			curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+			curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
 
-		if(res != CURLE_OK) {
+			res = curl_easy_perform(curl_handle);
+			long http_code = 0;
+			curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, &http_code);
+
+			if(res != CURLE_OK || http_code != 200) {
+				Com_Printf("CURL could not find an image at URL: \"%s\".\n", name + 1);
+				curl_easy_cleanup(curl_handle);
+				free(chunk.memory);
+				curl_global_cleanup();
+				shader.defaultShader = true;
+				return FinishShader();
+			}
+
+			image = R_LoadImageMemory(name, chunk.memory, chunk.size, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP);
+
 			curl_easy_cleanup(curl_handle);
+
 			free(chunk.memory);
+
 			curl_global_cleanup();
-			shader.defaultShader = true;
-			return FinishShader();
+
 		}
-
-		image = R_FindImageMemory(name, chunk.memory, chunk.size, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP);
-
-		curl_easy_cleanup(curl_handle);
-
-		free(chunk.memory);
-
-		curl_global_cleanup();
 
 		if ( !image ) {
 			ri->Printf( PRINT_DEVELOPER, S_COLOR_RED "Couldn't download image for netshader %s\n", name );
@@ -3474,6 +3483,9 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 			stages[0].active = qtrue;
 			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
 			stages[0].stateBits = GLS_DEFAULT;
+			if (image->transparent) {
+				stages[0].stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+			}
 		} else if ( shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX ) {
 			// explicit colors at vertexes
 			stages[0].bundle[0].image = image;

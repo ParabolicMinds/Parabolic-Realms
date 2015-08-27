@@ -28,7 +28,6 @@ pushed_t	pushed[MAX_GENTITIES], *pushed_p;
 #define MOVER_CRUSHER		4
 #define MOVER_TOGGLE		8
 #define MOVER_LOCKED		16
-#define MOVER_GOODIE		32
 #define MOVER_PLAYER_USE	64
 #define MOVER_INACTIVE		128
 
@@ -211,6 +210,8 @@ qboolean	G_TryPushingEntity( gentity_t *check, gentity_t *pusher, vec3_t move, v
 		VectorAdd (check->client->ps.origin, move2, check->client->ps.origin);
 		// make sure the client's view rotates when on a rotating mover
 		check->client->ps.delta_angles[YAW] += ANGLE2SHORT(amove[YAW]);
+
+		//if(check->client->ps.pm_flags & PMF_JUMP_HELD) VectorCopy(pusher->s.pos.trDelta, check->client->ps.velocity);
 	}
 
 	// may have pushed them off an edge
@@ -327,8 +328,12 @@ qboolean G_MoverPush( gentity_t *pusher, vec3_t move, vec3_t amove, gentity_t **
 		check = &g_entities[ entityList[ e ] ];
 
 		// only push items and players
-		if ( /*check->s.eType != ET_ITEM &&*/ check->s.eType != ET_PLAYER && check->s.eType != ET_NPC && !check->physicsObject ) {
+		if ( /*check->s.eType != ET_ITEM &&*/ check->s.eType != ET_PLAYER && check->s.eType != ET_NPC && check->s.eType != ET_BODY && !check->physicsObject ) {
 			continue;
+		}
+
+		if (check->flags & FL_UNSTOPPABLE) {
+			return qfalse;
 		}
 
 		// if the entity is standing on the pusher, it will definitely be moved
@@ -443,7 +448,7 @@ void G_MoverTeam( gentity_t *ent ) {
 		if ( !VectorCompare( move, vec3_origin )
 			|| !VectorCompare( amove, vec3_origin ) )
 		{//actually moved
-			if ( !G_MoverPush( part, move, amove, &obstacle ) ) {
+			if ( !G_MoverPush( part, move, amove, &obstacle ) && !(ent->flags & FL_UNSTOPPABLE) ) {
 				break;	// move was blocked
 			}
 		}
@@ -948,6 +953,10 @@ void InitMover( gentity_t *ent )
 	float		light;
 	vec3_t		color;
 	qboolean	lightSet, colorSet;
+
+	qboolean unstoppable;
+	G_SpawnBoolean("unstoppable", "0", &unstoppable);
+	if (unstoppable) ent->flags |= FL_UNSTOPPABLE;
 
 	// if the "model2" key is set, use a seperate model
 	// for drawing, but clip against the brushes

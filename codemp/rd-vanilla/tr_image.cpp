@@ -552,15 +552,10 @@ Upload32
 
 ===============
 */
-static void Upload32( unsigned *data,
-						 GLenum format,
-						 qboolean mipmap,
-						 qboolean picmip,
-						 qboolean isLightmap,
-						 qboolean allowTC,
-						 int *pformat,
-						 word *pUploadWidth, word *pUploadHeight, bool bRectangle = false )
+static void Upload32( unsigned *data, GLenum format, image_t * img, qboolean picmip, qboolean isLightmap, qboolean allowTC, bool bRectangle)
 {
+	img->transparent = false;
+
 	GLuint uiTarget = GL_TEXTURE_2D;
 	if ( bRectangle )
 	{
@@ -573,8 +568,8 @@ static void Upload32( unsigned *data,
 		int			i, c;
 		byte		*scan;
 		float		rMax = 0, gMax = 0, bMax = 0;
-		int			width = *pUploadWidth;
-		int			height = *pUploadHeight;
+		int			width = img->width;
+		int			height = img->height;
 
 		//
 		// perform optional picmip operation
@@ -637,15 +632,15 @@ static void Upload32( unsigned *data,
 		{
 			if ( glConfig.textureCompression == TC_S3TC && allowTC )
 			{
-				*pformat = GL_RGB4_S3TC;
+				img->internalFormat = GL_RGB4_S3TC;
 			}
 			else if ( glConfig.textureCompression == TC_S3TC_DXT && allowTC )
 			{	// Compress purely color - no alpha
 				if ( r_texturebits->integer == 16 ) {
-					*pformat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;	//this format cuts to 16 bit
+					img->internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;	//this format cuts to 16 bit
 				}
 				else {//if we aren't using 16 bit then, use 32 bit compression
-					*pformat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+					img->internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 				}
 			}
 			else if ( isLightmap && r_texturebitslm->integer > 0 )
@@ -653,49 +648,50 @@ static void Upload32( unsigned *data,
 				int lmBits = r_texturebitslm->integer & 0x30; // 16 or 32
 				// Allow different bit depth when we are a lightmap
 				if ( lmBits == 16 )
-					*pformat = GL_RGB5;
+					img->internalFormat = GL_RGB5;
 				else
-					*pformat = GL_RGB8;
+					img->internalFormat = GL_RGB8;
 			}
 			else if ( r_texturebits->integer == 16 )
 			{
-				*pformat = GL_RGB5;
+				img->internalFormat = GL_RGB5;
 			}
 			else if ( r_texturebits->integer == 32 )
 			{
-				*pformat = GL_RGB8;
+				img->internalFormat = GL_RGB8;
 			}
 			else
 			{
-				*pformat = 3;
+				img->internalFormat = 3;
 			}
 		}
 		else if ( samples == 4 )
 		{
+			img->transparent = true;
 			if ( glConfig.textureCompression == TC_S3TC_DXT && allowTC)
 			{	// Compress both alpha and color
-				*pformat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+				img->internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 			}
 			else if ( r_texturebits->integer == 16 )
 			{
-				*pformat = GL_RGBA4;
+				img->internalFormat = GL_RGBA4;
 			}
 			else if ( r_texturebits->integer == 32 )
 			{
-				*pformat = GL_RGBA8;
+				img->internalFormat = GL_RGBA8;
 			}
 			else
 			{
-				*pformat = 4;
+				img->internalFormat = 4;
 			}
 		}
 
-		*pUploadWidth = width;
-		*pUploadHeight = height;
+		img->width = width;
+		img->height = height;
 
-		qglTexImage2D( uiTarget, 0, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+		qglTexImage2D( uiTarget, 0, img->internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
 
-		if (mipmap) {
+		if (img->mipmap) {
 			R_LightScaleTexture (data, width, height, qfalse);
 			qglGenerateMipmap ( uiTarget );
 		}
@@ -704,7 +700,7 @@ static void Upload32( unsigned *data,
 	{
 	}
 
-	if (mipmap)
+	if (img->mipmap)
 	{
 		qglTexParameterf(uiTarget, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		qglTexParameterf(uiTarget, GL_TEXTURE_MAG_FILTER, gl_filter_max);
@@ -880,7 +876,7 @@ qboolean RE_RegisterImages_LevelLoadEnd(void)
 //
 // This is called by both R_FindImageFile and anything that creates default images...
 //
-static image_t *R_FindImageFile_NoLoad(const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode )
+image_t *R_FindImageFile_NoLoad(const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode )
 {
 	if (!name) {
 		return NULL;
@@ -990,14 +986,7 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 		GL_Bind(image);
 	}
 
-	Upload32( (unsigned *)pic,	format,
-								(qboolean)image->mipmap,
-								allowPicmip,
-								isLightmap,
-								allowTC,
-								&image->internalFormat,
-								&image->width,
-								&image->height, bRectangle );
+	Upload32( (unsigned *)pic, format, image, allowPicmip, isLightmap, allowTC, bRectangle);
 
 	qglTexParameterf( uiTarget, GL_TEXTURE_WRAP_S, glWrapClampMode );
 	qglTexParameterf( uiTarget, GL_TEXTURE_WRAP_T, glWrapClampMode );
@@ -1070,7 +1059,7 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	return image;
 }
 
-image_t	*R_FindImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode ) {
+image_t	*R_LoadImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode ) {
 	image_t	*image;
 	int		width, height;
 	byte	*pic;
@@ -1080,16 +1069,16 @@ image_t	*R_FindImageMemory( const char *name, byte * buf, size_t bufflen, qboole
 		return NULL;
 	}
 
+	image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
+	if (image) {
+		return image;
+	}
+
 	// need to do this here as well as in R_CreateImage, or R_FindImageFile_NoLoad() may complain about
 	//	different clamp parms used...
 	//
 	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP) {
 		glWrapClampMode = GL_CLAMP_TO_EDGE;
-	}
-
-	image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
-	if (image) {
-		return image;
 	}
 
 	//

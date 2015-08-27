@@ -3430,6 +3430,14 @@ void Cmd_PSE_Purge(gentity_t *ent) {
 	G_PSE_PurgeManifests();
 }
 
+void Cmd_Unstoppable(gentity_t * ent) {
+	if (ent->flags & FL_UNSTOPPABLE) {
+		ent->flags &= ~FL_UNSTOPPABLE;
+	} else {
+		ent->flags |= FL_UNSTOPPABLE;
+	}
+}
+
 /* This array MUST be sorted correctly by alphabetical name field */
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
@@ -3472,6 +3480,7 @@ command_t commands[] = {
 	{ "tell",				Cmd_Tell_f,					0 },
 	{ "thedestroyer",		Cmd_TheDestroyer_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "t_use",				Cmd_TargetUse_f,			CMD_CHEAT|CMD_ALIVE },
+	{ "unstoppable",		Cmd_Unstoppable,			CMD_CHEAT|CMD_ALIVE },
 	{ "voice_cmd",			Cmd_VoiceCommand_f,			CMD_NOINTERMISSION },
 	{ "vote",				Cmd_Vote_f,					CMD_NOINTERMISSION },
 	{ "where",				Cmd_Where_f,				CMD_NOINTERMISSION },

@@ -100,6 +100,8 @@ typedef struct image_s {
 
 	short		iLastLevelUsedOn;
 
+	bool		transparent;
+
 } image_t;
 
 //===============================================================================
@@ -1322,7 +1324,7 @@ model_t		*R_AllocModel( void );
 void    	R_Init( void );
 
 image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
-image_t		*R_FindImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
+image_t		*R_LoadImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
 
 image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, GLenum format, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int wrapClampMode, bool bRectangle = false );
 
@@ -1847,3 +1849,5 @@ void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input);
 extern refimport_t *ri;
 
 qboolean ShaderHashTableExists(void);
+
+image_t *R_FindImageFile_NoLoad(const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );

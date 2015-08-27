@@ -294,12 +294,13 @@ int BodyRemovalPadTime( gentity_t *ent )
 		// never go away
 	//	time = Q3_INFINITE;
 		// for now I'm making default 10000
-		time = 10000;
+		time = 10000 * PCVAR_G_BODYTIMEMULT.value;
 		break;
 
 	}
 
 
+	if (time < 0) time = Q3_INFINITE;
 	return time;
 }
 

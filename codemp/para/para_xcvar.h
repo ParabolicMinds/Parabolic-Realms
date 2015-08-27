@@ -32,6 +32,7 @@
 #endif
 
 #if defined(_GAME) //Game cvars (g_)
+XCVAR_DEF( PCVAR_G_BODYTIMEMULT,		"1",				NULL,										CVAR_ARCHIVE,				qtrue )
 XCVAR_DEF( PCVAR_G_GOLF,				"0",				G_PCVAR_GOLF_Switchfunc,					CVAR_ARCHIVE,				qtrue )
 #endif
 

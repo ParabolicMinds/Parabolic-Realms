@@ -28,7 +28,7 @@ extern vec3_t gPainPoint;
 
 #define SECURITY_LOG "security.log"
 
-#define BODY_QUEUE_SIZE		8
+#define BODY_QUEUE_SIZE		32
 
 #ifndef INFINITE
 #define INFINITE			1000000
@@ -63,6 +63,7 @@ extern vec3_t gPainPoint;
 #define	FL_DONT_SHOOT			0x00040000
 #define FL_SHIELDED				0x00080000
 #define FL_UNDYING				0x00100000	// takes damage down to 1, but never dies
+#define FL_UNSTOPPABLE			0x00200000
 
 //ex-eFlags -rww
 #define	FL_BOUNCE				0x00100000		// for missiles

@@ -109,14 +109,12 @@ void png_print_warning ( png_structp png_ptr, png_const_charp warning )
 	ri->Printf (PRINT_WARNING, "%s\n", warning);
 }
 
-bool IsPowerOfTwo ( int i ) { return (i & (i - 1)) == 0; }
-
 struct PNGFileReader
 {
-	PNGFileReader ( char *buf ) : buf(buf), offset(0), png_ptr(NULL), info_ptr(NULL) {}
+	PNGFileReader ( char *buf, bool fbuf = true ) : buf(buf), fbuf(fbuf), offset(0), png_ptr(NULL), info_ptr(NULL) {}
 	~PNGFileReader()
 	{
-		ri->FS_FreeFile (buf);
+		if (fbuf) ri->FS_FreeFile (buf);
 
 		if ( info_ptr != NULL )
 		{
@@ -179,14 +177,6 @@ struct PNGFileReader
 		int colortype;
 
 		png_get_IHDR (png_ptr, info_ptr, &width_, &height_, &depth, &colortype, NULL, NULL, NULL);
-
-		// While modern OpenGL can handle non-PoT textures, it's faster to handle only PoT
-		// so that the graphics driver doesn't have to fiddle about with the texture when uploading.
-		if ( !IsPowerOfTwo (width_) || !IsPowerOfTwo (height_) )
-		{
-			ri->Printf (PRINT_ERROR, "Width or height is not a power-of-two.\n");
-			return 0;
-		}
 
 		// This function is equivalent to using what used to be LoadPNG32. LoadPNG8 also existed,
 		// but this only seemed to be used by the RMG system which does not work in JKA. If this
@@ -262,6 +252,7 @@ struct PNGFileReader
 
 private:
 	char *buf;
+	bool fbuf;
 	size_t offset;
 	png_structp png_ptr;
 	png_infop info_ptr;
@@ -283,12 +274,12 @@ void LoadPNG ( const char *filename, byte **data, int *width, int *height )
 		return;
 	}
 
-	PNGFileReader reader (buf);
+	PNGFileReader reader (buf, true);
 	reader.Read (data, width, height);
 }
 
 void LoadPNG_M ( byte * buf, size_t bufflen, byte **data, int *width, int *height )
 {
-	PNGFileReader reader ((char *)buf);
+	PNGFileReader reader ((char *)buf, false);
 	reader.Read (data, width, height);
 }

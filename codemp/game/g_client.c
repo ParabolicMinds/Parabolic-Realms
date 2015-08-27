@@ -1004,7 +1004,7 @@ After sitting around for five seconds, fall into the ground and disappear
 =============
 */
 void BodySink( gentity_t *ent ) {
-	if ( level.time - ent->timestamp > BODY_SINK_TIME + 2500 ) {
+	if ( level.time - ent->timestamp > (BODY_SINK_TIME * PCVAR_G_BODYTIMEMULT.value) + 2500 ) {
 		// the body ques are never actually freed, they are just unlinked
 		trap->UnlinkEntity( (sharedEntity_t *)ent );
 		ent->physicsObject = qfalse;
@@ -1119,8 +1119,13 @@ static qboolean CopyToBodyQue( gentity_t *ent ) {
 	body->r.contents = CONTENTS_CORPSE;
 	body->r.ownerNum = ent->s.number;
 
-	body->nextthink = level.time + BODY_SINK_TIME;
-	body->think = BodySink;
+	if (PCVAR_G_BODYTIMEMULT.value >= 0) {
+		body->nextthink = level.time + (BODY_SINK_TIME * PCVAR_G_BODYTIMEMULT.value);
+		body->think = BodySink;
+	} else {
+		body->nextthink = 0;
+		body->think = NULL;
+	}
 
 	body->die = body_die;
 
