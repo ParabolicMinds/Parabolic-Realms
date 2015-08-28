@@ -16,7 +16,6 @@ set(MPVanillaRendererIncludeDirectories
 	)
 
 set(MPVanillaRendererFiles
-#	"${MPDir}/rd-vanilla/glext.h"
 	"${MPDir}/rd-vanilla/qgl.h"
 	"${MPDir}/rd-vanilla/G2_API.cpp"
 	"${MPDir}/rd-vanilla/G2_bolts.cpp"
@@ -53,6 +52,8 @@ set(MPVanillaRendererFiles
 	"${MPDir}/rd-vanilla/tr_world.cpp"
 	"${MPDir}/rd-vanilla/tr_WorldEffects.cpp"
 	"${MPDir}/rd-vanilla/tr_WorldEffects.h"
+	"${MPDir}/rd-vanilla/tr_paraload.cpp"
+	"${MPDir}/rd-vanilla/tr_paraload.hpp"
 	)
 source_group("renderer" FILES ${MPVanillaRendererFiles})
 

@@ -1809,6 +1809,63 @@ Ghoul2 Insert End
 
 /*
 ==================
+CG_Spray
+==================
+*/
+
+static void CG_Spray( centity_t *cent ) {
+	refEntity_t			ent;
+	entityState_t		*s1;
+
+	memset (&ent, 0, sizeof(ent));
+
+	ent.shaderRGBA[0] = cent->currentState.customRGBA[0];
+	ent.shaderRGBA[1] = cent->currentState.customRGBA[1];
+	ent.shaderRGBA[2] = cent->currentState.customRGBA[2];
+	ent.shaderRGBA[3] = cent->currentState.customRGBA[3];
+
+	s1 = &cent->currentState;
+
+	// if set to invisible, skip
+	if (!s1->modelindex || ( s1->eFlags & EF_NODRAW )) return;
+
+	// set frame
+	if ( s1->eFlags & EF_SHADER_ANIM ) {
+		// Deliberately setting it up so that shader anim will completely override any kind of model animation frame setting.
+		ent.renderfx|=RF_SETANIMINDEX;
+		ent.skinNum = s1->frame;
+	} else {
+		ent.frame = s1->frame;
+	}
+	ent.oldframe = ent.frame;
+	ent.backlerp = 0;
+
+	VectorCopy( cent->lerpOrigin, ent.origin);
+	VectorCopy( cent->lerpOrigin, ent.oldorigin);
+
+	ent.hModel = cgs.gameModels[s1->modelindex];
+
+	// convert angles to axis
+	AnglesToAxis( cent->lerpAngles, ent.axis );
+
+	if (cent->currentState.iModelScale) { //if the server says we have a custom scale then set it now.
+		cent->modelScale[0] = cent->modelScale[1] = cent->modelScale[2] = cent->currentState.iModelScale/100.0f;
+		VectorCopy(cent->modelScale, ent.modelScale);
+		ScaleModelAxis(&ent);
+	} else {
+		VectorClear(cent->modelScale);
+	}
+
+	char const * spraytex = CG_ConfigString(CS_PLAYERSPRAYS + cent->currentState.owner);
+	if (strlen(spraytex) > 1) {
+		ent.customShader = trap->R_RegisterShaderNoLightmaps(spraytex);
+	}
+
+	trap->R_AddRefEntityToScene (&ent);
+}
+
+/*
+==================
 CG_Speaker
 
 Speaker entities can automatically play sounds
@@ -3325,6 +3382,9 @@ Ghoul2 Insert End
 	case ET_PUSH_TRIGGER:
 	case ET_TELEPORT_TRIGGER:
 	case ET_TERRAIN:
+		break;
+	case ET_SPRAY:
+		CG_Spray( cent );
 		break;
 	case ET_GENERAL:
 		CG_General( cent );

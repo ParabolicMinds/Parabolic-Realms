@@ -3358,37 +3358,10 @@ most world construction surfaces.
 ===============
 */
 
-#include <curl/curl.h>
-
-struct MemoryStruct {
-  byte * memory;
-  size_t size;
-};
-
-static size_t
-WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
-{
-  size_t realsize = size * nmemb;
-  struct MemoryStruct *mem = (struct MemoryStruct *)userp;
-
-  mem->memory = (byte *)realloc((void *)mem->memory, mem->size + realsize + 1);
-  if(mem->memory == NULL) {
-	/* out of memory! */
-	printf("not enough memory (realloc returned NULL)\n");
-	return 0;
-  }
-
-  memcpy(&(mem->memory[mem->size]), contents, realsize);
-  mem->size += realsize;
-  mem->memory[mem->size] = 0;
-
-  return realsize;
-}
+#include "tr_paraload.hpp"
 
 shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage )
 {
-	char		strippedName[MAX_QPATH];
-	char		fileName[MAX_QPATH];
 	int			hash;
 	const char	*shaderText;
 	image_t		*image = NULL;
@@ -3415,66 +3388,24 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 
 	if (name[0] == '@') {
 
-		hash = generateHashValue(strippedName, FILE_HASH_SIZE);
+		hash = generateHashValue(name, FILE_HASH_SIZE);
 		for (sh = hashTable[hash]; sh; sh = sh->next) {
-			if (IsShader(sh, strippedName, lightmapIndex, styles)) {
+			if (IsShader(sh, name, lightmapIndex, styles)) {
 				return sh;
 			}
 		}
 
 		ClearGlobalShader();
-		Q_strncpyz(shader.name, strippedName, sizeof(shader.name));
+		Q_strncpyz(shader.name, name, sizeof(shader.name));
 		Com_Memcpy(shader.lightmapIndex, lightmapIndex, sizeof(shader.lightmapIndex));
 		Com_Memcpy(shader.styles, styles, sizeof(shader.styles));
 
 		image = R_FindImageFile_NoLoad(name, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP );
 		if (!image) {
-
-			CURL *curl_handle;
-			CURLcode res;
-
-			struct MemoryStruct chunk;
-
-			chunk.memory = (byte *)malloc(1);
-			chunk.size = 0;
-
-			curl_global_init(CURL_GLOBAL_ALL);
-
-			curl_handle = curl_easy_init();
-
-			curl_easy_setopt(curl_handle, CURLOPT_URL, name + 1);
-			curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-			curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
-			curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
-			curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
-
-			res = curl_easy_perform(curl_handle);
-			long http_code = 0;
-			curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, &http_code);
-
-			if(res != CURLE_OK || http_code != 200) {
-				Com_Printf("CURL could not find an image at URL: \"%s\".\n", name + 1);
-				curl_easy_cleanup(curl_handle);
-				free(chunk.memory);
-				curl_global_cleanup();
-				shader.defaultShader = true;
-				return FinishShader();
-			}
-
-			image = R_LoadImageMemory(name, chunk.memory, chunk.size, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP);
-
-			curl_easy_cleanup(curl_handle);
-
-			free(chunk.memory);
-
-			curl_global_cleanup();
-
-		}
-
-		if ( !image ) {
-			ri->Printf( PRINT_DEVELOPER, S_COLOR_RED "Couldn't download image for netshader %s\n", name );
 			shader.defaultShader = true;
-			return FinishShader();
+			sh = FinishShader();
+			R_ParallelDownloadNetTexture(name, sh);
+			return sh;
 		}
 
 		if ( shader.lightmapIndex[0] == LIGHTMAP_NONE ) {
@@ -3531,6 +3462,9 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 		return FinishShader();
 
 	} else {
+
+		char		strippedName[MAX_QPATH];
+		char		fileName[MAX_QPATH];
 
 		COM_StripExtension( name, strippedName, sizeof( strippedName ) );
 
@@ -3837,6 +3771,27 @@ qhandle_t RE_RegisterShader( const char *name ) {
 	return sh->index;
 }
 
+qhandle_t RE_RegisterShaderNoLightmaps( const char *name ) {
+	shader_t	*sh;
+
+	if ( strlen( name ) >= MAX_QPATH ) {
+		ri->Printf( PRINT_ALL, "Shader name exceeds MAX_QPATH\n" );
+		return 0;
+	}
+
+	sh = R_FindShader( name, lightmapsNone, stylesDefault, qtrue );
+
+	// we want to return 0 if the shader failed to
+	// load for some reason, but R_FindShader should
+	// still keep a name allocated for it, so if
+	// something calls RE_RegisterShader again with
+	// the same name, we don't try looking for it again
+	if ( sh->defaultShader ) {
+		return 0;
+	}
+
+	return sh->index;
+}
 
 /*
 ====================

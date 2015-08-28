@@ -5283,11 +5283,11 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 
 				if (!targ->client->ps.powerups[PW_FORCE_BOON])
 				{
-					targ->client->ps.fd.forcePower -= maxtake*famt;
+					if (!PCVAR_BG_INFFORCE.integer) targ->client->ps.fd.forcePower -= maxtake*famt;
 				}
 				else
 				{
-					targ->client->ps.fd.forcePower -= (maxtake*famt)/2;
+					if (!PCVAR_BG_INFFORCE.integer) targ->client->ps.fd.forcePower -= (maxtake*famt)/2;
 				}
 				subamt = (maxtake*hamt)+(take-maxtake);
 				if (targ->client->ps.fd.forcePower < 0)

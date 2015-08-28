@@ -99,3 +99,6 @@ void PM_SetForceJumpZStart(float value);
 
 void BG_CycleInven(playerState_t *ps, int direction);
 
+#define XCVAR_PROTO
+#include "para/para_xcvar.h"
+#undef XCVAR_PROTO

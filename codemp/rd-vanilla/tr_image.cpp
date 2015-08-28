@@ -104,6 +104,11 @@ static char *GenerateImageMappingName( const char *name )
 	int		i=0;
 	char	letter;
 
+	if (name[0] == '@') {
+		strcpy(sName, name);
+		return &sName[0];
+	}
+
 	while (name[i] != '\0' && i<MAX_QPATH-1)
 	{
 		letter = tolower((unsigned char)name[i]);

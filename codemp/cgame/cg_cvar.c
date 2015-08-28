@@ -30,6 +30,10 @@ static void CG_TeamOverlayChange( void ) {
 		trap->Cvar_Set( "teamoverlay", "0" );
 }
 
+static void CG_PCVAR_SPRAYSHADER_Setfunc(void) {
+	trap->SendConsoleCommand(va("setspray \"%s\"", PCVAR_CG_SPRAYSHADER.string));
+}
+
 
 //
 // Cvar table

@@ -3401,7 +3401,8 @@ void Cmd_Spray(gentity_t *ent) {
 	VectorCopy(pos.endpos, pb->s.pos.trBase);
 	VectorCopy(ang, pb->s.angles);
 	VectorCopy(ang, pb->s.apos.trBase);
-	pb->s.eType = ET_GENERAL;
+	pb->s.eType = ET_SPRAY;
+	pb->s.owner = ent->playerState->clientNum;
 	pb->s.modelindex = G_ModelIndex("models/spray.obj");
 	pb->r.svFlags |= SVF_BROADCAST;
 	trap->LinkEntity((sharedEntity_t *) pb);
@@ -3438,6 +3439,14 @@ void Cmd_Unstoppable(gentity_t * ent) {
 	}
 }
 
+void Cmd_SetSpray_f(gentity_t * ent) {
+	if (!ent->client) return;
+	if (trap->Argc() < 2) return;
+	char path [MAX_QPATH];
+	trap->Argv(1, path, MAX_QPATH);
+	trap->SetConfigstring(CS_PLAYERSPRAYS + ent->playerState->clientNum, path);
+}
+
 /* This array MUST be sorted correctly by alphabetical name field */
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
@@ -3471,6 +3480,7 @@ command_t commands[] = {
 	{ "say",				Cmd_Say_f,					0 },
 	{ "say_team",			Cmd_SayTeam_f,				0 },
 	{ "score",				Cmd_Score_f,				0 },
+	{ "setspray",			Cmd_SetSpray_f,				0 },
 	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
 	{ "siegeclass",			Cmd_SiegeClass_f,			CMD_NOINTERMISSION },
 	{ "svspray",			Cmd_Spray,					CMD_ALIVE|CMD_NOINTERMISSION },

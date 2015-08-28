@@ -563,6 +563,7 @@ typedef struct cgameImport_s {
 	qhandle_t		(*R_RegisterModel)						( const char *name );
 	qhandle_t		(*R_RegisterShader)						( const char *name );
 	qhandle_t		(*R_RegisterShaderNoMip)				( const char *name );
+	qhandle_t		(*R_RegisterShaderNoLightmaps)			( const char *name );
 	qhandle_t		(*R_RegisterSkin)						( const char *name );
 	void			(*R_RemapShader)						( const char *oldShader, const char *newShader, const char *offsetTime );
 	void			(*R_RenderScene)						( const refdef_t *fd );

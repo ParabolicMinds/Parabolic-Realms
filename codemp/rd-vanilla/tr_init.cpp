@@ -1904,6 +1904,7 @@ Q_EXPORT refexport_t* QDECL GetRefAPI( int apiVersion, refimport_t *rimp ) {
 	re.RegisterServerSkin					= RE_RegisterServerSkin;
 	re.RegisterShader						= RE_RegisterShader;
 	re.RegisterShaderNoMip					= RE_RegisterShaderNoMip;
+	re.RegisterShaderNoLightmaps			= RE_RegisterShaderNoLightmaps;
 	re.ShaderNameFromIndex					= RE_ShaderNameFromIndex;
 	re.LoadWorld							= RE_LoadWorldMap;
 	re.SetWorldVisData						= RE_SetWorldVisData;

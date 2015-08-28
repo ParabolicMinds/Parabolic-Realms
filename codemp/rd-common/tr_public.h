@@ -34,6 +34,7 @@ typedef struct refexport_s {
 	qhandle_t			(*RegisterServerSkin)					( const char *name );
 	qhandle_t			(*RegisterShader)						( const char *name );
 	qhandle_t			(*RegisterShaderNoMip)					( const char *name );
+	qhandle_t			(*RegisterShaderNoLightmaps)			( const char *name );
 	const char *		(*ShaderNameFromIndex)					( int index );
 	void				(*LoadWorld)							( const char *name );
 

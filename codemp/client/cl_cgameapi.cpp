@@ -1723,6 +1723,7 @@ void CL_BindCGame( void ) {
 		cgi.R_RegisterModel						= re->RegisterModel;
 		cgi.R_RegisterShader					= re->RegisterShader;
 		cgi.R_RegisterShaderNoMip				= re->RegisterShaderNoMip;
+		cgi.R_RegisterShaderNoLightmaps			= re->RegisterShaderNoLightmaps;
 		cgi.R_RegisterSkin						= re->RegisterSkin;
 		cgi.R_RemapShader						= re->RemapShader;
 		cgi.R_RenderScene						= re->RenderScene;

@@ -82,7 +82,7 @@ void BG_ForcePowerDrain( playerState_t *ps, forcePowers_t forcePower, int overri
 			}
 		}
 
-		ps->fd.forcePower -= jumpDrain;
+		if (!PCVAR_BG_INFFORCE.integer) ps->fd.forcePower -= jumpDrain;
 		if ( ps->fd.forcePower < 0 )
 		{
 			ps->fd.forcePower = 0;
@@ -91,7 +91,7 @@ void BG_ForcePowerDrain( playerState_t *ps, forcePowers_t forcePower, int overri
 		return;
 	}
 
-	ps->fd.forcePower -= drain;
+	if (!PCVAR_BG_INFFORCE.integer) ps->fd.forcePower -= drain;
 	if ( ps->fd.forcePower < 0 )
 	{
 		ps->fd.forcePower = 0;
@@ -2963,7 +2963,7 @@ void PM_WeaponLightsaber(void)
 				//This will get set to false again once the saber makes it back to its owner game-side
 				if (!pm->ps->saberInFlight)
 				{
-					pm->ps->fd.forcePower -= forcePowerNeeded[pm->ps->fd.forcePowerLevel[FP_SABERTHROW]][FP_SABERTHROW];
+					if (!PCVAR_BG_INFFORCE.integer) pm->ps->fd.forcePower -= forcePowerNeeded[pm->ps->fd.forcePowerLevel[FP_SABERTHROW]][FP_SABERTHROW];
 				}
 
 				pm->ps->saberInFlight = qtrue;

@@ -1945,7 +1945,7 @@ void ForceDrainDamage( gentity_t *self, gentity_t *traceEnt, vec3_t dir, vec3_t 
 				}
 				//G_Damage( traceEnt, self, self, dir, impactPoint, dmg, 0, MOD_FORCE_DARK );
 
-				if (dmg)
+				if (dmg && !PCVAR_BG_INFFORCE.integer)
 				{
 					traceEnt->client->ps.fd.forcePower -= (dmg);
 				}
