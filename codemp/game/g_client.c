@@ -2170,7 +2170,7 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	Q_strncpyz( forcePowers, Info_ValueForKey( userinfo, "forcepowers" ), sizeof( forcePowers ) );
 
 	// update our customRGBA for team colors.
-	if ( level.gametype >= GT_TEAM && level.gametype != GT_SIEGE && !g_jediVmerc.integer ) {
+	if ( level.gametype >= GT_TEAM && level.gametype != GT_SIEGE && level.gametype != GT_RPG && !g_jediVmerc.integer ) {
 		char skin[MAX_QPATH] = {0};
 		vec3_t colorOverride = {0.0f};
 
@@ -2182,7 +2182,7 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	}
 
 	// bots set their team a few frames later
-	if ( level.gametype >= GT_TEAM && g_entities[clientNum].r.svFlags & SVF_BOT ) {
+	if ( level.gametype >= GT_TEAM && level.gametype != GT_RPG && g_entities[clientNum].r.svFlags & SVF_BOT ) {
 		s = Info_ValueForKey( userinfo, "team" );
 		if ( !Q_stricmp( s, "red" ) || !Q_stricmp( s, "r" ) )
 			team = TEAM_RED;
@@ -3463,7 +3463,8 @@ void ClientSpawn(gentity_t *ent) {
 		{
 			if (client->ps.fd.forcePowerLevel[FP_SABER_OFFENSE])
 			{
-				client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_SABER );	//these are precached in g_items, ClearRegisteredItems()
+				client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_SABER );
+				client->ps.stats[STAT_WEAPONS] |= (1 << WP_MELEE);
 			}
 			else
 			{ //if you don't have saber attack rank then you don't get a saber
@@ -3611,6 +3612,17 @@ void ClientSpawn(gentity_t *ent) {
 		client->ps.stats[STAT_WEAPONS] = 0;
 		client->ps.stats[STAT_HOLDABLE_ITEMS] = 0;
 		client->ps.stats[STAT_HOLDABLE_ITEM] = 0;
+	}
+
+	if (level.gametype == GT_RPG) {
+		client->ps.stats[STAT_WEAPONS] = 0;
+		client->ps.stats[STAT_HOLDABLE_ITEMS] = 0;
+		client->ps.stats[STAT_HOLDABLE_ITEM] = 0;
+
+		client->ps.stats[STAT_WEAPONS] |= (1 << WP_SABER);
+		client->ps.stats[STAT_WEAPONS] |= (1 << WP_MELEE);
+		client->ps.stats[STAT_WEAPONS] |= (1 << WP_BRYAR_OLD);
+		client->ps.weapon = WP_MELEE;
 	}
 
 // nmckenzie: DESERT_SIEGE... or well, siege generally.  This was over-writing the max value, which was NOT good for siege.

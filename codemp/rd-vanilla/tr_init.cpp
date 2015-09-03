@@ -1640,6 +1640,7 @@ Ghoul2 Insert End
 		ri->Cmd_AddCommand( commands[i].cmd, commands[i].func );
 }
 
+#include "tr_paraload.hpp"
 
 /*
 ===============
@@ -1650,6 +1651,8 @@ extern void R_InitWorldEffects(void); //tr_WorldEffects.cpp
 void R_Init( void ) {
 	int i;
 	byte *ptr;
+
+	R_ParallelInitialize();
 
 //	ri->Printf( PRINT_ALL, "----- R_Init -----\n" );
 	// clear all our internal state

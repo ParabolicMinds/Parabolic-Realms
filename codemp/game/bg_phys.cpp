@@ -324,46 +324,48 @@ void BG_InitializeSimulationDynamics() {
 	gentity_t * gent = g_entities;
 	for (int g = 0; g < MAX_GENTITIES; g++, gent++) {
 		if (!gent->r.bmodel) continue;
-		 int * gbrushes = new int [cm_brushes];
-		 int * gpatches = new int [cm_patches];
-		 int gi = strtol(gent->model + 1, nullptr, 10);
-		 assert(gi > 0);
-		 int gbrushsize, gpatchsize;
-		 trap->CM_SubmodelIndicies(gi, gbrushes, gpatches, &gbrushsize, &gpatchsize);
-		 for (int i = 0; i < gbrushsize; i++) {
-			 if (!(trap->CM_BrushContentFlags(gbrushes[i]) & CONTENTS_SOLID)) continue;
-			 vec3_t points[BP_POINTS_SIZE];
-			 int num = trap->CM_CalculateHull(gbrushes[i], points, BP_POINTS_SIZE);
-			 bulletEntity2_t bent {B_CreateMapObject(points, num), gent};
-			 bent.bworld_enabled = true;
-			 VectorCopy(bent.gent->s.origin, bent.stored_pos);
-			 VectorCopy(bent.gent->s.angles, bent.stored_ang);
-			 bent.stored_contents = gent->r.contents;
-			 bent.stored_solid = gent->s.solid;
-			 bent.physobj->rigidBody->setCollisionFlags(bent.physobj->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
-			 bent.physobj->rigidBody->setActivationState(DISABLE_DEACTIVATION);
-			 map_dynamics.push_back(bent);
-		 }
-		 for (int i = 0; i < gpatchsize; i++) {
-			 if (!(trap->CM_PatchContentFlags(gpatches[i]) & CONTENTS_SOLID)) continue;
-			 vec3_t points[BP_POINTS_SIZE];
-			 int width, height;
-			 trap->CM_PatchMeshPoints(gpatches[i], points, BP_POINTS_SIZE, &width, &height);
-			 if (width * height < 4) continue;
-			 std::vector<bulletObject_t *> bobs = B_CreateMapPatchObjects(points, width, height);
-			 for (auto bob : bobs) {
-				 bulletEntity2_t bent {bob, gent};
-				 bent.bworld_enabled = true;
-				 VectorCopy(bent.gent->s.origin, bent.stored_pos);
-				 VectorCopy(bent.gent->s.angles, bent.stored_ang);
-				 bent.stored_contents = gent->r.contents;
-				 bent.stored_solid = gent->s.solid;
-				 bent.physobj->rigidBody->setCollisionFlags(bent.physobj->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
-				 bent.physobj->rigidBody->setActivationState(DISABLE_DEACTIVATION);
-				 map_dynamics.push_back(bent);
-			 }
-		 }
-		 delete [] gbrushes;
+		//if (!gent->model) continue;
+		//if (gent->model[0] == '*') continue;
+		int * gbrushes = new int [cm_brushes];
+		int * gpatches = new int [cm_patches];
+		int gi = strtol(gent->model + 1, nullptr, 10);
+		assert(gi > 0);
+		int gbrushsize, gpatchsize;
+		trap->CM_SubmodelIndicies(gi, gbrushes, gpatches, &gbrushsize, &gpatchsize);
+		for (int i = 0; i < gbrushsize; i++) {
+			if (!(trap->CM_BrushContentFlags(gbrushes[i]) & CONTENTS_SOLID)) continue;
+			vec3_t points[BP_POINTS_SIZE];
+			int num = trap->CM_CalculateHull(gbrushes[i], points, BP_POINTS_SIZE);
+			bulletEntity2_t bent {B_CreateMapObject(points, num), gent};
+			bent.bworld_enabled = true;
+			VectorCopy(bent.gent->s.origin, bent.stored_pos);
+			VectorCopy(bent.gent->s.angles, bent.stored_ang);
+			bent.stored_contents = gent->r.contents;
+			bent.stored_solid = gent->s.solid;
+			bent.physobj->rigidBody->setCollisionFlags(bent.physobj->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+			bent.physobj->rigidBody->setActivationState(DISABLE_DEACTIVATION);
+			map_dynamics.push_back(bent);
+		}
+		for (int i = 0; i < gpatchsize; i++) {
+			if (!(trap->CM_PatchContentFlags(gpatches[i]) & CONTENTS_SOLID)) continue;
+			vec3_t points[BP_POINTS_SIZE];
+			int width, height;
+			trap->CM_PatchMeshPoints(gpatches[i], points, BP_POINTS_SIZE, &width, &height);
+			if (width * height < 4) continue;
+			std::vector<bulletObject_t *> bobs = B_CreateMapPatchObjects(points, width, height);
+			for (auto bob : bobs) {
+				bulletEntity2_t bent {bob, gent};
+				bent.bworld_enabled = true;
+				VectorCopy(bent.gent->s.origin, bent.stored_pos);
+				VectorCopy(bent.gent->s.angles, bent.stored_ang);
+				bent.stored_contents = gent->r.contents;
+				bent.stored_solid = gent->s.solid;
+				bent.physobj->rigidBody->setCollisionFlags(bent.physobj->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+				bent.physobj->rigidBody->setActivationState(DISABLE_DEACTIVATION);
+				map_dynamics.push_back(bent);
+			}
+		}
+		delete [] gbrushes;
 	}
 }
 

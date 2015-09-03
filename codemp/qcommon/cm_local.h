@@ -141,6 +141,9 @@ extern	cvar_t		*cm_noCurves;
 extern	cvar_t		*cm_playerCurveClip;
 extern	cvar_t		*cm_extraVerbose;
 
+extern clipMap_t	SubBSP[MAX_SUB_BSP];
+extern int			NumSubBSP, TotalSubModels;
+
 // cm_test.c
 
 // Used for oriented capsule collision detection

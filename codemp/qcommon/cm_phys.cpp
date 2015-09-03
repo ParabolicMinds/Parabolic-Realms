@@ -20,6 +20,8 @@ static glm::vec3 CM_GetIntersectingPoint(cplane_t * a, cplane_t * b, cplane_t * 
 	return glm::inverse(sysmat) * glm::vec3(a->dist, b->dist, c->dist);
 }
 
+
+
 void CM_NumData(int * brushes, int * patches) {
 	*brushes = cmg.numBrushes;
 	*patches = cmg.numSurfaces;

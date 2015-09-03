@@ -373,6 +373,8 @@ struct gentity_s {
 	int			genericValue14;
 	int			genericValue15;
 
+	qboolean	sspawn_ent;
+
 	char		*soundSet;
 
 	qboolean	isSaberEntity;
@@ -1513,5 +1515,10 @@ void G_UpdateCvars( void );
 #include "para/pse_xincoming.h"
 #undef _XPSEGAMEEXPORTPROTO
 
-
 extern gameImport_t *trap;
+
+//some spawn funcs
+void G_SpawnTurret( vec3_t position );
+
+//fish
+void G_FishStartThink(gentity_t * fish);

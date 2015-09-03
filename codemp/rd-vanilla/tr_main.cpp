@@ -837,7 +837,7 @@ static qboolean SurfIsOffscreen( const drawSurf_t *drawSurf, vec4_t clipDest[128
 	R_DecomposeSort( drawSurf->sort, &entityNum, &shader, &fogNum, &dlighted );
 	RB_BeginSurface( shader, fogNum );
 	rb_surfaceTable[ *drawSurf->surface ]( drawSurf->surface );
-	assert( tess.numVertexes < 128 );
+	//assert( tess.numVertexes < 128 );
 	for ( i = 0; i < tess.numVertexes; i++ )
 	{
 		int j;
@@ -1357,6 +1357,7 @@ void R_DebugGraphics( void ) {
 	ri->CM_DrawDebugSurface( R_DebugPolygon );
 }
 
+#include "tr_paraload.hpp"
 
 /*
 ================
@@ -1382,6 +1383,8 @@ void R_RenderView (viewParms_t *parms) {
 	firstDrawSurf = tr.refdef.numDrawSurfs;
 
 	tr.viewCount++;
+
+	while(R_ParallelDownloadReady()) {}
 
 	// set viewParms.world
 	R_RotateForViewer ();

@@ -3447,6 +3447,10 @@ void Cmd_SetSpray_f(gentity_t * ent) {
 	trap->SetConfigstring(CS_PLAYERSPRAYS + ent->playerState->clientNum, path);
 }
 
+void Cms_SpecialSpawn_f(gentity_t * ent) {
+	G_SpawnTurret(ent->client->ps.origin);
+}
+
 /* This array MUST be sorted correctly by alphabetical name field */
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
@@ -3483,6 +3487,7 @@ command_t commands[] = {
 	{ "setspray",			Cmd_SetSpray_f,				0 },
 	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
 	{ "siegeclass",			Cmd_SiegeClass_f,			CMD_NOINTERMISSION },
+	{ "sspawn",				Cms_SpecialSpawn_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "svspray",			Cmd_Spray,					CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "team",				Cmd_Team_f,					CMD_NOINTERMISSION },
 //	{ "teamtask",			Cmd_TeamTask_f,				CMD_NOINTERMISSION },

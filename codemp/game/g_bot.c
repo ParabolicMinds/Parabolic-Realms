@@ -117,6 +117,7 @@ int G_GetMapTypeBits(char *type)
 			typeBits |= (1 << GT_FFA);
 			typeBits |= (1 << GT_TEAM);
 			typeBits |= (1 << GT_JEDIMASTER);
+			typeBits |= (1 << GT_RPG);
 		}
 		if( strstr( type, "holocron" ) ) {
 			typeBits |= (1 << GT_HOLOCRON);
@@ -142,9 +143,13 @@ int G_GetMapTypeBits(char *type)
 		if( strstr( type, "cty" ) ) {
 			typeBits |= (1 << GT_CTY);
 		}
+		if( strstr( type, "rpg" ) ) {
+			typeBits |= (1 << GT_RPG);
+		}
 	} else {
 		typeBits |= (1 << GT_FFA);
 		typeBits |= (1 << GT_JEDIMASTER);
+		typeBits |= (1 << GT_RPG);
 	}
 
 	return typeBits;
@@ -275,8 +280,8 @@ G_LoadArenas
 ===============
 */
 
-#define MAX_MAPS 256
-#define MAPSBUFSIZE (MAX_MAPS * 64)
+#define MAX_MAPS 1024
+#define MAPSBUFSIZE (MAX_MAPS * 128)
 
 void G_LoadArenas( void ) {
 #if 0
@@ -1196,7 +1201,7 @@ static void G_LoadBots( void ) {
 	vmCvar_t	botsFile;
 	int			numdirs;
 	char		filename[128];
-	char		dirlist[1024];
+	char		dirlist[256000];
 	char*		dirptr;
 	int			i;
 	int			dirlen;
@@ -1217,7 +1222,7 @@ static void G_LoadBots( void ) {
 	}
 
 	// get all bots from .bot files
-	numdirs = trap->FS_GetFileList("scripts", ".bot", dirlist, 1024 );
+	numdirs = trap->FS_GetFileList("scripts", ".bot", dirlist, 256000 );
 	dirptr  = dirlist;
 	for (i = 0; i < numdirs; i++, dirptr += dirlen+1) {
 		dirlen = strlen(dirptr);

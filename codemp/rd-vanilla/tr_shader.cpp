@@ -1396,6 +1396,24 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 
 				stage->rgbGen = CGEN_CONST;
 			}
+			else if ( !Q_stricmp( token, "rainbow" ) )
+			{
+				vec3_t	color;
+
+				VectorClear( color );
+
+				char * ext = COM_ParseExt(text, qfalse);
+				if (!ext) ri->Printf( PRINT_ALL, S_COLOR_YELLOW  "WARNING: missing parameters for rgbGen rainbow in shader '%s'\n", shader.name );
+				float shiftspeed = strtof(ext, NULL);
+				stage->constantColor[0] = 255;
+				stage->constantColor[1] = 0;
+				stage->constantColor[2] = 0;
+
+				stage->coShift = shiftspeed;
+				stage->coBank = 0.0f;
+
+				stage->rgbGen = CGEN_RAINBOW;
+			}
 			else if ( !Q_stricmp( token, "identity" ) )
 			{
 				stage->rgbGen = CGEN_IDENTITY;
@@ -3161,6 +3179,69 @@ static shader_t *FinishShader( void ) {
 	return GeneratePermanentShader();
 }
 
+void R_FinishFutureShader(shader_t * olds, image_t * image) {
+	olds->stages[0].bundle[0].image = image;
+	/*
+	olds->defaultShader = false;
+	Q_strncpyz(shader.name, olds->name, sizeof(shader.name));
+	Com_Memcpy(shader.lightmapIndex, lightmapsNone, sizeof(shader.lightmapIndex));
+	Com_Memcpy(shader.styles, stylesDefault, sizeof(shader.styles));
+	if ( shader.lightmapIndex[0] == LIGHTMAP_NONE ) {
+		// dynamic colors at vertexes
+		stages[0].bundle[0].image = image;
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
+		stages[0].stateBits = GLS_DEFAULT;
+		if (image->transparent) {
+			stages[0].stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+		}
+	} else if ( shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX ) {
+		// explicit colors at vertexes
+		stages[0].bundle[0].image = image;
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_EXACT_VERTEX;
+		stages[0].alphaGen = AGEN_SKIP;
+		stages[0].stateBits = GLS_DEFAULT;
+	} else if ( shader.lightmapIndex[0] == LIGHTMAP_2D ) {
+		// GUI elements
+		stages[0].bundle[0].image = image;
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_VERTEX;
+		stages[0].alphaGen = AGEN_VERTEX;
+		stages[0].stateBits = GLS_DEPTHTEST_DISABLE |
+			  GLS_SRCBLEND_SRC_ALPHA |
+			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+	} else if ( shader.lightmapIndex[0] == LIGHTMAP_WHITEIMAGE ) {
+		// fullbright level
+		stages[0].bundle[0].image = tr.whiteImage;
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
+		stages[0].stateBits = GLS_DEFAULT;
+
+		stages[1].bundle[0].image = image;
+		stages[1].active = qtrue;
+		stages[1].rgbGen = CGEN_IDENTITY;
+		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+	} else {
+		// two pass lightmap
+		stages[0].bundle[0].image = tr.lightmaps[shader.lightmapIndex[0]];
+		stages[0].bundle[0].isLightmap = qtrue;
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
+													// for identitylight
+		stages[0].stateBits = GLS_DEFAULT;
+
+		stages[1].bundle[0].image = image;
+		stages[1].active = qtrue;
+		stages[1].rgbGen = CGEN_IDENTITY;
+		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
+	}
+	shader_t * news = FinishShader();
+	*olds = *news;
+	strcpy(olds->name, news->name);
+	*/
+}
+
 //========================================================================================
 
 /*
@@ -3261,13 +3342,15 @@ inline qboolean IsShader(shader_t *sh, const char *name, const int *lightmapInde
 {
 	int	i;
 
-	if (Q_stricmp(sh->name, name))
-	{
+	if (sh->name[0] == '@' && name[0] == '@') {
+		return strcmp(sh->name, name) ? qfalse : qtrue;
+	} else if (sh->name[0] == '@' || name[0] == '@') {
+		return qfalse;
+	} else if (Q_stricmp(sh->name, name)) {
 		return qfalse;
 	}
 
-	if (!sh->defaultShader)
-	{
+	if (!sh->defaultShader) {
 		for(i=0;i<MAXLIGHTMAPS;i++)
 		{
 			if (sh->lightmapIndex[i] != lightmapIndex[i])
@@ -3400,66 +3483,28 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 		Com_Memcpy(shader.lightmapIndex, lightmapIndex, sizeof(shader.lightmapIndex));
 		Com_Memcpy(shader.styles, styles, sizeof(shader.styles));
 
+		stages[0].active = qtrue;
+		stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
+		stages[0].stateBits = GLS_DEFAULT;
+
 		image = R_FindImageFile_NoLoad(name, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP );
-		if (!image) {
-			shader.defaultShader = true;
+		if (image) {
+			stages[0].bundle[0].image = image;
+			if (image->transparent) {
+				stages[0].stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+			} else {
+				stages[0].stateBits = GLS_DEFAULT;
+			}
+			return FinishShader();
+		} else {
+			image = R_FindImageFile("textures/para/nettexload", qtrue, qtrue, qtrue, GL_REPEAT);
+			if (!image) image = tr.whiteImage;
+			stages[0].bundle[0].image = image;
+			stages[0].stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
 			sh = FinishShader();
 			R_ParallelDownloadNetTexture(name, sh);
 			return sh;
 		}
-
-		if ( shader.lightmapIndex[0] == LIGHTMAP_NONE ) {
-			// dynamic colors at vertexes
-			stages[0].bundle[0].image = image;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
-			stages[0].stateBits = GLS_DEFAULT;
-			if (image->transparent) {
-				stages[0].stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-			}
-		} else if ( shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX ) {
-			// explicit colors at vertexes
-			stages[0].bundle[0].image = image;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_EXACT_VERTEX;
-			stages[0].alphaGen = AGEN_SKIP;
-			stages[0].stateBits = GLS_DEFAULT;
-		} else if ( shader.lightmapIndex[0] == LIGHTMAP_2D ) {
-			// GUI elements
-			stages[0].bundle[0].image = image;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_VERTEX;
-			stages[0].alphaGen = AGEN_VERTEX;
-			stages[0].stateBits = GLS_DEPTHTEST_DISABLE |
-				  GLS_SRCBLEND_SRC_ALPHA |
-				  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-		} else if ( shader.lightmapIndex[0] == LIGHTMAP_WHITEIMAGE ) {
-			// fullbright level
-			stages[0].bundle[0].image = tr.whiteImage;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
-			stages[0].stateBits = GLS_DEFAULT;
-
-			stages[1].bundle[0].image = image;
-			stages[1].active = qtrue;
-			stages[1].rgbGen = CGEN_IDENTITY;
-			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-		} else {
-			// two pass lightmap
-			stages[0].bundle[0].image = tr.lightmaps[shader.lightmapIndex[0]];
-			stages[0].bundle[0].isLightmap = qtrue;
-			stages[0].active = qtrue;
-			stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
-														// for identitylight
-			stages[0].stateBits = GLS_DEFAULT;
-
-			stages[1].bundle[0].image = image;
-			stages[1].active = qtrue;
-			stages[1].rgbGen = CGEN_IDENTITY;
-			stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-		}
-
-		return FinishShader();
 
 	} else {
 
@@ -4021,7 +4066,7 @@ Finds and loads all .shader files, combining them into
 a single large text block that can be scanned for shader names
 =====================
 */
-#define	MAX_SHADER_FILES	4096
+#define	MAX_SHADER_FILES	25600
 static void ScanAndLoadShaderFiles( void )
 {
 	char **shaderFiles;
@@ -4045,6 +4090,7 @@ static void ScanAndLoadShaderFiles( void )
 	}
 
 	if ( numShaderFiles > MAX_SHADER_FILES ) {
+		Com_Printf("WARNING: More shader files than MAX_SHADER_FILES (%i)\n", int(MAX_SHADER_FILES));
 		numShaderFiles = MAX_SHADER_FILES;
 	}
 
@@ -4074,7 +4120,7 @@ static void ScanAndLoadShaderFiles( void )
 			Q_strncpyz(shaderName, token, sizeof(shaderName));
 			shaderLine = COM_GetCurrentParseLine();
 
-			if ( token[0] == '#' )
+			if ( token[0] == '#' || token[0] == '/' || token[0] == '\\' )
 			{
 				ri->Printf( PRINT_WARNING, "WARNING: Deprecated shader comment \"%s\" on line %d in file %s.  Ignoring line.\n",
 					shaderName, shaderLine, filename );

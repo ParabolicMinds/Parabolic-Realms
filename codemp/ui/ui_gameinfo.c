@@ -124,7 +124,7 @@ UI_LoadArenas
 ===============
 */
 
-#define MAPSBUFSIZE (MAX_MAPS * 64)
+#define MAPSBUFSIZE (MAX_MAPS * 128)
 void UI_LoadArenas( void ) {
 	int			numdirs;
 	char		filename[MAX_QPATH];
@@ -168,6 +168,7 @@ void UI_LoadArenas( void ) {
 				uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_FFA);
 				uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_TEAM);
 				uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_JEDIMASTER);
+				uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_RPG);
 			}
 			if( strstr( type, "holocron" ) ) {
 				uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_HOLOCRON);
@@ -193,9 +194,13 @@ void UI_LoadArenas( void ) {
 			if( strstr( type, "cty" ) ) {
 				uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_CTY);
 			}
+			if( strstr( type, "rpg" ) ) {
+				uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_RPG);
+			}
 		} else {
 			uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_FFA);
 			uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_JEDIMASTER);
+			uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << GT_RPG);
 		}
 
 		uiInfo.mapCount++;
@@ -265,7 +270,7 @@ void UI_LoadBots( void ) {
 	vmCvar_t	botsFile;
 	int			numdirs;
 	char		filename[128];
-	char		dirlist[1024];
+	char		dirlist[256000];
 	char*		dirptr;
 	int			i;
 	int			dirlen;
@@ -281,7 +286,7 @@ void UI_LoadBots( void ) {
 	}
 
 	// get all bots from .bot files
-	numdirs = trap->FS_GetFileList("scripts", ".bot", dirlist, 1024 );
+	numdirs = trap->FS_GetFileList("scripts", ".bot", dirlist, 256000 );
 	dirptr  = dirlist;
 	for (i = 0; i < numdirs; i++, dirptr += dirlen+1) {
 		dirlen = strlen(dirptr);

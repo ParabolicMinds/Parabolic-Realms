@@ -2240,7 +2240,7 @@ void WP_SaberLoadParms( void )
 {
 	int				len, totallen, saberExtFNLen, fileCnt, i;
 	char			*holdChar, *marker;
-	char			saberExtensionListBuf[2048];			//	The list of file names read in
+	char			saberExtensionListBuf[256000];			//	The list of file names read in
 	fileHandle_t	f;
 
 	len = 0;

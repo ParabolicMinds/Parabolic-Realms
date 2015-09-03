@@ -1793,13 +1793,17 @@ void NPC_ShySpawn( gentity_t *ent )
 	ent->nextthink = level.time + SHY_THINK_TIME;
 	ent->think = NPC_ShySpawn;
 
-	//rwwFIXMEFIXME: Care about other clients not just 0?
-	if ( DistanceSquared( g_entities[0].r.currentOrigin, ent->r.currentOrigin ) <= SHY_SPAWN_DISTANCE_SQR )
-		return;
-
-	if ( (InFOV( ent, &g_entities[0], 80, 64 )) ) // FIXME: hardcoded fov
-		if ( (NPC_ClearLOS2( &g_entities[0], ent->r.currentOrigin )) )
+	gentity_t * plyr = 0;
+	int i;
+	for (i = 0; i < MAX_CLIENTS; i++) {
+		plyr = &g_entities[i];
+		if (!plyr->client) continue;
+		if ( DistanceSquared( plyr->r.currentOrigin, ent->r.currentOrigin ) <= SHY_SPAWN_DISTANCE_SQR )
 			return;
+		if ( (InFOV( ent, plyr, 80, 64 )) ) // FIXME: hardcoded fov
+			if ( (NPC_ClearLOS2( plyr, ent->r.currentOrigin )) )
+				return;
+	}
 
 	ent->think = 0;
 	ent->nextthink = 0;

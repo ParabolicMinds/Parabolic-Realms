@@ -1104,6 +1104,28 @@ static void RB_FogPass( void ) {
 	R_DrawElements( tess.numIndexes, tess.indexes );
 }
 
+static void RainbowShiftColors(byte * vec, float shift, float * bank) {
+	*bank += shift;
+	while (*bank > 0.0f) {
+		*bank -= 1.0f;
+		if (vec[0] == 255) {
+			if (vec[2] > 0) vec[2] -= 1;
+			else if (vec[1] < 255) vec[1] += 1;
+			else if (vec[1] == 255) vec[0] -= 1;
+		}
+		else if (vec[1] == 255) {
+			if (vec[0] > 0) vec[0] -= 1;
+			else if (vec[2] < 255) vec[2] += 1;
+			else if (vec[2] == 255) vec[1] -= 1;
+		}
+		else if (vec[2] == 255) {
+			if (vec[1] > 0) vec[1] -= 1;
+			else if (vec[0] < 255) vec[0] += 1;
+			else if (vec[0] == 255) vec[2] -= 1;
+		}
+	}
+}
+
 /*
 ===============
 ComputeColors
@@ -1271,6 +1293,14 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 			{
 				byteAlias_t *baDest = (byteAlias_t *)&tess.svars.colors[i],
 					*baSource = (byteAlias_t *)&styleColors[pStage->lightmapStyle];
+				baDest->i = baSource->i;
+			}
+			break;
+		case CGEN_RAINBOW:
+			RainbowShiftColors(pStage->constantColor, pStage->coShift, &pStage->coBank);
+			for ( i = 0; i < tess.numVertexes; i++ ) {
+				byteAlias_t *baDest = (byteAlias_t *)&tess.svars.colors[i],
+					*baSource = (byteAlias_t *)&pStage->constantColor;
 				baDest->i = baSource->i;
 			}
 			break;

@@ -174,6 +174,7 @@ void G_InitSessionData( gclient_t *client, char *userinfo, qboolean isBot ) {
 		} else {
 			switch ( level.gametype ) {
 			default:
+			case GT_RPG:
 			case GT_FFA:
 			case GT_HOLOCRON:
 			case GT_JEDIMASTER:

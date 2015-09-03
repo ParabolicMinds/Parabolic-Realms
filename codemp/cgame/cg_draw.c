@@ -6699,6 +6699,7 @@ static void CG_DrawWarmup( void ) {
 		else if ( cgs.gametype == GT_SIEGE )			s = CG_GetStringEdString("MENUS", "SIEGE");//"Siege";
 		else if ( cgs.gametype == GT_CTF )				s = CG_GetStringEdString("MENUS", "CAPTURE_THE_FLAG");//"Capture the Flag";
 		else if ( cgs.gametype == GT_CTY )				s = CG_GetStringEdString("MENUS", "CAPTURE_THE_YSALIMARI");//"Capture the Ysalamiri";
+		else if ( cgs.gametype == GT_RPG )				s = CG_GetStringEdString("MENUS", "RPG");//"RPG";
 		else if ( cgs.gametype == GT_SINGLE_PLAYER )	s = "Cooperative";
 		else											s = "";
 		w = CG_Text_Width(s, 1.5f, FONT_MEDIUM);

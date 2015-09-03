@@ -1615,8 +1615,11 @@ static qboolean UpdateRider( Vehicle_t *pVeh, bgEntity_t *pRider, usercmd_t *pUm
 	gentity_t *parent;
 	gentity_t *rider;
 
+
 	if ( pVeh->m_iBoarding != 0 && pVeh->m_iDieTime==0)
 		return qtrue;
+
+
 
 	parent = (gentity_t *)pVeh->m_pParentEntity;
 	rider = (gentity_t *)pRider;
@@ -1628,9 +1631,9 @@ static qboolean UpdateRider( Vehicle_t *pVeh, bgEntity_t *pRider, usercmd_t *pUm
 		rider->client->ps.rocketLockTime = parent->client->ps.rocketLockTime;
 		rider->client->ps.rocketTargetTime = parent->client->ps.rocketTargetTime;
 	}
+
 	// Regular exit.
-	if ( pUmcd->buttons & BUTTON_USE && pVeh->m_pVehicleInfo->type!=VH_SPEEDER)
-	{
+	if ( pUmcd->buttons & BUTTON_USE && pVeh->m_pVehicleInfo->type!=VH_SPEEDER) {
 		if ( pVeh->m_pVehicleInfo->type == VH_WALKER )
 		{//just get the fuck out
 			pVeh->m_EjectDir = VEH_EJECT_REAR;

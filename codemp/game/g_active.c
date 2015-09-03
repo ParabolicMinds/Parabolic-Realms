@@ -523,71 +523,100 @@ void	G_TouchTriggers( gentity_t *ent ) {
 	vec3_t		mins, maxs;
 	static vec3_t	range = { 40, 40, 52 };
 
-	if ( !ent->client ) {
-		return;
-	}
+	/*if (ent->m_pVehicle) {
+		VectorAdd( ent->s.origin, ent->r.mins, mins );
+		VectorAdd( ent->s.origin, ent->r.maxs, maxs );
+		num = trap->EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
+		for ( i=0 ; i<num ; i++ ) {
+			hit = &g_entities[touch[i]];
 
-	// dead clients don't activate triggers!
-	if ( ent->client->ps.stats[STAT_HEALTH] <= 0 ) {
-		return;
-	}
-
-	VectorSubtract( ent->client->ps.origin, range, mins );
-	VectorAdd( ent->client->ps.origin, range, maxs );
-
-	num = trap->EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
-
-	// can't use ent->r.absmin, because that has a one unit pad
-	VectorAdd( ent->client->ps.origin, ent->r.mins, mins );
-	VectorAdd( ent->client->ps.origin, ent->r.maxs, maxs );
-
-	for ( i=0 ; i<num ; i++ ) {
-		hit = &g_entities[touch[i]];
-
-		if ( !hit->touch && !ent->touch ) {
-			continue;
-		}
-		if ( !( hit->r.contents & CONTENTS_TRIGGER ) ) {
-			continue;
-		}
-
-		// ignore most entities if a spectator
-		if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
-			if ( hit->s.eType != ET_TELEPORT_TRIGGER &&
-				// this is ugly but adding a new ET_? type will
-				// most likely cause network incompatibilities
-				hit->touch != Touch_DoorTrigger) {
+			if ( !hit->touch && !ent->touch ) {
 				continue;
 			}
-		}
-
-		// use seperate code for determining if an item is picked up
-		// so you don't have to actually contact its bounding box
-		if ( hit->s.eType == ET_ITEM ) {
-			if ( !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
+			if ( !( hit->r.contents & CONTENTS_TRIGGER ) ) {
 				continue;
 			}
-		} else {
+
+			// use seperate code for determining if an item is picked up
+			// so you don't have to actually contact its bounding box
+
 			if ( !trap->EntityContact( mins, maxs, (sharedEntity_t *)hit, qfalse ) ) {
 				continue;
 			}
+
+			memset( &trace, 0, sizeof(trace) );
+
+			if ( hit->touch ) {
+				hit->touch (hit, ent, &trace);
+			}
+
+			if ( ( ent->r.svFlags & SVF_BOT ) && ( ent->touch ) ) {
+				ent->touch( ent, hit, &trace );
+			}
+		}
+	} else */if (ent->client) {
+		// dead clients don't activate triggers!
+		if ( ent->client->ps.stats[STAT_HEALTH] <= 0 ) {
+			return;
 		}
 
-		memset( &trace, 0, sizeof(trace) );
+		VectorSubtract( ent->client->ps.origin, range, mins );
+		VectorAdd( ent->client->ps.origin, range, maxs );
 
-		if ( hit->touch ) {
-			hit->touch (hit, ent, &trace);
+		num = trap->EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
+
+		// can't use ent->r.absmin, because that has a one unit pad
+		VectorAdd( ent->client->ps.origin, ent->r.mins, mins );
+		VectorAdd( ent->client->ps.origin, ent->r.maxs, maxs );
+
+		for ( i=0 ; i<num ; i++ ) {
+			hit = &g_entities[touch[i]];
+
+			if ( !hit->touch && !ent->touch ) {
+				continue;
+			}
+			if ( !( hit->r.contents & CONTENTS_TRIGGER ) ) {
+				continue;
+			}
+
+			// ignore most entities if a spectator
+			if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
+				if ( hit->s.eType != ET_TELEPORT_TRIGGER &&
+					// this is ugly but adding a new ET_? type will
+					// most likely cause network incompatibilities
+					hit->touch != Touch_DoorTrigger) {
+					continue;
+				}
+			}
+
+			// use seperate code for determining if an item is picked up
+			// so you don't have to actually contact its bounding box
+			if ( hit->s.eType == ET_ITEM ) {
+				if ( !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
+					continue;
+				}
+			} else {
+				if ( !trap->EntityContact( mins, maxs, (sharedEntity_t *)hit, qfalse ) ) {
+					continue;
+				}
+			}
+
+			memset( &trace, 0, sizeof(trace) );
+
+			if ( hit->touch ) {
+				hit->touch (hit, ent, &trace);
+			}
+
+			if ( ( ent->r.svFlags & SVF_BOT ) && ( ent->touch ) ) {
+				ent->touch( ent, hit, &trace );
+			}
 		}
 
-		if ( ( ent->r.svFlags & SVF_BOT ) && ( ent->touch ) ) {
-			ent->touch( ent, hit, &trace );
+		// if we didn't touch a jump pad this pmove frame
+		if ( ent->client->ps.jumppad_frame != ent->client->ps.pmove_framecount ) {
+			ent->client->ps.jumppad_frame = 0;
+			ent->client->ps.jumppad_ent = 0;
 		}
-	}
-
-	// if we didn't touch a jump pad this pmove frame
-	if ( ent->client->ps.jumppad_frame != ent->client->ps.pmove_framecount ) {
-		ent->client->ps.jumppad_frame = 0;
-		ent->client->ps.jumppad_ent = 0;
 	}
 }
 

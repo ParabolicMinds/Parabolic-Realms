@@ -1113,22 +1113,6 @@ void Touch_DoorTrigger( gentity_t *ent, gentity_t *other, trace_t *trace )
 		return;
 	}
 
-	if (!ent->genericValue14 &&
-		(!ent->parent || !ent->parent->genericValue14))
-	{
-		if (other->client && other->s.number >= MAX_CLIENTS &&
-			other->s.eType == ET_NPC && other->s.NPC_class == CLASS_VEHICLE)
-		{ //doors don't open for vehicles
-			return;
-		}
-
-		if (other->client && other->s.number < MAX_CLIENTS &&
-			other->client->ps.m_iVehicleNum)
-		{ //can't open a door while on a vehicle
-			return;
-		}
-	}
-
 	if ( ent->flags & FL_INACTIVE )
 	{
 		return;
@@ -1493,6 +1477,26 @@ void SP_func_door (gentity_t *ent)
 		}
 	}
 }
+
+/*
+===============================================================================
+
+FISH
+
+===============================================================================
+*/
+
+void SP_func_fish (gentity_t *ent) {
+	trap->SetBrushModel( (sharedEntity_t *)ent, ent->model );
+	ent->s.eType = ET_MOVER;
+	G_SetOrigin(ent, ent->s.origin);
+	ent->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+	ent->think = G_FishStartThink;
+	ent->nextthink = level.time + FRAMETIME;
+	ent->genericValue1 = 0;
+	trap->LinkEntity((sharedEntity_t *)ent);
+}
+
 
 /*
 ===============================================================================

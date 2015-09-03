@@ -207,6 +207,7 @@ typedef enum {
 	CGEN_FOG,				// standard fog
 	CGEN_CONST,				// fixed color
 	CGEN_LIGHTMAPSTYLE,
+	CGEN_RAINBOW
 } colorGen_t;
 
 typedef enum {
@@ -361,6 +362,8 @@ typedef struct shaderStage_s {
 	alphaGen_t		alphaGen;
 
 	byte			constantColor[4];			// for CGEN_CONST and AGEN_CONST
+	float			coShift;					// for CGEN_RAINBOW
+	float			coBank;
 
 	uint32_t		stateBits;					// GLS_xxxx mask
 
@@ -1852,3 +1855,4 @@ extern refimport_t *ri;
 qboolean ShaderHashTableExists(void);
 
 image_t *R_FindImageFile_NoLoad(const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
+void R_FinishFutureShader(shader_t * pasts, image_t * image);

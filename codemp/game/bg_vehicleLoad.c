@@ -1267,7 +1267,7 @@ void BG_VehWeaponLoadParms( void )
 {
 	int			len, totallen, vehExtFNLen, fileCnt, i;
 	char		*holdChar, *marker;
-	char		vehWeaponExtensionListBuf[2048];			//	The list of file names read in
+	char		vehWeaponExtensionListBuf[256000];			//	The list of file names read in
 	fileHandle_t	f;
 	char		*tempReadBuffer;
 
@@ -1333,7 +1333,7 @@ void BG_VehicleLoadParms( void )
 	int			len, totallen, vehExtFNLen, fileCnt, i;
 //	const char	*filename = "ext_data/vehicles.dat";
 	char		*holdChar, *marker;
-	char		vehExtensionListBuf[2048];			//	The list of file names read in
+	char		vehExtensionListBuf[256000];			//	The list of file names read in
 	fileHandle_t	f;
 	char		*tempReadBuffer;
 

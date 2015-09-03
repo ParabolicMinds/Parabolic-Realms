@@ -3161,7 +3161,8 @@ const char *gametypeStringShort[GT_MAX_GAME_TYPE] = {
 	"TDM",
 	"SAGA",
 	"CTF",
-	"CTY"
+	"CTY",
+	"RPG"
 };
 
 const char *BG_GetGametypeString( int gametype )
@@ -3189,6 +3190,8 @@ const char *BG_GetGametypeString( int gametype )
 		return "Capture The Flag";
 	case GT_CTY:
 		return "Capture The Ysalimiri";
+	case GT_RPG:
+		return "Role Playing Game";
 
 	default:
 		return "Unknown Gametype";

@@ -2,21 +2,23 @@
 
 #include <curl/curl.h>
 
-struct MemoryStruct {
+#include <atomic>
+#include <vector>
+#include <thread>
+
+typedef struct curlmem_s {
   byte * memory;
   size_t size;
-};
+} curlmem_t;
 
 static size_t
 WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
   size_t realsize = size * nmemb;
-  struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+  curlmem_t *mem = (curlmem_t *)userp;
 
   mem->memory = (byte *)realloc((void *)mem->memory, mem->size + realsize + 1);
   if(mem->memory == NULL) {
-	/* out of memory! */
-	printf("not enough memory (realloc returned NULL)\n");
 	return 0;
   }
 
@@ -27,43 +29,87 @@ WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
   return realsize;
 }
 
-void R_ParallelDownloadNetTexture(char const * name, shader_t * sh) {
+typedef struct pdl_s {
+	shader_t * sh;
+	char name [MAX_QPATH];
+	std::thread * thr;
+	std::atomic_bool done;
+	bool success;
+	curlmem_t mem;
 	CURL *curl_handle;
+} pdl_t;
+
+static void R_FreePDL(pdl_t * * pdl) {
+	curl_easy_cleanup((*pdl)->curl_handle);
+	free((*pdl)->mem.memory);
+	delete *pdl;
+}
+
+static void R_ParallelDownloadNetTexture_ThreadRun(pdl_t * pdl) {
 	CURLcode res;
 
-	struct MemoryStruct chunk;
+	pdl->mem.memory = (byte *)malloc(1);
+	pdl->mem.size = 0;
 
-	chunk.memory = (byte *)malloc(1);
-	chunk.size = 0;
+	pdl->curl_handle = curl_easy_init();
 
-	curl_global_init(CURL_GLOBAL_ALL);
+	curl_easy_setopt(pdl->curl_handle, CURLOPT_URL, pdl->name + 1);
+	curl_easy_setopt(pdl->curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+	curl_easy_setopt(pdl->curl_handle, CURLOPT_WRITEDATA, (void *)&pdl->mem);
+	curl_easy_setopt(pdl->curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+	curl_easy_setopt(pdl->curl_handle, CURLOPT_FOLLOWLOCATION, 1);
 
-	curl_handle = curl_easy_init();
-
-	curl_easy_setopt(curl_handle, CURLOPT_URL, name + 1);
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
-	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
-	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
-
-	res = curl_easy_perform(curl_handle);
+	res = curl_easy_perform(pdl->curl_handle);
 	long http_code = 0;
-	curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, &http_code);
+	curl_easy_getinfo (pdl->curl_handle, CURLINFO_RESPONSE_CODE, &http_code);
 
 	if(res != CURLE_OK || http_code != 200) {
-		Com_Printf("CURL could not find an image at URL: \"%s\".\n", name + 1);
-		curl_easy_cleanup(curl_handle);
-		free(chunk.memory);
-		curl_global_cleanup();
-		//shader.defaultShader = true;
-		//return FinishShader();
+		pdl->success = false;
+	} else {
+		pdl->success = true;
 	}
+	pdl->done.store(true);
+}
 
-	//image = R_LoadImageMemory(name, chunk.memory, chunk.size, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP);
+static std::vector<pdl_t *> pdls;
 
-	curl_easy_cleanup(curl_handle);
+void R_ParallelInitialize() {
+	curl_global_init(CURL_GLOBAL_ALL);
+}
 
-	free(chunk.memory);
-
+void R_ParallelShutdown() {
 	curl_global_cleanup();
+}
+
+void R_ParallelDownloadNetTexture(char const * name, shader_t * sh) {
+	pdl_t * pdl = new pdl_t;
+	pdl->sh = sh;
+	Q_strncpyz(pdl->name, name, MAX_QPATH);
+	pdl->done.store(false);
+	pdl->success = false;
+
+	pdl->thr = new std::thread {R_ParallelDownloadNetTexture_ThreadRun, pdl};
+	pdls.push_back(pdl);
+	Com_Printf("New CURL thread began.\n");
+}
+
+bool R_ParallelDownloadReady() {
+	image_t * image = NULL;
+	std::vector<pdl_t *>::iterator pdli;
+	for (pdli = pdls.begin(); pdli != pdls.end();) {
+		if(!(*pdli)->done) {
+			pdli++;
+			continue;
+		}
+		Com_Printf("CURL thread ended.\n");
+		(*pdli)->thr->join();
+		if ((*pdli)->success) {
+			image = R_LoadImageMemory((*pdli)->name, (*pdli)->mem.memory, (*pdli)->mem.size, qtrue, qtrue, qtrue, GL_REPEAT);
+			if (image) R_FinishFutureShader((*pdli)->sh, image);
+		}
+		R_FreePDL(&*pdli);
+		pdli = pdls.erase(pdli);
+		if (image) break;
+	}
+	return image != NULL;
 }

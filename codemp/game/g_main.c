@@ -118,16 +118,16 @@ void G_CacheGametype( void )
 		int gt = BG_GetGametypeForString( g_gametype.string );
 		if ( gt == -1 )
 		{
-			trap->Print( "Gametype '%s' unrecognised, defaulting to FFA/Deathmatch\n", g_gametype.string );
-			level.gametype = GT_FFA;
+			trap->Print( "Gametype '%s' unrecognised, defaulting to RPG\n", g_gametype.string );
+			level.gametype = GT_RPG;
 		}
 		else
 			level.gametype = gt;
 	}
 	else if ( g_gametype.integer < 0 || level.gametype >= GT_MAX_GAME_TYPE )
 	{
-		trap->Print( "g_gametype %i is out of range, defaulting to 0\n", level.gametype );
-		level.gametype = GT_FFA;
+		trap->Print( "g_gametype %i is out of range, defaulting to RPG\n", level.gametype );
+		level.gametype = GT_RPG;
 	}
 	else
 		level.gametype = atoi( g_gametype.string );
