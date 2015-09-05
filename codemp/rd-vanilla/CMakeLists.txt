@@ -1,4 +1,20 @@
-cmake_minimum_required(VERSION 2.8.8)
+#============================================================================
+# Copyright (C) 2013 - 2015, OpenJK contributors
+# 
+# This file is part of the OpenJK source code.
+# 
+# OpenJK is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+#============================================================================
 
 # Make sure the user is not executing this script directly
 if(NOT InOpenJK)
@@ -168,24 +184,31 @@ set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} ${OPENGL_LIBRARIES}
 set(MPVanillaRendererIncludeDirectories ${MPVanillaRendererIncludeDirectories} ${OpenJKLibDir})
 add_library(${MPVanillaRenderer} SHARED ${MPVanillaRendererFiles})
 
-if(NOT WIN32)
+if(NOT MSVC)
 	# remove "lib" prefix for .so/.dylib files
 	set_target_properties(${MPVanillaRenderer} PROPERTIES PREFIX "")
-endif(NOT WIN32)
+endif()
 
 if(WIN32)
-	install(TARGETS ${MPVanillaRenderer} RUNTIME DESTINATION ".")
+	install(TARGETS ${MPVanillaRenderer}
+		RUNTIME
+		DESTINATION ${JKAInstallDir}
+		COMPONENT ${JKAMPClientComponent})
 else(WIN32)
 	if(MakeApplicationBundles AND BuildMPEngine)
-		install(TARGETS ${MPVanillaRenderer} LIBRARY DESTINATION "${MPEngine}.app/Contents/MacOS/")
-	else(MakeApplicationBundles AND BuildMPEngine)
-		install(TARGETS ${MPVanillaRenderer} LIBRARY DESTINATION ".")
-	endif(MakeApplicationBundles AND BuildMPEngine)
-endif(WIN32)
-set_target_properties(${MPVanillaRenderer} PROPERTIES COMPILE_DEFINITIONS_RELWITHDEBINFO "${SharedDefines};${ReleaseDefines}")
-set_target_properties(${MPVanillaRenderer} PROPERTIES COMPILE_DEFINITIONS_MINSIZEREL "${SharedDefines};${ReleaseDefines}")
-set_target_properties(${MPVanillaRenderer} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${SharedDefines};${ReleaseDefines}")
-set_target_properties(${MPVanillaRenderer} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${SharedDefines};${DebugDefines}")
+		install(TARGETS ${MPVanillaRenderer}
+			LIBRARY
+			DESTINATION "${JKAInstallDir}/${MPEngine}.app/Contents/MacOS/"
+			COMPONENT ${JKAMPClientComponent})
+	else()
+		install(TARGETS ${MPVanillaRenderer}
+			LIBRARY
+			DESTINATION ${JKAInstallDir}
+			COMPONENT ${JKAMPClientComponent})
+	endif()
+endif()
+
+set_target_properties(${MPVanillaRenderer} PROPERTIES COMPILE_DEFINITIONS "${SharedDefines}")
 set_target_properties(${MPVanillaRenderer} PROPERTIES INCLUDE_DIRECTORIES "${MPVanillaRendererIncludeDirectories}")
 set_target_properties(${MPVanillaRenderer} PROPERTIES PROJECT_LABEL "MP Vanilla Renderer")
 target_link_libraries(${MPVanillaRenderer} ${MPVanillaRendererLibraries})

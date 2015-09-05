@@ -1,3 +1,25 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #include "client.h"
 #include "cl_cgameapi.h"
 #include "FxScheduler.h"
@@ -257,7 +279,7 @@ int CFxScheduler::RegisterEffect( const char *file, bool bHasCorrectPath /*= fal
 	COM_StripExtension( file, sfile, sizeof( sfile ) );
 
 	std::string s = sfile;
-	transform(s.begin(), s.end(), s.begin(), ::tolower);
+	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 
 	Com_DPrintf("Registering effect : %s\n", sfile);
 

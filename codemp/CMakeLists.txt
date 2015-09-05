@@ -1,4 +1,20 @@
-cmake_minimum_required(VERSION 2.8.8)
+#============================================================================
+# Copyright (C) 2013 - 2015, OpenJK contributors
+# 
+# This file is part of the OpenJK source code.
+# 
+# OpenJK is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+#============================================================================
 
 # Make sure the user is not executing this script directly
 if(NOT InOpenJK)
@@ -377,7 +393,7 @@ if(BuildMPEngine)
 	endif()
 
 	# OpenAL (is optionally included for Windows)
-	if (WIN32 AND NOT WIN64)
+	if (MSVC AND NOT WIN64)
 		if(UseInternalOpenAL)
 			# There's a libs/OpenAL32.lib
 			# (mrw) TODO Is this actually required on windows? It is loaded at runtime, should not be linked?
@@ -394,17 +410,22 @@ if(BuildMPEngine)
 	endif()
 
 	if(UseInternalSDL2)
-		if(ARCH_BITS EQUAL 32)
+		if(MSVC14)
+			set(MSVC_SUFFIX "_2015")
+		else()
+			set(MSVC_SUFFIX "")
+		endif()
+		if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 			set(MPEngineLibraries
 				${MPEngineLibraries}
-				${OpenJKLibDir}/SDL2/lib/x86/SDL2.lib
-				${OpenJKLibDir}/SDL2/lib/x86/SDL2main.lib
+				${OpenJKLibDir}/SDL2/lib/x86${MSVC_SUFFIX}/SDL2main.lib
+				${OpenJKLibDir}/SDL2/lib/x86${MSVC_SUFFIX}/SDL2.lib
 				)
 		else()
 			set(MPEngineLibraries
 				${MPEngineLibraries}
-				${OpenJKLibDir}/SDL2/lib/x64/SDL2.lib
-				${OpenJKLibDir}/SDL2/lib/x64/SDL2main.lib
+				${OpenJKLibDir}/SDL2/lib/x64${MSVC_SUFFIX}/SDL2main.lib
+				${OpenJKLibDir}/SDL2/lib/x64${MSVC_SUFFIX}/SDL2.lib
 				)
 		endif()
 		
@@ -419,14 +440,14 @@ if(BuildMPEngine)
 	endif()
 
 	# EAX is Windows-Only (right?)
-	if(WIN32)
+	if(MSVC)
 		set(MPEngineEAXFiles
 			"${MPDir}/client/eax/eax.h"
 			"${MPDir}/client/eax/EaxMan.h"
 			)
 		source_group("eax" FILES ${MPEngineEAXFiles})
 		set(MPEngineFiles ${MPEngineFiles} ${MPEngineEAXFiles})
-	endif(WIN32)
+	endif(MSVC)
 
 	#    Source Files
 
@@ -575,13 +596,13 @@ if(BuildMPEngine)
 	if(WIN32)
 		add_executable(${MPEngine} WIN32 ${MPEngineFiles})
 		if(UseInternalSDL2)
-			if(ARCH_BITS EQUAL 32)
+			if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 				set(MPEngineExtraInstallFiles
-					${OpenJKLibDir}/SDL2/bin/x86/SDL2.dll
+					${OpenJKLibDir}/SDL2/bin/x86${MSVC_SUFFIX}/SDL2.dll
 					)
 			else()
 				set(MPEngineExtraInstallFiles
-					${OpenJKLibDir}/SDL2/bin/x64/SDL2.dll
+					${OpenJKLibDir}/SDL2/bin/x64${MSVC_SUFFIX}/SDL2.dll
 					)
 			endif()
 		endif()
@@ -595,18 +616,23 @@ if(BuildMPEngine)
 	endif(WIN32)
 
 	if(MakeApplicationBundles)
-		install(TARGETS ${MPEngine} BUNDLE DESTINATION ".")
+		install(TARGETS ${MPEngine}
+			BUNDLE
+			DESTINATION ${JKAInstallDir}
+			COMPONENT ${JKAMPClientComponent})
 	else(MakeApplicationBundles)
-		install(TARGETS ${MPEngine} RUNTIME DESTINATION ".")
+		install(TARGETS ${MPEngine}
+			RUNTIME
+			DESTINATION ${JKAInstallDir}
+			COMPONENT ${JKAMPClientComponent})
 		if(MPEngineExtraInstallFiles)
-			install(FILES ${MPEngineExtraInstallFiles} DESTINATION ".")
+			install(FILES ${MPEngineExtraInstallFiles}
+				DESTINATION ${JKAInstallDir}
+				COMPONENT ${JKAMPClientComponent})
 		endif()
 	endif(MakeApplicationBundles)
 
-	set_target_properties(${MPEngine} PROPERTIES COMPILE_DEFINITIONS_RELWITHDEBINFO "${MPEngineDefines};${ReleaseDefines}")
-	set_target_properties(${MPEngine} PROPERTIES COMPILE_DEFINITIONS_MINSIZEREL "${MPEngineDefines};${ReleaseDefines}")
-	set_target_properties(${MPEngine} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${MPEngineDefines};${ReleaseDefines}")
-	set_target_properties(${MPEngine} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${MPEngineDefines};${DebugDefines}")
+	set_target_properties(${MPEngine} PROPERTIES COMPILE_DEFINITIONS "${MPEngineDefines}")
 	set_target_properties(${MPEngine} PROPERTIES INCLUDE_DIRECTORIES "${MPEngineIncludeDirectories}")
 	set_target_properties(${MPEngine} PROPERTIES PROJECT_LABEL "MP Client")
 	target_link_libraries(${MPEngine} ${MPEngineLibraries})
@@ -689,12 +715,53 @@ if(BuildMPDed)
 	endif(WIN32)
 
 	add_executable(${MPDed} ${MPDedFiles})
-	install(TARGETS ${MPDed} RUNTIME DESTINATION ".")
-	set_target_properties(${MPDed} PROPERTIES COMPILE_DEFINITIONS_RELWITHDEBINFO "${MPDedDefines};${ReleaseDefines}")
-	set_target_properties(${MPDed} PROPERTIES COMPILE_DEFINITIONS_MINSIZEREL "${MPDedDefines};${ReleaseDefines}")
-	set_target_properties(${MPDed} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${MPDedDefines};${ReleaseDefines}")
-	set_target_properties(${MPDed} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${MPDedDefines};${DebugDefines}")
+	install(TARGETS ${MPDed}
+		RUNTIME
+		DESTINATION ${JKAInstallDir}
+		COMPONENT ${JKAMPServerComponent})
+	set_target_properties(${MPDed} PROPERTIES COMPILE_DEFINITIONS "${MPDedDefines}")
 	set_target_properties(${MPDed} PROPERTIES INCLUDE_DIRECTORIES "${MPDedIncludeDirectories}")
 	set_target_properties(${MPDed} PROPERTIES PROJECT_LABEL "MP Dedicated Server")
 	target_link_libraries(${MPDed} ${MPDedLibraries})
 endif(BuildMPDed)
+
+set(GameLibsBuilt)
+if(BuildMPGame)
+	set(GameLibsBuilt ${GameLibsBuilt} ${MPGame})
+endif()
+
+if(BuildMPCGame)
+	set(GameLibsBuilt ${GameLibsBuilt} ${MPCGame})
+endif()
+
+if(BuildMPUI)
+	set(GameLibsBuilt ${GameLibsBuilt} ${MPUI})
+endif()
+
+if(WIN32)
+set(GameLibFullPaths)
+	if(MSVC)
+		foreach(GameLib ${GameLibsBuilt})
+			set(GameLibFullPaths
+				${GameLibFullPaths}
+				${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${GameLib}${CMAKE_SHARED_LIBRARY_SUFFIX})
+		endforeach(GameLib)
+	else()
+		foreach(GameLib ${GameLibsBuilt})
+			set(GameLibFullPaths
+				${GameLibFullPaths}
+				${CMAKE_BINARY_DIR}/${GameLib}${CMAKE_SHARED_LIBRARY_SUFFIX})
+		endforeach(GameLib)
+	endif()
+
+	include(InstallZIP)
+	add_zip_command(${AssetsPk3}
+		FILES ${GameLibFullPaths}
+		DEPENDS "${GameLibsBuilt}")
+	add_custom_target(Assets
+		ALL
+		DEPENDS ${AssetsPk3})
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${AssetsPk3}
+		DESTINATION "${JKAInstallDir}/OpenJK"
+		COMPONENT ${JKAMPCoreComponent})
+endif()

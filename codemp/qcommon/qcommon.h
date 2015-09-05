@@ -1,3 +1,27 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
 // qcommon.h -- definitions common between client and server, but not game.or ref modules
@@ -562,8 +586,6 @@ void FS_HomeRmdir( const char *homePath, qboolean recursive );
 
 qboolean FS_FileExists( const char *file );
 
-int		FS_LoadStack();
-
 char   *FS_BuildOSPath( const char *base, const char *game, const char *qpath );
 qboolean FS_CompareZipChecksum(const char *zipfile);
 
@@ -677,6 +699,8 @@ qboolean FS_CheckDirTraversal(const char *checkdir);
 qboolean FS_idPak( char *pak, char *base );
 qboolean FS_ComparePaks( char *neededpaks, int len, qboolean dlstring );
 void FS_Rename( const char *from, const char *to );
+
+qboolean FS_WriteToTemporaryFile( const void *data, size_t dataLength, char **tempFileName );
 
 
 /*
@@ -1024,5 +1048,7 @@ inline int Round(float value)
 // Persistent data store API
 bool PD_Store ( const char *name, const void *data, size_t size );
 const void *PD_Load ( const char *name, size_t *size );
+
+uint32_t ConvertUTF8ToUTF32( char *utf8CurrentChar, char **utf8NextChar );
 
 #include "sys/sys_public.h"

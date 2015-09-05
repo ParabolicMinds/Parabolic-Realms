@@ -1,3 +1,24 @@
+/*
+===========================================================================
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
 #include "qcommon/qcommon.h"
@@ -17,4 +38,11 @@ void		Sys_SigHandler( int signal );
 void		Sys_AnsiColorPrint( const char *msg );
 #endif
 
-bool		Sys_UnpackDLL( const char *name );
+struct UnpackDLLResult
+{
+	bool succeeded;
+	char *tempDLLPath;
+};
+
+UnpackDLLResult Sys_UnpackDLL( const char *name );
+bool Sys_DLLNeedsUnpacking();

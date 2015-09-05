@@ -1,19 +1,28 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #include "qcommon/q_shared.h"
 
-#ifdef _MSC_VER
-#pragma warning( disable : 4018)
-#pragma warning( disable : 4245)
-#pragma warning( disable : 4284)
-#pragma warning( disable : 4512)
-#pragma warning( disable : 4786)
-
-#pragma warning ( disable : 4663 )	//spcialize class
-#pragma warning( push, 3 )
-#endif
 #include <algorithm>
-#ifdef _MSC_VER
-#pragma warning (pop)
-#endif
 
 #include "navigator.h"
 #include "game/g_nav.h"
@@ -600,6 +609,9 @@ Load
 bool CNavigator::Load( const char *filename, int checksum )
 {
 	fileHandle_t	file;
+
+	// Free previous map just in case. jampgame doesn't do this by default...
+	Free();
 
 	//Attempt to load the file
 	FS_FOpenFileByMode( va( "maps/%s.nav", filename ), &file, FS_READ );

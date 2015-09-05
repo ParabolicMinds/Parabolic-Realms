@@ -1,3 +1,27 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 // common.c -- misc functions used in client and server
 
 #include "stringed_ingame.h"
@@ -6,7 +30,7 @@
 #include "../server/NPCNav/navigator.h"
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 #include "para/scripting_engine.hpp"
@@ -236,6 +260,13 @@ void NORETURN QDECL Com_Error( int code, const char *fmt, ... ) {
 	// when we are running automated scripts, make sure we
 	// know if anything failed
 	if ( com_buildScript && com_buildScript->integer ) {
+		code = ERR_FATAL;
+	}
+
+	// ERR_DROPs on dedicated drop to an interactive console
+	// which doesn't make sense for dedicated as it's generally
+	// run unattended
+	if ( com_dedicated && com_dedicated->integer ) {
 		code = ERR_FATAL;
 	}
 
@@ -1241,7 +1272,7 @@ void Com_Init( char *commandLine ) {
 		com_G2Report = Cvar_Get("com_G2Report", "0", 0);
 #endif
 
-		com_affinity = Cvar_Get( "com_affinity", "1", CVAR_ARCHIVE );
+		com_affinity = Cvar_Get( "com_affinity", "0", CVAR_ARCHIVE );
 
 		com_bootlogo = Cvar_Get( "com_bootlogo", "1", CVAR_ARCHIVE);
 
@@ -1579,6 +1610,12 @@ void Com_Frame( void ) {
 			c_pointcontents = 0;
 		}
 
+		if ( com_affinity->modified )
+		{
+			com_affinity->modified = qfalse;
+			Sys_SetProcessorAffinity();
+		}
+
 		com_frameNumber++;
 	}
 	catch (int code) {
@@ -1640,7 +1677,7 @@ Field_Clear
 ==================
 */
 void Field_Clear( field_t *edit ) {
-	edit->buffer[0] = 0;
+	memset(edit->buffer, 0, MAX_EDIT_LINE);
 	edit->cursor = 0;
 	edit->scroll = 0;
 }
@@ -1712,7 +1749,7 @@ PrintArgMatches
 // This is here for if ever commands with other argument completion
 static void PrintArgMatches( const char *s ) {
 	if ( !Q_stricmpn( s, shortestMatch, strlen( shortestMatch ) ) ) {
-		Com_Printf( S_COLOR_WHITE"  %s\n", s );
+		Com_Printf( S_COLOR_WHITE "  %s\n", s );
 	}
 }
 #endif
@@ -1930,5 +1967,46 @@ void Com_RandomBytes( byte *string, int len )
 
 	Com_Printf( "Com_RandomBytes: using weak randomization\n" );
 	for( i = 0; i < len; i++ )
-		string[i] = (unsigned char)( rand() % 255 );
+		string[i] = (unsigned char)( rand() % 256 );
+}
+
+/*
+===============
+Converts a UTF-8 character to UTF-32.
+===============
+*/
+uint32_t ConvertUTF8ToUTF32( char *utf8CurrentChar, char **utf8NextChar )
+{
+	uint32_t utf32 = 0;
+	char *c = utf8CurrentChar;
+
+	if( ( *c & 0x80 ) == 0 )
+		utf32 = *c++;
+	else if( ( *c & 0xE0 ) == 0xC0 ) // 110x xxxx
+	{
+		utf32 |= ( *c++ & 0x1F ) << 6;
+		utf32 |= ( *c++ & 0x3F );
+	}
+	else if( ( *c & 0xF0 ) == 0xE0 ) // 1110 xxxx
+	{
+		utf32 |= ( *c++ & 0x0F ) << 12;
+		utf32 |= ( *c++ & 0x3F ) << 6;
+		utf32 |= ( *c++ & 0x3F );
+	}
+	else if( ( *c & 0xF8 ) == 0xF0 ) // 1111 0xxx
+	{
+		utf32 |= ( *c++ & 0x07 ) << 18;
+		utf32 |= ( *c++ & 0x3F ) << 12;
+		utf32 |= ( *c++ & 0x3F ) << 6;
+		utf32 |= ( *c++ & 0x3F );
+	}
+	else
+	{
+		Com_DPrintf( "Unrecognised UTF-8 lead byte: 0x%x\n", (unsigned int)*c );
+		c++;
+	}
+
+	*utf8NextChar = c;
+
+	return utf32;
 }

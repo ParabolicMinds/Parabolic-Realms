@@ -1,3 +1,26 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #include "tr_local.h"
 
 
@@ -362,17 +385,18 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 
 		R_IssuePendingRenderCommands();
 		R_SetColorMappings();
+		R_SetGammaCorrectionLUT();
 	}
 
-    // check for errors
-    if ( !r_ignoreGLErrors->integer ) {
-        int	err;
-
+	// check for errors
+	if ( !r_ignoreGLErrors->integer ) {
 		R_IssuePendingRenderCommands();
-        if ( ( err = qglGetError() ) != GL_NO_ERROR ) {
-            Com_Error( ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!\n", err );
-        }
-    }
+
+		GLenum err = qglGetError();
+		if ( err != GL_NO_ERROR ) {
+			Com_Error( ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!\n", err );
+		}
+	}
 
 	//
 	// draw buffer stuff
@@ -413,16 +437,19 @@ Returns the number of msec spent in the back end
 =============
 */
 void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
-	swapBuffersCommand_t	*cmd;
+	swapBuffersCommand_t *cmd;
+	renderCommandList_t *cmdList;
 
 	if ( !tr.registered ) {
 		return;
 	}
-	cmd = (swapBuffersCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
-	if ( !cmd ) {
-		return;
-	}
+
+	cmdList = &backEndData->commands;
+	assert( cmdList->used + 4 <= MAX_RENDER_COMMANDS );
+
+	cmd = (swapBuffersCommand_t *)(cmdList->cmds + cmdList->used);
 	cmd->commandId = RC_SWAP_BUFFERS;
+	cmdList->used += 4;
 
 	R_IssueRenderCommands( qtrue );
 

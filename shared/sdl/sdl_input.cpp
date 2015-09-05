@@ -1,3 +1,24 @@
+/*
+===========================================================================
+Copyright (C) 2005 - 2015, ioquake3 contributors
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #include <SDL.h>
 #include "qcommon/qcommon.h"
 #include "qcommon/q_shared.h"
@@ -153,6 +174,83 @@ static qboolean IN_IsConsoleKey( fakeAscii_t key, int character )
 	return qfalse;
 }
 
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
+static bool IN_NumLockEnabled( void )
+{
+#if defined(_WIN32)
+	return (GetKeyState( VK_NUMLOCK ) & 1) != 0;
+#else
+	// @fixme : doesn't give proper state if numlock is on before app startup
+	return (SDL_GetModState() & KMOD_NUM) != 0;
+#endif
+}
+
+static void IN_TranslateNumpad( SDL_Keysym *keysym, fakeAscii_t *key )
+{
+	if ( IN_NumLockEnabled() )
+	{
+		switch ( keysym->sym )
+		{
+		case SDLK_KP_0:
+			keysym->scancode = SDL_SCANCODE_0;
+			keysym->sym = SDLK_0;
+			*key = A_0;
+			break;
+		case SDLK_KP_1:
+			keysym->scancode = SDL_SCANCODE_1;
+			keysym->sym = SDLK_1;
+			*key = A_1;
+			break;
+		case SDLK_KP_2:
+			keysym->scancode = SDL_SCANCODE_2;
+			keysym->sym = SDLK_2;
+			*key = A_2;
+			break;
+		case SDLK_KP_3:
+			keysym->scancode = SDL_SCANCODE_3;
+			keysym->sym = SDLK_3;
+			*key = A_3;
+			break;
+		case SDLK_KP_4:
+			keysym->scancode = SDL_SCANCODE_4;
+			keysym->sym = SDLK_4;
+			*key = A_4;
+			break;
+		case SDLK_KP_5:
+			keysym->scancode = SDL_SCANCODE_5;
+			keysym->sym = SDLK_5;
+			*key = A_5;
+			break;
+		case SDLK_KP_6:
+			keysym->scancode = SDL_SCANCODE_6;
+			keysym->sym = SDLK_6;
+			*key = A_6;
+			break;
+		case SDLK_KP_7:
+			keysym->scancode = SDL_SCANCODE_7;
+			keysym->sym = SDLK_7;
+			*key = A_7;
+			break;
+		case SDLK_KP_8:
+			keysym->scancode = SDL_SCANCODE_8;
+			keysym->sym = SDLK_8;
+			*key = A_8;
+			break;
+		case SDLK_KP_9:
+			keysym->scancode = SDL_SCANCODE_9;
+			keysym->sym = SDLK_9;
+			*key = A_9;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 /*
 ===============
 IN_TranslateSDLToJKKey
@@ -164,10 +262,18 @@ static fakeAscii_t IN_TranslateSDLToJKKey( SDL_Keysym *keysym, qboolean down ) {
 	if( keysym->sym >= SDLK_SPACE && keysym->sym < SDLK_DELETE )
 	{
 		// These happen to match the ASCII chars
-		key = (fakeAscii_t)keysym->sym;
+		// SDL2 only passes ASCII letters as lowercase, but the UI etc expects uppercase
+		if ( keysym->sym >= SDLK_a && keysym->sym <= SDLK_z )
+		{
+			key = (fakeAscii_t)('A' + (keysym->sym - SDLK_a));
+		}
+		else
+			key = (fakeAscii_t)keysym->sym;
 	}
 	else
 	{
+		IN_TranslateNumpad( keysym, &key );
+
 		switch( keysym->sym )
 		{
 			case SDLK_PAGEUP:       key = A_PAGE_UP;       break;
@@ -228,6 +334,40 @@ static fakeAscii_t IN_TranslateSDLToJKKey( SDL_Keysym *keysym, qboolean down ) {
 			case SDLK_SCROLLLOCK:   key = A_SCROLLLOCK;    break;
 			case SDLK_NUMLOCKCLEAR: key = A_NUMLOCK;       break;
 			case SDLK_CAPSLOCK:     key = A_CAPSLOCK;      break;
+
+			case L'\u00D7':			key = A_MULTIPLY;		break;
+			case L'\u00E0':			key = A_LOW_AGRAVE;		break;
+			case L'\u00E1':			key = A_LOW_AACUTE;		break;
+			case L'\u00E2':			key = A_LOW_ACIRCUMFLEX; break;
+			case L'\u00E3':			key = A_LOW_ATILDE;		break;
+			case L'\u00E4':			key = A_LOW_ADIERESIS;	break;
+			case L'\u00E5':			key = A_LOW_ARING;		break;
+			case L'\u00E6':			key = A_LOW_AE;			break;
+			case L'\u00E7':			key = A_LOW_CCEDILLA;	break;
+			case L'\u00E8':			key = A_LOW_EGRAVE;		break;
+			case L'\u00E9':			key = A_LOW_EACUTE;		break;
+			case L'\u00EA':			key = A_LOW_ECIRCUMFLEX; break;
+			case L'\u00EB':			key = A_LOW_EDIERESIS;	break;
+			case L'\u00EC':			key = A_LOW_IGRAVE;		break;
+			case L'\u00ED':			key = A_LOW_IACUTE;		break;
+			case L'\u00EE':			key = A_LOW_ICIRCUMFLEX; break;
+			case L'\u00EF':			key = A_LOW_IDIERESIS;	break;
+			case L'\u00F0':			key = A_LOW_ETH;		break;
+			case L'\u00F1':			key = A_LOW_NTILDE;		break;
+			case L'\u00F2':			key = A_LOW_OGRAVE;		break;
+			case L'\u00F3':			key = A_LOW_OACUTE;		break;
+			case L'\u00F4':			key = A_LOW_OCIRCUMFLEX; break;
+			case L'\u00F5':			key = A_LOW_OTILDE;		break;
+			case L'\u00F6':			key = A_LOW_ODIERESIS;	break;
+			case L'\u00F7':			key = A_DIVIDE;			break;
+			case L'\u00F8':			key = A_LOW_OSLASH;		break;
+			case L'\u00F9':			key = A_LOW_UGRAVE;		break;
+			case L'\u00FA':			key = A_LOW_UACUTE;		break;
+			case L'\u00FB':			key = A_LOW_UCIRCUMFLEX; break;
+			case L'\u00FC':			key = A_LOW_UDIERESIS;	break;
+			case L'\u00FD':			key = A_LOW_YACUTE;		break;
+			case L'\u00FE':			key = A_LOW_THORN;		break;
+			case L'\u00FF':			key = A_LOW_YDIERESIS;	break;
 
 			default:
 				break;
@@ -333,20 +473,6 @@ static void IN_DeactivateMouse( void )
 	}
 }
 
-/*
-===============
-IN_InitKeyLockStates
-===============
-*/
-void IN_InitKeyLockStates( void )
-{
-	const unsigned char *keystate = SDL_GetKeyboardState(NULL);
-
-	kg.keys[A_SCROLLLOCK].down = (qboolean)!!(keystate[SDL_SCANCODE_SCROLLLOCK]);
-	kg.keys[A_NUMLOCK].down = (qboolean)!!(keystate[SDL_SCANCODE_NUMLOCKCLEAR]);
-	kg.keys[A_CAPSLOCK].down = (qboolean)!!(keystate[SDL_SCANCODE_CAPSLOCK]);
-}
-
 // We translate axes movement into keypresses
 static int joy_keys[16] = {
 	A_CURSOR_LEFT, A_CURSOR_RIGHT,
@@ -433,6 +559,8 @@ static void IN_InitJoystick( void )
 
 	in_joystickUseAnalog = Cvar_Get( "in_joystickUseAnalog", "0", CVAR_ARCHIVE );
 
+	in_joystickThreshold = Cvar_Get( "joy_threshold", "0.15", CVAR_ARCHIVE );
+
 	stick = SDL_JoystickOpen( in_joystickNo->integer );
 
 	if (stick == NULL) {
@@ -447,6 +575,7 @@ static void IN_InitJoystick( void )
 	Com_DPrintf( "Buttons:    %d\n", SDL_JoystickNumButtons(stick) );
 	Com_DPrintf( "Balls:      %d\n", SDL_JoystickNumBalls(stick) );
 	Com_DPrintf( "Use Analog: %s\n", in_joystickUseAnalog->integer ? "Yes" : "No" );
+	Com_DPrintf( "Threshold: %f\n", in_joystickThreshold->value );
 
 	SDL_JoystickEventState(SDL_QUERY);
 }
@@ -467,7 +596,6 @@ void IN_Init( void *windowData )
 	in_keyboardDebug = Cvar_Get( "in_keyboardDebug", "0", CVAR_ARCHIVE );
 
 	in_joystick = Cvar_Get( "in_joystick", "0", CVAR_ARCHIVE|CVAR_LATCH );
-	in_joystickThreshold = Cvar_Get( "joy_threshold", "0.15", CVAR_ARCHIVE );
 
 	// mouse variables
 	in_mouse = Cvar_Get( "in_mouse", "1", CVAR_ARCHIVE );
@@ -482,10 +610,166 @@ void IN_Init( void *windowData )
 	Cvar_SetValue( "com_unfocused", ( appState & SDL_WINDOW_INPUT_FOCUS ) == 0 );
 	Cvar_SetValue( "com_minimized", ( appState & SDL_WINDOW_MINIMIZED ) != 0 );
 
-	IN_InitKeyLockStates( );
-
 	IN_InitJoystick( );
 	Com_DPrintf( "------------------------------------\n" );
+}
+
+uint8_t ConvertUTF32ToExpectedCharset( uint32_t utf32 )
+{
+	switch ( utf32 )
+	{
+		// Cyrillic characters - mapped to Windows-1251 encoding
+		case 0x0410: return 192;
+		case 0x0411: return 193;
+		case 0x0412: return 194;
+		case 0x0413: return 195;
+		case 0x0414: return 196;
+		case 0x0415: return 197;
+		case 0x0416: return 198;
+		case 0x0417: return 199;
+		case 0x0418: return 200;
+		case 0x0419: return 201;
+		case 0x041A: return 202;
+		case 0x041B: return 203;
+		case 0x041C: return 204;
+		case 0x041D: return 205;
+		case 0x041E: return 206;
+		case 0x041F: return 207;
+		case 0x0420: return 208;
+		case 0x0421: return 209;
+		case 0x0422: return 210;
+		case 0x0423: return 211;
+		case 0x0424: return 212;
+		case 0x0425: return 213;
+		case 0x0426: return 214;
+		case 0x0427: return 215;
+		case 0x0428: return 216;
+		case 0x0429: return 217;
+		case 0x042A: return 218;
+		case 0x042B: return 219;
+		case 0x042C: return 220;
+		case 0x042D: return 221;
+		case 0x042E: return 222;
+		case 0x042F: return 223;
+		case 0x0430: return 224;
+		case 0x0431: return 225;
+		case 0x0432: return 226;
+		case 0x0433: return 227;
+		case 0x0434: return 228;
+		case 0x0435: return 229;
+		case 0x0436: return 230;
+		case 0x0437: return 231;
+		case 0x0438: return 232;
+		case 0x0439: return 233;
+		case 0x043A: return 234;
+		case 0x043B: return 235;
+		case 0x043C: return 236;
+		case 0x043D: return 237;
+		case 0x043E: return 238;
+		case 0x043F: return 239;
+		case 0x0440: return 240;
+		case 0x0441: return 241;
+		case 0x0442: return 242;
+		case 0x0443: return 243;
+		case 0x0444: return 244;
+		case 0x0445: return 245;
+		case 0x0446: return 246;
+		case 0x0447: return 247;
+		case 0x0448: return 248;
+		case 0x0449: return 249;
+		case 0x044A: return 250;
+		case 0x044B: return 251;
+		case 0x044C: return 252;
+		case 0x044D: return 253;
+		case 0x044E: return 254;
+		case 0x044F: return 255;
+
+		// Eastern european characters - polish, czech, etc use Windows-1250 encoding
+		case 0x0160: return 138;
+		case 0x015A: return 140;
+		case 0x0164: return 141;
+		case 0x017D: return 142;
+		case 0x0179: return 143;
+		case 0x0161: return 154;
+		case 0x015B: return 156;
+		case 0x0165: return 157;
+		case 0x017E: return 158;
+		case 0x017A: return 159;
+		case 0x0141: return 163;
+		case 0x0104: return 165;
+		case 0x015E: return 170;
+		case 0x017B: return 175;
+		case 0x0142: return 179;
+		case 0x0105: return 185;
+		case 0x015F: return 186;
+		case 0x013D: return 188;
+		case 0x013E: return 190;
+		case 0x017C: return 191;
+		case 0x0154: return 192;
+		case 0x00C1: return 193;
+		case 0x00C2: return 194;
+		case 0x0102: return 195;
+		case 0x00C4: return 196;
+		case 0x0139: return 197;
+		case 0x0106: return 198;
+		case 0x00C7: return 199;
+		case 0x010C: return 200;
+		case 0x00C9: return 201;
+		case 0x0118: return 202;
+		case 0x00CB: return 203;
+		case 0x011A: return 204;
+		case 0x00CD: return 205;
+		case 0x00CE: return 206;
+		case 0x010E: return 207;
+		case 0x0110: return 208;
+		case 0x0143: return 209;
+		case 0x0147: return 210;
+		case 0x00D3: return 211;
+		case 0x00D4: return 212;
+		case 0x0150: return 213;
+		case 0x00D6: return 214;
+		case 0x0158: return 216;
+		case 0x016E: return 217;
+		case 0x00DA: return 218;
+		case 0x0170: return 219;
+		case 0x00DC: return 220;
+		case 0x00DD: return 221;
+		case 0x0162: return 222;
+		case 0x00DF: return 223;
+		case 0x0155: return 224;
+		case 0x00E1: return 225;
+		case 0x00E2: return 226;
+		case 0x0103: return 227;
+		case 0x00E4: return 228;
+		case 0x013A: return 229;
+		case 0x0107: return 230;
+		case 0x00E7: return 231;
+		case 0x010D: return 232;
+		case 0x00E9: return 233;
+		case 0x0119: return 234;
+		case 0x00EB: return 235;
+		case 0x011B: return 236;
+		case 0x00ED: return 237;
+		case 0x00EE: return 238;
+		case 0x010F: return 239;
+		case 0x0111: return 240;
+		case 0x0144: return 241;
+		case 0x0148: return 242;
+		case 0x00F3: return 243;
+		case 0x00F4: return 244;
+		case 0x0151: return 245;
+		case 0x00F6: return 246;
+		case 0x0159: return 248;
+		case 0x016F: return 249;
+		case 0x00FA: return 250;
+		case 0x0171: return 251;
+		case 0x00FC: return 252;
+		case 0x00FD: return 253;
+		case 0x0163: return 254;
+		case 0x02D9: return 255;
+
+		default: return (uint8_t)utf32;
+	}
 }
 
 /*
@@ -493,6 +777,7 @@ void IN_Init( void *windowData )
 IN_ProcessEvents
 ===============
 */
+void SNDDMA_Activate( qboolean activate );
 static void IN_ProcessEvents( void )
 {
 	SDL_Event e;
@@ -535,34 +820,7 @@ static void IN_ProcessEvents( void )
 					// Quick and dirty UTF-8 to UTF-32 conversion
 					while( *c )
 					{
-						int utf32 = 0;
-
-						if( ( *c & 0x80 ) == 0 )
-							utf32 = *c++;
-						else if( ( *c & 0xE0 ) == 0xC0 ) // 110x xxxx
-						{
-							utf32 |= ( *c++ & 0x1F ) << 6;
-							utf32 |= ( *c++ & 0x3F );
-						}
-						else if( ( *c & 0xF0 ) == 0xE0 ) // 1110 xxxx
-						{
-							utf32 |= ( *c++ & 0x0F ) << 12;
-							utf32 |= ( *c++ & 0x3F ) << 6;
-							utf32 |= ( *c++ & 0x3F );
-						}
-						else if( ( *c & 0xF8 ) == 0xF0 ) // 1111 0xxx
-						{
-							utf32 |= ( *c++ & 0x07 ) << 18;
-							utf32 |= ( *c++ & 0x3F ) << 12;
-							utf32 |= ( *c++ & 0x3F ) << 6;
-							utf32 |= ( *c++ & 0x3F );
-						}
-						else
-						{
-							Com_DPrintf( "Unrecognised UTF-8 lead byte: 0x%x\n", (unsigned int)*c );
-							c++;
-						}
-
+						uint32_t utf32 = ConvertUTF8ToUTF32( c, &c );
 						if( utf32 != 0 )
 						{
 							if( IN_IsConsoleKey( A_NULL, utf32 ) )
@@ -571,7 +829,10 @@ static void IN_ProcessEvents( void )
 								Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qfalse, 0, NULL );
 							}
 							else
-								Sys_QueEvent( 0, SE_CHAR, utf32, 0, 0, NULL );
+							{
+								uint8_t encoded = ConvertUTF32ToExpectedCharset( utf32 );
+								Sys_QueEvent( 0, SE_CHAR, encoded, 0, 0, NULL );
+							}
 						}
 					}
 				}
@@ -610,7 +871,7 @@ static void IN_ProcessEvents( void )
 					Sys_QueEvent( 0, SE_KEY, A_MWHEELUP, qtrue, 0, NULL );
 					Sys_QueEvent( 0, SE_KEY, A_MWHEELUP, qfalse, 0, NULL );
 				}
-				else
+				else if( e.wheel.y < 0 )
 				{
 					Sys_QueEvent( 0, SE_KEY, A_MWHEELDOWN, qtrue, 0, NULL );
 					Sys_QueEvent( 0, SE_KEY, A_MWHEELDOWN, qfalse, 0, NULL );
@@ -627,8 +888,19 @@ static void IN_ProcessEvents( void )
 					case SDL_WINDOWEVENT_MINIMIZED:    Cvar_SetValue( "com_minimized", 1 ); break;
 					case SDL_WINDOWEVENT_RESTORED:
 					case SDL_WINDOWEVENT_MAXIMIZED:    Cvar_SetValue( "com_minimized", 0 ); break;
-					case SDL_WINDOWEVENT_FOCUS_LOST:   Cvar_SetValue( "com_unfocused", 1 ); break;
-					case SDL_WINDOWEVENT_FOCUS_GAINED: Cvar_SetValue( "com_unfocused", 0 ); break;
+					case SDL_WINDOWEVENT_FOCUS_LOST:
+					{
+						Cvar_SetValue( "com_unfocused", 1 );
+						SNDDMA_Activate( qfalse );
+						break;
+					}
+
+					case SDL_WINDOWEVENT_FOCUS_GAINED:
+					{
+						Cvar_SetValue( "com_unfocused", 0 );
+						SNDDMA_Activate( qtrue );
+						break;
+					}
 				}
 				break;
 

@@ -1,28 +1,38 @@
+/*
+===========================================================================
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #pragma once
 
 // Sequencer Header File
-
 #include "blockstream.h"
 #include "interface.h"
 #include "taskmanager.h"
 #include "sequence.h"
 
-#ifdef _MSC_VER
-#pragma warning(disable : 4786)	//identifier was truncated
-
-#pragma warning (push, 3)	//go back down to 3 for the stl include
-#pragma warning (disable:4503)	// decorated name length xceeded, name was truncated
-#endif
 #include <list>
 #include <vector>
 #include <map>
-#ifdef _MSC_VER
-#pragma warning (pop)
-#pragma warning (disable:4503)	// decorated name length xceeded, name was truncated
-#endif
 
 //Defines
-
 #define SQ_COMMON		0x00000000 	//Common one-pass sequence
 #define	SQ_LOOP			0x00000001 	//Looping sequence
 #define SQ_RETAIN		0x00000002 	//Inside a looping sequence list, retain the information

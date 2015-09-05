@@ -1,8 +1,28 @@
-#include "tr_local.h"
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
 
-#if !defined __TR_WORLDEFFECTS_H
-	#include "tr_WorldEffects.h"
-#endif
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
+#include "tr_local.h"
+#include "tr_WorldEffects.h"
 
 backEndData_t	*backEndData;
 backEndState_t	backEnd;
@@ -1802,6 +1822,51 @@ void RB_ShowImages( void ) {
 //	ri->Printf( PRINT_ALL, "%i msec to draw all images\n", end - start );
 }
 
+static void RB_GammaCorrectRender()
+{
+	qglPushAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+
+	RB_SetGL2D();
+
+	// All this fixed-function texture type enabling/disabling is ludicrous :(
+	qglEnable(GL_TEXTURE_RECTANGLE_ARB);
+	GL_SelectTexture(0);
+	qglBindTexture(GL_TEXTURE_RECTANGLE_ARB, tr.sceneImage);
+	qglCopyTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, 0, 0, glConfig.vidWidth, glConfig.vidHeight, 0);
+
+	qglEnable(GL_TEXTURE_3D);
+	GL_SelectTexture(1);
+	qglBindTexture(GL_TEXTURE_3D, tr.gammaCorrectLUTImage);
+
+	qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaCorrectVtxShader);
+	qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.gammaCorrectPxShader);
+
+	qglEnable(GL_VERTEX_PROGRAM_ARB);
+	qglEnable(GL_FRAGMENT_PROGRAM_ARB);
+
+	qglBegin(GL_QUADS);
+		qglTexCoord2f(0.0f, 0.0f);
+		qglVertex2f(-1.0f, -1.0f);
+
+		qglTexCoord2f(0.0f, (float)glConfig.vidHeight);
+		qglVertex2f(-1.0f,  1.0f);
+
+		qglTexCoord2f((float)glConfig.vidWidth, (float)glConfig.vidHeight);
+		qglVertex2f( 1.0f,  1.0f);
+
+		qglTexCoord2f((float)glConfig.vidWidth, 0.0f);
+		qglVertex2f( 1.0f, -1.0f);
+	qglEnd();
+
+	qglDisable(GL_VERTEX_PROGRAM_ARB);
+	qglDisable(GL_FRAGMENT_PROGRAM_ARB);
+
+	qglDisable(GL_TEXTURE_3D);
+	GL_SelectTexture(0);
+
+	qglPopAttrib();
+}
+
 
 /*
 =============
@@ -1815,6 +1880,11 @@ const void	*RB_SwapBuffers( const void *data ) {
 	// finish any 2D drawing if needed
 	if ( tess.numIndexes ) {
 		RB_EndSurface();
+	}
+
+	if ( glConfigExt.doGammaCorrectionWithShaders )
+	{
+		RB_GammaCorrectRender();
 	}
 
 	// texture swapping test

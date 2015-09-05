@@ -1,3 +1,26 @@
+/*
+===========================================================================
+Copyright (C) 1999 - 2005, Id Software, Inc.
+Copyright (C) 2000 - 2013, Raven Software, Inc.
+Copyright (C) 2001 - 2013, Activision, Inc.
+Copyright (C) 2013 - 2015, OpenJK contributors
+
+This file is part of the OpenJK source code.
+
+OpenJK is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, see <http://www.gnu.org/licenses/>.
+===========================================================================
+*/
+
 #include "RoffSystem.h"
 
 #ifndef DEDICATED
@@ -430,20 +453,12 @@ qboolean CROFFSystem::Unload( int id )
 
 	if ( itr != mROFFList.end() )
 	{ // requested item found in the list, free mem, then remove from list
-		delete ((CROFF *)(*itr).second);
+		delete itr->second;
 
-#ifdef _WIN32
-		itr = mROFFList.erase( itr );
-#else
-		// darn stl differences
-		TROFFList::iterator titr;
-		titr = itr;
-		++itr;
-		mROFFList.erase(titr);
-#endif
+		mROFFList.erase( itr++ );
 
 #ifdef _DEBUG
-		Com_Printf( S_COLOR_GREEN"roff unloaded\n" );
+		Com_Printf( S_COLOR_GREEN "roff unloaded\n" );
 #endif
 
 		return qtrue;
@@ -452,7 +467,7 @@ qboolean CROFFSystem::Unload( int id )
 	{ // not found
 
 #ifdef _DEBUG
-		Com_Printf( S_COLOR_RED"unload failed: roff <%i> does not exist\n", id );
+		Com_Printf( S_COLOR_RED "unload failed: roff <%i> does not exist\n", id );
 #endif
 		return qfalse;
 	}
