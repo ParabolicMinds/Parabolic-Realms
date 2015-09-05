@@ -229,6 +229,7 @@ extern qboolean BG_ParseLiteral( const char **data, const char *string );
 //
 #define MAX_NPC_DATA_SIZE 0x40000
 char	NPCParms[MAX_NPC_DATA_SIZE];
+int		NPCCount;
 
 /*
 team_t TranslateTeamName( const char *name )
@@ -3610,5 +3611,26 @@ void NPC_LoadParms( void )
 			//*marker = 0; //rww - make sure this is null or strcat will not append to the correct place
 			//rww  12/19/02-actually the probelm was npcParseBuffer not being nul-term'd, which could cause issues in the strcat too
 		}
+	}
+	//Count the NPCs
+	NPCCount = 0;
+	char const * p = NPCParms, * token;
+	while ( p ) {
+		token = COM_ParseExt( &p, qtrue );
+		if ( token[0] == 0 ) break;
+		SkipBracedSection( &p, 0 );
+		NPCCount++;
+	}
+	Com_Printf("NPC Data: %i\n", NPCCount);
+}
+
+void NPC_PrintNPCs(void(*printfunc)(char const *)) {
+	char const * p = NPCParms, * token;
+	while ( p ) {
+		token = COM_ParseExt( &p, qtrue );
+		if ( token[0] == 0 ) break;
+		printfunc(token);
+		SkipBracedSection( &p, 0 );
+		NPCCount++;
 	}
 }

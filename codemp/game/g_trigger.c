@@ -1221,7 +1221,7 @@ void trigger_teleporter_touch (gentity_t *self, gentity_t *other, trace_t *trace
 		return;
 	}
 
-	TeleportPlayer( other, dest->s.origin, dest->s.angles );
+	TeleportPlayer( other, dest->s.origin, dest->s.angles, qtrue );
 }
 
 
@@ -1640,10 +1640,10 @@ void hyperspace_touch( gentity_t *self, gentity_t *other, trace_t *trace )
 				VectorMA( newOrg, uDiff, up, newOrg );
 				//trap->Print("hyperspace from %s to %s\n", vtos(other->client->ps.origin), vtos(newOrg) );
 				//now put them in the offset position, facing the angles that position wants them to be facing
-				TeleportPlayer( other, newOrg, ent->s.angles );
+				TeleportPlayer( other, newOrg, ent->s.angles, qtrue );
 				if ( other->m_pVehicle && other->m_pVehicle->m_pPilot )
 				{//teleport the pilot, too
-					TeleportPlayer( (gentity_t*)other->m_pVehicle->m_pPilot, newOrg, ent->s.angles );
+					TeleportPlayer( (gentity_t*)other->m_pVehicle->m_pPilot, newOrg, ent->s.angles, qtrue );
 					//FIXME: and the passengers?
 				}
 				//make them face the new angle

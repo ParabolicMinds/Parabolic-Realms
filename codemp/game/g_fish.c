@@ -10,24 +10,27 @@ typedef enum fish_think_state_e {
 
 #define fishState genericValue1
 
-static void FISH_Resting(gentity_t * fish) {
-
+static int FISH_Resting(gentity_t * fish) {
+	if (!Q_irand(0, 10)) {
+		fish->fishState = FISHS_ORIENTING;
+		return 0;
+	} else return 1000;
 }
 
-static void FISH_Orienting(gentity_t * fish) {
-
+static int FISH_Orienting(gentity_t * fish) {
+	return 1000;
 }
 
-static void FISH_Wandering(gentity_t * fish) {
-
+static int FISH_Wandering(gentity_t * fish) {
+	return 1000;
 }
 
-static void FISH_GoTo(gentity_t * fish) {
-
+static int FISH_GoTo(gentity_t * fish) {
+	return 1000;
 }
 
-static void FISH_Bolting(gentity_t * fish) {
-
+static int FISH_Bolting(gentity_t * fish) {
+	return 1000;
 }
 
 static void G_FishThink(gentity_t * fish) {
@@ -38,25 +41,25 @@ static void G_FishThink(gentity_t * fish) {
 		fish->nextthink = level.time;
 		break;
 	case FISHS_RESTING:
-		FISH_Resting(fish);
+		fish->nextthink = level.time + FISH_Resting(fish);
 		break;
 	case FISHS_ORIENTING:
-		FISH_Orienting(fish);
+		fish->nextthink = level.time + FISH_Orienting(fish);
 		break;
 	case FISHS_WANDERING:
-		FISH_Wandering(fish);
+		fish->nextthink = level.time + FISH_Wandering(fish);
 		break;
 	case FISHS_GOTO:
-		FISH_GoTo(fish);
+		fish->nextthink = level.time + FISH_GoTo(fish);
 		break;
 	case FISHS_BOLTING:
-		FISH_Bolting(fish);
+		fish->nextthink = level.time + FISH_Bolting(fish);
 		break;
 	}
 }
 
 void G_FishStartThink(gentity_t * fish) {
-	fish->fishState = FISHS_RESTING;
+	fish->fishState = FISHS_WANDERING;
 	fish->think = G_FishThink;
 	fish->nextthink = level.time + 50;
 }

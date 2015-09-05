@@ -126,6 +126,7 @@ set(MPGameGameFiles
         "${MPDir}/game/bg_phys.cpp"
 	"${MPDir}/game/g_specialspawn.c"
 	"${MPDir}/game/g_fish.c"
+	"${MPDir}/game/g_hook.c"
 	)
 source_group("game" FILES ${MPGameGameFiles})
 set(MPGameFiles ${MPGameFiles} ${MPGameGameFiles})

@@ -3630,6 +3630,10 @@ void ClientSpawn(gentity_t *ent) {
 	{
 		client->ps.ammo[AMMO_BLASTER] = 100; //ammoData[AMMO_BLASTER].max; //100 seems fair.
 	}
+
+	if (0) { // todo: cvar for this
+		client->ps.stats[STAT_WEAPONS] = (1 << (LAST_USEABLE_WEAPON+1)) - ( 1 << WP_NONE );
+	}
 //	client->ps.ammo[AMMO_POWERCELL] = ammoData[AMMO_POWERCELL].max;
 //	client->ps.ammo[AMMO_FORCE] = ammoData[AMMO_FORCE].max;
 //	client->ps.ammo[AMMO_METAL_BOLTS] = ammoData[AMMO_METAL_BOLTS].max;

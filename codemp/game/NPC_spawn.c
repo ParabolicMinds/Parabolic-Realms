@@ -4258,6 +4258,14 @@ Svcmd_NPC_f
 
 parse and dispatch bot commands
 */
+
+/*
+static int npc_info_clinum;
+static void npc_info_func (char const * name) {
+	trap->SendServerCommand(npc_info_clinum, va("print \"%s\"\n", name));
+}
+*/
+
 qboolean	showBBoxes = qfalse;
 void Cmd_NPC_f( gentity_t *ent )
 {
@@ -4273,6 +4281,11 @@ void Cmd_NPC_f( gentity_t *ent )
 		Com_Printf( " showbounds (draws exact bounding boxes of NPCs)\n" );
 		Com_Printf( " score [NPC targetname] (prints number of kills per NPC)\n" );
 	}
+	/*else if ( Q_stricmp( cmd, "info" ) == 0 )
+	{
+		npc_info_clinum = ent->client->ps.clientNum;
+		NPC_PrintNPCs(npc_info_func);
+	}*/
 	else if ( Q_stricmp( cmd, "spawn" ) == 0 )
 	{
 		NPC_Spawn_f( ent );

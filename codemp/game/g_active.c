@@ -1271,6 +1271,10 @@ qboolean G_ActionButtonPressed(int buttons)
 	{
 		return qtrue;
 	}
+	else if (buttons & BUTTON_GRAPPLE_HOOK)
+	{
+		return qtrue;
+	}
 
 	return qfalse;
 }

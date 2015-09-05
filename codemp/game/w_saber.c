@@ -6491,21 +6491,24 @@ void saberKnockDown(gentity_t *saberent, gentity_t *saberOwner, gentity_t *other
 	VectorSet( saberent->r.mins, -3.0f, -3.0f, -1.5f );
 	VectorSet( saberent->r.maxs, 3.0f, 3.0f, 1.5f );
 
-	//perform a trace before attempting to spawn at currently location.
-	//unfortunately, it's a fairly regular occurance that current saber location
-	//(normally at the player's right hand) could result in the saber being stuck
-	//in the the map and then freaking out.
-	trap->Trace(&tr, saberent->r.currentOrigin, saberent->r.mins, saberent->r.maxs, saberent->r.currentOrigin, saberent->s.number, saberent->clipmask, qfalse, 0, 0);
-	if(tr.startsolid || tr.fraction != 1)
-	{//bad position, try popping our origin up a bit
-		saberent->r.currentOrigin[2] += 20;
-		G_SetOrigin(saberent, saberent->r.currentOrigin);
+
+	if (PCVAR_G_SBDROPVALID.integer) {
+		//perform a trace before attempting to spawn at currently location.
+		//unfortunately, it's a fairly regular occurance that current saber location
+		//(normally at the player's right hand) could result in the saber being stuck
+		//in the the map and then freaking out.
 		trap->Trace(&tr, saberent->r.currentOrigin, saberent->r.mins, saberent->r.maxs, saberent->r.currentOrigin, saberent->s.number, saberent->clipmask, qfalse, 0, 0);
 		if(tr.startsolid || tr.fraction != 1)
-		{//still no luck, try using our owner's origin
-			G_SetOrigin(saberent, saberOwner->client->ps.origin);
+		{//bad position, try popping our origin up a bit
+			saberent->r.currentOrigin[2] += 20;
+			G_SetOrigin(saberent, saberent->r.currentOrigin);
+			trap->Trace(&tr, saberent->r.currentOrigin, saberent->r.mins, saberent->r.maxs, saberent->r.currentOrigin, saberent->s.number, saberent->clipmask, qfalse, 0, 0);
+			if(tr.startsolid || tr.fraction != 1)
+			{//still no luck, try using our owner's origin
+				G_SetOrigin(saberent, saberOwner->client->ps.origin);
 
-			//since this is our last chance, we don't care if this works or not.
+				//since this is our last chance, we don't care if this works or not.
+			}
 		}
 	}
 

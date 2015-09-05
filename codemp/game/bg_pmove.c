@@ -7602,7 +7602,7 @@ static void PM_Weapon( void )
 	pm->ps->weaponstate = WEAPON_FIRING;
 
 	// take an ammo away if not infinite
-	if ( pm->ps->clientNum < MAX_CLIENTS && pm->ps->ammo[ weaponData[pm->ps->weapon].ammoIndex ] != -1 )
+	if ( !PCVAR_BG_INFAMMO.integer && pm->ps->clientNum < MAX_CLIENTS && pm->ps->ammo[ weaponData[pm->ps->weapon].ammoIndex ] != -1 )
 	{
 		// enough energy to fire this weapon?
 		if ((pm->ps->ammo[weaponData[pm->ps->weapon].ammoIndex] - amount) >= 0)
@@ -7625,13 +7625,7 @@ static void PM_Weapon( void )
 	}
 
 	if ( pm->cmd.buttons & BUTTON_ALT_ATTACK ) 	{
-		//if ( pm->ps->weapon == WP_BRYAR_PISTOL && pm->gametype != GT_SIEGE )
-		if (0)
-		{ //kind of a hack for now
-			PM_AddEvent( EV_FIRE_WEAPON );
-			addTime = weaponData[pm->ps->weapon].fireTime;
-		}
-		else if (pm->ps->weapon == WP_DISRUPTOR && pm->ps->zoomMode != 1)
+		if (pm->ps->weapon == WP_DISRUPTOR && pm->ps->zoomMode != 1)
 		{
 			PM_AddEvent( EV_FIRE_WEAPON );
 			addTime = weaponData[pm->ps->weapon].fireTime;
@@ -7664,6 +7658,8 @@ static void PM_Weapon( void )
 		addTime /= 1.3;
 	}
 	*/
+
+	addTime /= PCVAR_BG_SUPERWEAPONS.value;
 
 	if (pm->ps->fd.forcePowersActive & (1 << FP_RAGE))
 	{
@@ -10308,6 +10304,7 @@ void PmoveSingle (pmove_t *pmove) {
 			|| (pm->cmd.buttons&BUTTON_FORCEGRIP)
 			|| (pm->cmd.buttons&BUTTON_FORCE_LIGHTNING)
 			|| (pm->cmd.buttons&BUTTON_FORCE_DRAIN)
+			|| (pm->cmd.buttons&BUTTON_GRAPPLE_HOOK)
 			|| pm->cmd.upmove )
 		{//stop the anim
 			if ( pm->ps->legsAnim == BOTH_MEDITATE

@@ -2492,7 +2492,7 @@ void Cmd_SetViewpos_f( gentity_t *ent ) {
 	trap->Argv( 4, buffer, sizeof( buffer ) );
 	angles[YAW] = atof( buffer );
 
-	TeleportPlayer( ent, origin, angles );
+	TeleportPlayer( ent, origin, angles, qfalse );
 }
 
 void G_LeaveVehicle( gentity_t* ent, qboolean ConCheck ) {
@@ -3451,6 +3451,205 @@ void Cms_SpecialSpawn_f(gentity_t * ent) {
 	G_SpawnTurret(ent->client->ps.origin);
 }
 
+void WP_SaberAddG2Model( gentity_t *saberent, const char *saberModel, qhandle_t saberSkin );
+
+void Cmd_DropSaber_f(gentity_t * ent) {
+	gentity_t * saberent = &g_entities[ent->client->ps.saberEntityNum];
+	gentity_t * saberOwner = ent;
+
+	if (!saberent->inuse || !saberOwner->inuse) return;
+	if (!saberOwner->client->ps.saberEntityNum) return;
+
+	saberOwner->client->ps.saberEntityState = 1;
+
+	saberent->s.saberInFlight = qfalse;//qtrue;
+	saberent->s.pos.trType = TR_LINEAR;
+	saberent->s.eType = ET_GENERAL;
+	saberent->s.eFlags = 0;
+
+	WP_SaberAddG2Model( saberent, saberOwner->client->saber[0].model, saberOwner->client->saber[0].skin );
+
+	saberent->s.modelGhoul2 = 127;
+
+	saberent->parent = saberOwner;
+
+	saberent->methodOfDeath = MOD_SABER;
+	saberent->splashMethodOfDeath = MOD_SABER;
+	saberent->s.solid = 2;
+	saberent->r.contents = CONTENTS_LIGHTSABER;
+
+	saberent->genericValue5 = 0;
+
+	VectorSet( saberent->r.mins, -24.0f, -24.0f, -8.0f );
+	VectorSet( saberent->r.maxs, 24.0f, 24.0f, 8.0f );
+
+	saberent->s.genericenemyindex = saberOwner->s.number+1024;
+	saberent->s.weapon = WP_SABER;
+
+	saberent->genericValue5 = 0;
+
+	if (saberOwner->client->ps.saberInFlight) {
+
+	} else {
+		G_SetOrigin(saberent, saberOwner->client->lastSaberBase_Always); //use this as opposed to the right hand bolt,
+	}
+	saberOwner->client->ps.saberInFlight = qtrue;
+	//because I don't want to risk reconstructing the skel again to get it here. And it isn't worth storing.
+	saberKnockDown(saberent, saberOwner, saberOwner);
+}
+
+void Cmd_KnockDown_f( gentity_t *ent )
+{
+	if ( BG_KnockDownable(&ent->client->ps) )
+	{
+		ent->client->ps.forceHandExtend = HANDEXTEND_KNOCKDOWN;
+		ent->client->ps.forceDodgeAnim = 0;
+		ent->client->ps.forceHandExtendTime = level.time;
+		ent->client->ps.quickerGetup = qfalse;
+	}
+}
+
+#define COORD_SIZE (8)
+#define ANGLE_SIZE (8)
+#define TELEPORT_DISTANCE 64
+
+static void OffsetTeleportVector(vec3_t pos, vec3_t angles, float distance, vec3_t out) {
+	vec3_t delta, adjang;
+	float z = pos[2];
+	VectorCopy(angles, adjang);
+	adjang[0] = 0;
+	adjang[2] = 0;
+	AngleVectors(adjang, delta, NULL, NULL);
+	VectorMA(pos, distance, delta, out);
+	out[2] = z;
+}
+
+void Cmd_Teleport_f (gentity_t * ent) {
+	vec3_t pos, ang;
+	int i;
+	char otherNameToken [MAX_NETNAME], other2NameToken [MAX_NETNAME];
+	gentity_t * other = 0, * other2 = 0, * iter = 0;
+	VectorClear(pos);
+	VectorClear(ang);
+	switch (trap->Argc()) {
+	case 0:  //
+	case 1:  // invalid
+	default: //
+		break;
+	case 2: // teleport another player to you
+		trap->Argv(1, otherNameToken, MAX_NETNAME);
+		for(other = g_entities, i = 0;i < MAX_CLIENTS;i++,other++) {
+			if (!other->client) continue;
+			if (strstr(other->client->pers.netname, otherNameToken)) {
+				VectorCopy(ent->client->ps.origin, pos);
+				ang[YAW] = -ent->client->ps.viewangles[YAW];
+				OffsetTeleportVector(pos, ent->client->ps.viewangles, TELEPORT_DISTANCE, pos);
+				TeleportPlayer(other, pos, ang, qfalse);
+				return;
+			}
+		}
+		trap->SendServerCommand( ent-g_entities, va( "print \"Player not found with that token.\n\"") );
+		return;
+	case 3: // teleport another player to another player
+		trap->Argv(1, otherNameToken, MAX_NETNAME);
+		trap->Argv(2, other2NameToken, MAX_NETNAME);
+		for(iter = g_entities, i = 0;i < MAX_CLIENTS && (!other || !other2);i++,iter++) {
+			if (!iter->client) continue;
+			if (!other && strstr(iter->client->pers.netname, otherNameToken)) {
+				other = iter;
+			}
+			if (!other2 && strstr(iter->client->pers.netname, other2NameToken)) {
+				other2 = iter;
+			}
+		}
+		if (other && other2) {
+			VectorCopy(other2->client->ps.origin, pos);
+			ang[YAW] = -other2->client->ps.viewangles[YAW];
+			OffsetTeleportVector(pos, other2->client->ps.viewangles, TELEPORT_DISTANCE, pos);
+			TeleportPlayer(other, pos, ang, qfalse);
+			return;
+		}
+		trap->SendServerCommand( ent-g_entities, va( "print \"Player not found with that token.\n\"") );
+		return;
+	case 4: // teleport yourself to coordinates
+	{
+		char xt [COORD_SIZE], yt[COORD_SIZE], zt[COORD_SIZE];
+		trap->Argv(1, xt, COORD_SIZE);
+		trap->Argv(2, yt, COORD_SIZE);
+		trap->Argv(3, zt, COORD_SIZE);
+		VectorSet(pos, strtof(xt, NULL), strtof(yt, NULL), strtof(zt, NULL));
+		TeleportPlayer(ent, pos, ang, qfalse);
+		return;
+	}
+		break;
+	case 5: // teleport another player to coordinates
+		trap->Argv(1, otherNameToken, MAX_NETNAME);
+		for(iter = g_entities, i = 0;i < MAX_CLIENTS;i++,iter++) {
+			if (!iter->client) continue;
+			if (strstr(iter->client->pers.netname, otherNameToken)) {
+				other = iter;
+				break;
+			}
+			if (!other) {
+				trap->SendServerCommand( ent-g_entities, va( "print \"Player not found with that token.\n\"") );
+				return;
+			}
+			char xt [COORD_SIZE], yt[COORD_SIZE], zt[COORD_SIZE];
+			trap->Argv(2, xt, COORD_SIZE);
+			trap->Argv(3, yt, COORD_SIZE);
+			trap->Argv(4, zt, COORD_SIZE);
+			VectorSet(pos, strtof(xt, NULL), strtof(yt, NULL), strtof(zt, NULL));
+			TeleportPlayer(ent, pos, ang, qfalse);
+			return;
+		}
+		break;
+	case 7: // teleport yourself to coordinates + angles
+	{
+		char xt [COORD_SIZE], yt[COORD_SIZE], zt[COORD_SIZE];
+		trap->Argv(1, xt, COORD_SIZE);
+		trap->Argv(2, yt, COORD_SIZE);
+		trap->Argv(3, zt, COORD_SIZE);
+		VectorSet(pos, strtof(xt, NULL), strtof(yt, NULL), strtof(zt, NULL));
+		char rxt [ANGLE_SIZE], ryt[ANGLE_SIZE], rzt[ANGLE_SIZE];
+		trap->Argv(4, rxt, ANGLE_SIZE);
+		trap->Argv(5, ryt, ANGLE_SIZE);
+		trap->Argv(6, rzt, ANGLE_SIZE);
+		VectorSet(ang, strtof(rxt, NULL), strtof(ryt, NULL), strtof(rzt, NULL));
+		TeleportPlayer(ent, pos, ang, qfalse);
+		return;
+	}
+		break;
+	case 8: // teleport another player to coordinates + angles
+		trap->Argv(1, otherNameToken, MAX_NETNAME);
+		for(iter = g_entities, i = 0;i < MAX_CLIENTS;i++,iter++) {
+			if (!iter->client) continue;
+			if (strstr(iter->client->pers.netname, otherNameToken)) {
+				other = iter;
+				break;
+			}
+			if (!other) {
+				trap->SendServerCommand( ent-g_entities, va( "print \"Player not found with that token.\n\"") );
+				return;
+			}
+			char xt [COORD_SIZE], yt[COORD_SIZE], zt[COORD_SIZE];
+			trap->Argv(2, xt, COORD_SIZE);
+			trap->Argv(3, yt, COORD_SIZE);
+			trap->Argv(4, zt, COORD_SIZE);
+			VectorSet(pos, strtof(xt, NULL), strtof(yt, NULL), strtof(zt, NULL));
+			char rxt [ANGLE_SIZE], ryt[ANGLE_SIZE], rzt[ANGLE_SIZE];
+			trap->Argv(5, rxt, ANGLE_SIZE);
+			trap->Argv(6, ryt, ANGLE_SIZE);
+			trap->Argv(7, rzt, ANGLE_SIZE);
+			VectorSet(ang, strtof(rxt, NULL), strtof(ryt, NULL), strtof(rzt, NULL));
+			TeleportPlayer(ent, pos, ang, qfalse);
+			return;
+		}
+		break;
+	}
+	trap->SendServerCommand( ent-g_entities, va( "print \"Invalid arguments.\n\"") );
+}
+
+
 /* This array MUST be sorted correctly by alphabetical name field */
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
@@ -3461,6 +3660,7 @@ command_t commands[] = {
 	{ "debugBMove_Left",	Cmd_BotMoveLeft_f,			CMD_CHEAT|CMD_ALIVE },
 	{ "debugBMove_Right",	Cmd_BotMoveRight_f,			CMD_CHEAT|CMD_ALIVE },
 	{ "debugBMove_Up",		Cmd_BotMoveUp_f,			CMD_CHEAT|CMD_ALIVE },
+	{ "dropsaber",			Cmd_DropSaber_f,			CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "duelteam",			Cmd_DuelTeam_f,				CMD_NOINTERMISSION },
 	{ "follow",				Cmd_Follow_f,				CMD_NOINTERMISSION },
 	{ "follownext",			Cmd_FollowNext_f,			CMD_NOINTERMISSION },
@@ -3472,6 +3672,7 @@ command_t commands[] = {
 	{ "god",				Cmd_God_f,					CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "kill",				Cmd_Kill_f,					CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "killother",			Cmd_KillOther_f,			CMD_CHEAT|CMD_NOINTERMISSION },
+	{ "knockdown",			Cmd_KnockDown_f,			CMD_ALIVE|CMD_NOINTERMISSION },
 //	{ "kylesmash",			TryGrapple,					0 },
 	{ "levelshot",			Cmd_LevelShot_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "maplist",			Cmd_MapList_f,				CMD_NOINTERMISSION },
@@ -3492,6 +3693,7 @@ command_t commands[] = {
 	{ "team",				Cmd_Team_f,					CMD_NOINTERMISSION },
 //	{ "teamtask",			Cmd_TeamTask_f,				CMD_NOINTERMISSION },
 	{ "teamvote",			Cmd_TeamVote_f,				CMD_NOINTERMISSION },
+	{ "teleport",			Cmd_Teleport_f,				CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "tell",				Cmd_Tell_f,					0 },
 	{ "thedestroyer",		Cmd_TheDestroyer_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "t_use",				Cmd_TargetUse_f,			CMD_CHEAT|CMD_ALIVE },

@@ -3300,6 +3300,9 @@ void G_RunFrame( int levelTime ) {
 				WP_ForcePowersUpdate(ent, &ent->client->pers.cmd );
 				WP_SaberPositionUpdate(ent, &ent->client->pers.cmd);
 				WP_SaberStartMissileBlockCheck(ent, &ent->client->pers.cmd);
+				if (ent->client->pers.cmd.buttons & BUTTON_GRAPPLE_HOOK) {
+					G_GrappleHook(ent);
+				}
 			}
 
 			if (g_allowNPC.integer)

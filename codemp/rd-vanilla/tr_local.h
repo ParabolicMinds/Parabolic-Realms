@@ -362,6 +362,8 @@ typedef struct shaderStage_s {
 	alphaGen_t		alphaGen;
 
 	byte			constantColor[4];			// for CGEN_CONST and AGEN_CONST
+
+	byte			normalizedColor[4];
 	float			coShift;					// for CGEN_RAINBOW
 	float			coBank;
 

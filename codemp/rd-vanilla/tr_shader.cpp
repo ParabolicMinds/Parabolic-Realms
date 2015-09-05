@@ -1398,16 +1398,27 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			}
 			else if ( !Q_stricmp( token, "rainbow" ) )
 			{
-				vec3_t	color;
+				int normalize = 0;
+				float shiftspeed = 1.0f;
 
-				VectorClear( color );
+				/*
+				if (pread || !COM_ParseInt(text, &normalize)) {
+					ri->Printf( PRINT_ALL, S_COLOR_YELLOW  "WARNING: missing parameter 'normalize' for rgbGen rainbow in shader '%s', presuming non-normalized.\n", shader.name );
+					pread = 1;
+				}
 
-				char * ext = COM_ParseExt(text, qfalse);
-				if (!ext) ri->Printf( PRINT_ALL, S_COLOR_YELLOW  "WARNING: missing parameters for rgbGen rainbow in shader '%s'\n", shader.name );
-				float shiftspeed = strtof(ext, NULL);
+				if (pread || !COM_ParseFloat(text, &shiftspeed)) {
+					ri->Printf( PRINT_ALL, S_COLOR_YELLOW  "WARNING: missing parameter 'shiftspeed' for rgbGen rainbow in shader '%s', presuming 1.0f.\n", shader.name );
+					pread = 1;
+				}*/
+
+				normalize = strtol(COM_ParseExt(text, qfalse), NULL, 10);
+				shiftspeed = strtof(COM_ParseExt(text, qfalse), NULL);
+
 				stage->constantColor[0] = 255;
 				stage->constantColor[1] = 0;
 				stage->constantColor[2] = 0;
+				stage->constantColor[3] = normalize;
 
 				stage->coShift = shiftspeed;
 				stage->coBank = 0.0f;

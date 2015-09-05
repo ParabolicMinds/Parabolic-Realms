@@ -173,16 +173,13 @@ TELEPORTERS
 =================================================================================
 */
 
-void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
+void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles, qboolean push ) {
 	gentity_t	*tent;
 	qboolean	isNPC = qfalse;
-	qboolean	noAngles;
 	if (player->s.eType == ET_NPC)
 	{
 		isNPC = qtrue;
 	}
-
-	noAngles = (angles[0] > 999999.0) ? qtrue : qfalse;
 
 	// use temp events at source and destination to prevent the effect
 	// from getting dropped by a second player event
@@ -201,7 +198,7 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 	player->client->ps.origin[2] += 1;
 
 	// spit the player out
-	if ( !noAngles ) {
+	if ( push && angles[0] <= 999999.0f ) {
 		AngleVectors( angles, player->client->ps.velocity, NULL, NULL );
 		VectorScale( player->client->ps.velocity, 400, player->client->ps.velocity );
 		player->client->ps.pm_time = 160;		// hold time

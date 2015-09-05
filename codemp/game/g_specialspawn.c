@@ -778,6 +778,8 @@ void G_SpawnTurret( vec3_t pos) {
 	base->s.modelindex2 = G_ModelIndex( "models/map_objects/hoth/turret_bottom.md3" );
 	base->s.modelindex = G_ModelIndex( "models/map_objects/hoth/turret_base.md3" );
 
+	base->s.origin[2] -= 8;
+
 	G_SetAngles( base, base->s.angles );
 	G_SetOrigin( base, base->s.origin );
 

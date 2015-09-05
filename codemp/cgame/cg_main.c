@@ -19,7 +19,6 @@ Ghoul2 Insert End
 
 void CG_InitJetpackGhoul2(void);
 void CG_CleanJetpackGhoul2(void);
-
 vec4_t colorTable[CT_MAX] =
 {
 	{0, 0, 0, 0},			// CT_NONE

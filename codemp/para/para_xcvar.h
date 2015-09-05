@@ -29,12 +29,16 @@
 #endif
 
 #if defined(_GAME) || defined(_CGAME) //Game and CGame cvars (bg_)
+XCVAR_DEF( PCVAR_BG_INFAMMO,			"0",							NULL,										CVAR_ARCHIVE|CVAR_SYSTEMINFO,				qtrue )
 XCVAR_DEF( PCVAR_BG_INFFORCE,			"0",							NULL,										CVAR_ARCHIVE|CVAR_SYSTEMINFO,				qtrue )
+XCVAR_DEF( PCVAR_BG_SABERLEN,			"1.0",							NULL,										CVAR_SYSTEMINFO,							qtrue )
+XCVAR_DEF( PCVAR_BG_SUPERWEAPONS,		"0",							NULL,										CVAR_ARCHIVE|CVAR_SYSTEMINFO,				qtrue )
 #endif
 
 #if defined(_GAME) //Game cvars (g_)
 XCVAR_DEF( PCVAR_G_BODYTIMEMULT,		"1.0",							NULL,										CVAR_ARCHIVE,				qtrue )
 XCVAR_DEF( PCVAR_G_GOLF,				"0",							G_PCVAR_GOLF_Switchfunc,					CVAR_ARCHIVE,				qtrue )
+XCVAR_DEF( PCVAR_G_SBDROPVALID,			"1",							NULL,										CVAR_ARCHIVE,				qtrue )
 #endif
 
 #if defined(_CGAME) //CGame cvars (cg_)

@@ -272,6 +272,8 @@ static void WP_FireBryarPistol( gentity_t *ent, qboolean altFire )
 
 		VectorSet( missile->r.maxs, boxSize, boxSize, boxSize );
 		VectorSet( missile->r.mins, -boxSize, -boxSize, -boxSize );
+
+		damage *= PCVAR_BG_SUPERWEAPONS.value;
 	}
 
 	missile->damage = damage;
@@ -752,6 +754,8 @@ void WP_DisruptorAltFire( gentity_t *ent )
 
 	damage += count;
 
+	damage *= PCVAR_BG_SUPERWEAPONS.value;
+
 	skip = ent->s.number;
 
 	for (i = 0; i < traces; i++ )
@@ -1059,6 +1063,8 @@ static void WP_BowcasterMainFire( gentity_t *ent )
 	{
 		damage = 30;
 	}
+
+	count *= PCVAR_BG_SUPERWEAPONS.value;
 
 	for (i = 0; i < count; i++ )
 	{
@@ -1434,6 +1440,8 @@ static void WP_DEMP2_AltFire( gentity_t *ent )
 	{ //this was just a tap-fire
 		damage = 1;
 	}
+
+	damage *= PCVAR_BG_SUPERWEAPONS.value;
 
 	trap->Trace( &tr, start, NULL, NULL, end, ent->s.number, MASK_SHOT, qfalse, 0, 0);
 

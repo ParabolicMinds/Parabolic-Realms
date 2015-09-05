@@ -329,7 +329,6 @@ void IN_GenCMD31( void )
 	cl.gcmdValue = GENCMD_GLOAT;
 }
 
-
 //toggle automap view mode
 static bool g_clAutoMapMode = false;
 void IN_AutoMapButton(void)
@@ -1739,6 +1738,10 @@ void CL_InitInput( void ) {
 
 	cl_nodelta = Cvar_Get ("cl_nodelta", "0", 0);
 	cl_debugMove = Cvar_Get ("cl_debugMove", "0", 0);
+
+	//Pararealms
+	Cmd_AddCommand ("+hook", IN_Button12Down);
+	Cmd_AddCommand ("-hook", IN_Button12Up);
 }
 
 /*
@@ -1861,4 +1864,7 @@ void CL_ShutdownInput(void)
 	Cmd_RemoveCommand("automap_button");
 	Cmd_RemoveCommand("automap_toggle");
 	Cmd_RemoveCommand("voicechat");
+
+	Cmd_RemoveCommand("+hook");
+	Cmd_RemoveCommand("-hook");
 }

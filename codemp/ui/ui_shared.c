@@ -4810,6 +4810,7 @@ static const char *g_bindCommands[] = {
 	"+force_grip",
 	"+force_lightning",
 	"+forward",
+	"+hook",
 	"+left",
 	"+lookdown",
 	"+lookup",

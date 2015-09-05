@@ -454,7 +454,7 @@ float Q_rsqrt( float number )
 	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
 //	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
 
-	assert( !Q_isnan(y) );
+	if (Q_isnan(y)) return INFINITY;
 	return y;
 }
 

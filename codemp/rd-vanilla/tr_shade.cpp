@@ -1126,6 +1126,17 @@ static void RainbowShiftColors(byte * vec, float shift, float * bank) {
 	}
 }
 
+static void NormalizeByteColor(byte * rgbIn, byte * rgbOut) {
+	vec3_t col;
+	VectorSet(col, rgbIn[0], rgbIn[1], rgbIn[2]);
+	float sum = col[0] + col[1] + col[2];
+	VectorScale(col, (255.0f / sum), col);
+	rgbOut[0] = byte(col[0]);
+	rgbOut[1] = byte(col[1]);
+	rgbOut[2] = byte(col[2]);
+	rgbOut[3] = 0;
+}
+
 /*
 ===============
 ComputeColors
@@ -1298,10 +1309,19 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 			break;
 		case CGEN_RAINBOW:
 			RainbowShiftColors(pStage->constantColor, pStage->coShift, &pStage->coBank);
-			for ( i = 0; i < tess.numVertexes; i++ ) {
-				byteAlias_t *baDest = (byteAlias_t *)&tess.svars.colors[i],
-					*baSource = (byteAlias_t *)&pStage->constantColor;
-				baDest->i = baSource->i;
+			if (pStage->constantColor[3] > 0) {
+				NormalizeByteColor(pStage->constantColor, pStage->normalizedColor);
+				for ( i = 0; i < tess.numVertexes; i++ ) {
+					byteAlias_t *baDest = (byteAlias_t *)&tess.svars.colors[i],
+						*baSource = (byteAlias_t *)&pStage->normalizedColor;
+					baDest->i = baSource->i;
+				}
+			} else {
+				for ( i = 0; i < tess.numVertexes; i++ ) {
+					byteAlias_t *baDest = (byteAlias_t *)&tess.svars.colors[i],
+						*baSource = (byteAlias_t *)&pStage->constantColor;
+					baDest->i = baSource->i;
+				}
 			}
 			break;
 	}

@@ -1237,7 +1237,7 @@ int	TAG_GetAngles( const char *owner, const char *name, vec3_t angles );
 int TAG_GetRadius( const char *owner, const char *name );
 int TAG_GetFlags( const char *owner, const char *name );
 
-void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles );
+void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles, qboolean push );
 
 //
 // g_weapon.c
@@ -1522,3 +1522,8 @@ void G_SpawnTurret( vec3_t position );
 
 //fish
 void G_FishStartThink(gentity_t * fish);
+
+//ghook
+void G_GrappleHook(gentity_t * ent);
+
+void NPC_PrintNPCs(void(*printfunc)(char const *));
