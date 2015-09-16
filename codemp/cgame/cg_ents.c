@@ -1878,7 +1878,7 @@ static void CG_Spray( centity_t *cent ) {
 		VectorClear(cent->modelScale);
 	}
 
-	char const * spraytex = cgs.clientinfo[cent->currentState.clientNum].sprayshader;
+	char const * spraytex = cgs.clientinfo[cent->currentState.owner].sprayshader;
 	if (strlen(spraytex) > 1) {
 		ent.customShader = trap->R_RegisterShaderNoLightmaps(spraytex);
 	}

@@ -1413,7 +1413,7 @@ netField_t	playerStateFields[] =
 { PSF(ragAttach), GENTITYNUM_BITS },
 { PSF(iModelScale), 10 }, //0-1024 (guess it's gotta be increased if we want larger allowable scale.. but 1024% is pretty big)
 { PSF(hackingBaseTime), 16 }, //up to 65536ms, over 10 seconds would just be silly anyway
-{ PSF(hookState), 3 },
+{ PSF(hookState), 4 },
 { PSF(hookDist), 0 },
 { PSF(hookPos[0]), 0 },
 { PSF(hookPos[1]), 0 },
