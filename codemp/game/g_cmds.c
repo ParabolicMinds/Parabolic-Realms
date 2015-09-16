@@ -2761,7 +2761,7 @@ void Cmd_SaberAttackCycle_f(gentity_t *ent)
 	}
 	if ( ent->client->ps.weapon != WP_SABER )
 	{
-        return;
+		return;
 	}
 	/*
 	if (ent->client->ps.weaponTime > 0)
@@ -3461,14 +3461,6 @@ void Cmd_Unstoppable(gentity_t * ent) {
 	}
 }
 
-void Cmd_SetSpray_f(gentity_t * ent) {
-	if (!ent->client) return;
-	if (trap->Argc() < 2) return;
-	char path [MAX_QPATH];
-	trap->Argv(1, path, MAX_QPATH);
-	trap->SetConfigstring(CS_PLAYERSPRAYS + ent->playerState->clientNum, path);
-}
-
 void Cms_SpecialSpawn_f(gentity_t * ent) {
 	G_SpawnTurret(ent->client->ps.origin);
 }
@@ -3707,7 +3699,6 @@ command_t commands[] = {
 	{ "say",				Cmd_Say_f,					0 },
 	{ "say_team",			Cmd_SayTeam_f,				0 },
 	{ "score",				Cmd_Score_f,				0 },
-	{ "setspray",			Cmd_SetSpray_f,				0 },
 	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
 	{ "siegeclass",			Cmd_SiegeClass_f,			CMD_NOINTERMISSION },
 	{ "sspawn",				Cms_SpecialSpawn_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },

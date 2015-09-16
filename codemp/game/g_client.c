@@ -1967,8 +1967,6 @@ typedef struct userinfoValidate_s {
 
 #define UIF( x, _min, _max ) { STRING(\\) #x STRING(\\), STRING( x ), _min, _max }
 static userinfoValidate_t userinfoFields[] = {
-	UIF( cl_guid,			0, 0 ), // not allowed, q3fill protection
-	UIF( cl_punkbuster,		0, 0 ), // not allowed, q3fill protection
 	UIF( ip,				0, 1 ), // engine adds this at the end
 	UIF( name,				1, 1 ),
 	UIF( rate,				1, 1 ),
@@ -1988,50 +1986,20 @@ static userinfoValidate_t userinfoFields[] = {
 	UIF( teamtask,			0, 1 ), // optional
 	UIF( password,			0, 1 ), // optional
 	UIF( teamoverlay,		0, 1 ), // only registered in cgame, not sent when connecting
+	UIF( sab1_rgb_red,		1, 1 ),
+	UIF( sab1_rgb_grn,		1, 1 ),
+	UIF( sab1_rgb_blu,		1, 1 ),
+	UIF( sab2_rgb_red,		1, 1 ),
+	UIF( sab2_rgb_grn,		1, 1 ),
+	UIF( sab2_rgb_blu,		1, 1 ),
+	UIF( sprayshader,		0, 1 ),
 };
 static const size_t numUserinfoFields = ARRAY_LEN( userinfoFields );
 
-static const char *userinfoValidateExtra[USERINFO_VALIDATION_MAX] = {
-	"Size",					// USERINFO_VALIDATION_SIZE
-	"# of slashes",			// USERINFO_VALIDATION_SLASH
-	"Extended ascii",		// USERINFO_VALIDATION_EXTASCII
-	"Control characters",	// USERINFO_VALIDATION_CONTROLCHARS
-};
-
-void Svcmd_ToggleUserinfoValidation_f( void ) {
-	if ( trap->Argc() == 1 ) {
-		int i=0;
-		for ( i=0; i<numUserinfoFields; i++ ) {
-			if ( (g_userinfoValidate.integer & (1<<i)) )	trap->Print( "%2d [X] %s\n", i, userinfoFields[i].fieldClean );
-			else											trap->Print( "%2d [ ] %s\n", i, userinfoFields[i].fieldClean );
-		}
-		for ( ; i<numUserinfoFields+USERINFO_VALIDATION_MAX; i++ ) {
-			if ( (g_userinfoValidate.integer & (1<<i)) )	trap->Print( "%2d [X] %s\n", i, userinfoValidateExtra[i-numUserinfoFields] );
-			else											trap->Print( "%2d [ ] %s\n", i, userinfoValidateExtra[i-numUserinfoFields] );
-		}
-		return;
-	}
-	else {
-		char arg[8]={0};
-		int index;
-
-		trap->Argv( 1, arg, sizeof( arg ) );
-		index = atoi( arg );
-
-		if ( index < 0 || index > numUserinfoFields+USERINFO_VALIDATION_MAX-1 ) {
-			Com_Printf( "ToggleUserinfoValidation: Invalid range: %i [0, %i]\n", index, numUserinfoFields+USERINFO_VALIDATION_MAX-1 );
-			return;
-		}
-
-		trap->Cvar_Set( "g_userinfoValidate", va( "%i", (1 << index) ^ (g_userinfoValidate.integer & ((1 << (numUserinfoFields + USERINFO_VALIDATION_MAX)) - 1)) ) );
-		trap->Cvar_Update( &g_userinfoValidate );
-
-		if ( index < numUserinfoFields )	Com_Printf( "%s %s\n", userinfoFields[index].fieldClean,				((g_userinfoValidate.integer & (1<<index)) ? "Validated" : "Ignored") );
-		else								Com_Printf( "%s %s\n", userinfoValidateExtra[index-numUserinfoFields],	((g_userinfoValidate.integer & (1<<index)) ? "Validated" : "Ignored") );
-	}
-}
-
 char *G_ValidateUserinfo( const char *userinfo ) {
+
+	if (!g_userinfoValidate.integer) return NULL;
+
 	unsigned int		i=0, count=0;
 	size_t				length = strlen( userinfo );
 	userinfoValidate_t	*info = NULL;
@@ -2042,48 +2010,43 @@ char *G_ValidateUserinfo( const char *userinfo ) {
 	memset( fieldCount, 0, sizeof( fieldCount ) );
 
 	// size checks
-	if ( g_userinfoValidate.integer & (1<<(numUserinfoFields+USERINFO_VALIDATION_SIZE)) ) {
-		if ( length < 1 )
-			return "Userinfo too short";
-		else if ( length >= MAX_INFO_STRING )
-			return "Userinfo too long";
-	}
+	if ( length < 1 )
+		return "Userinfo too short";
+	else if ( length >= MAX_INFO_STRING )
+		return "Userinfo too long";
+
 
 	// slash checks
-	if ( g_userinfoValidate.integer & (1<<(numUserinfoFields+USERINFO_VALIDATION_SLASH)) ) {
-		// there must be a leading slash
-		if ( userinfo[0] != '\\' )
-			return "Missing leading slash";
+	// there must be a leading slash
+	if ( userinfo[0] != '\\' )
+		return "Missing leading slash";
 
-		// no trailing slashes allowed, engine will append ip\\ip:port
-		if ( userinfo[length-1] == '\\' )
-			return "Trailing slash";
+	// no trailing slashes allowed, engine will append ip\\ip:port
+	if ( userinfo[length-1] == '\\' )
+		return "Trailing slash";
 
-		// format for userinfo field is: \\key\\value
-		// so there must be an even amount of slashes
-		for ( i=0, count=0; i<length; i++ ) {
-			if ( userinfo[i] == '\\' )
-				count++;
-		}
-		if ( (count&1) ) // odd
-			return "Bad number of slashes";
+	// format for userinfo field is: \\key\\value
+	// so there must be an even amount of slashes
+	for ( i=0, count=0; i<length; i++ ) {
+		if ( userinfo[i] == '\\' )
+			count++;
 	}
+	if ( (count&1) ) // odd
+		return "Bad number of slashes";
+
 
 	// extended characters are impossible to type, may want to disable
-	if ( g_userinfoValidate.integer & (1<<(numUserinfoFields+USERINFO_VALIDATION_EXTASCII)) ) {
-		for ( i=0, count=0; i<length; i++ ) {
-			if ( userinfo[i] < 0 )
-				count++;
-		}
-		if ( count )
-			return "Extended ASCII characters found";
+	for ( i=0, count=0; i<length; i++ ) {
+		if ( userinfo[i] < 0 )
+			count++;
 	}
+	if ( count )
+		return "Extended ASCII characters found";
+
 
 	// disallow \n \r ; and \"
-	if ( g_userinfoValidate.integer & (1<<(numUserinfoFields+USERINFO_VALIDATION_CONTROLCHARS)) ) {
-		if ( Q_strchrs( userinfo, "\n\r;\"" ) )
-			return "Invalid characters found";
-	}
+	if ( Q_strchrs( userinfo, "\n\r;\"" ) )
+		return "Invalid characters found";
 
 	s = userinfo;
 	while ( s ) {
@@ -2100,12 +2063,10 @@ char *G_ValidateUserinfo( const char *userinfo ) {
 
 	// count the number of fields
 	for ( i=0, info=userinfoFields; i<numUserinfoFields; i++, info++ ) {
-		if ( g_userinfoValidate.integer & (1<<i) ) {
-			if ( info->minCount && !fieldCount[i] )
-				return va( "%s field not found", info->fieldClean );
-			else if ( fieldCount[i] > info->maxCount )
-				return va( "Too many %s fields (%i/%i)", info->fieldClean, fieldCount[i], info->maxCount );
-		}
+		if ( info->minCount && !fieldCount[i] )
+			return va( "%s field not found", info->fieldClean );
+		else if ( fieldCount[i] > info->maxCount )
+			return va( "Too many %s fields (%i/%i)", info->fieldClean, fieldCount[i], info->maxCount );
 	}
 
 	return NULL;
@@ -2117,7 +2078,7 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	int team=TEAM_FREE, health=100, maxHealth=100, teamLeader;
 	const char *s=NULL;
 	char *value=NULL, userinfo[MAX_INFO_STRING], buf[MAX_INFO_STRING], oldClientinfo[MAX_INFO_STRING], model[MAX_QPATH],
-		forcePowers[DEFAULT_FORCEPOWERS_LEN], oldname[MAX_NETNAME], className[MAX_QPATH], color1[16], color2[16];
+		forcePowers[DEFAULT_FORCEPOWERS_LEN], oldname[MAX_NETNAME], className[MAX_QPATH], color1[16], color2[16], sprayshader[MAX_QPATH];
 	qboolean modelChanged = qfalse;
 	gender_t gender = GENDER_MALE;
 
@@ -2182,6 +2143,13 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	client->ps.customRGBA[0] = (value=Info_ValueForKey( userinfo, "char_color_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[1] = (value=Info_ValueForKey( userinfo, "char_color_green" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[2] = (value=Info_ValueForKey( userinfo, "char_color_blue" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+
+	client->ps.sab1RGB[0] = (value=Info_ValueForKey( userinfo, "sab1_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab1RGB[1] = (value=Info_ValueForKey( userinfo, "sab1_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab1RGB[2] = (value=Info_ValueForKey( userinfo, "sab1_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab2RGB[0] = (value=Info_ValueForKey( userinfo, "sab2_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab2RGB[1] = (value=Info_ValueForKey( userinfo, "sab2_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab2RGB[2] = (value=Info_ValueForKey( userinfo, "sab2_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 
 	//Prevent skins being too dark
 	if ( g_charRestrictRGB.integer && ((client->ps.customRGBA[0]+client->ps.customRGBA[1]+client->ps.customRGBA[2]) < 100) )
@@ -2312,6 +2280,8 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	Q_strncpyz( color1, Info_ValueForKey( userinfo, "color1" ), sizeof( color1 ) );
 	Q_strncpyz( color2, Info_ValueForKey( userinfo, "color2" ), sizeof( color2 ) );
 
+	Q_strncpyz( sprayshader, Info_ValueForKey( userinfo, "sprayshader" ), sizeof( sprayshader ) );
+
 	// gender hints
 	s = Info_ValueForKey( userinfo, "sex" );
 	if ( !Q_stricmp( s, "female" ) )
@@ -2336,6 +2306,7 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	Q_strcat( buf, sizeof( buf ), va( "c1\\%s\\", color1 ) );
 	Q_strcat( buf, sizeof( buf ), va( "c2\\%s\\", color2 ) );
 	Q_strcat( buf, sizeof( buf ), va( "hc\\%i\\", client->pers.maxHealth ) );
+	if (strlen(sprayshader)) Q_strcat( buf, sizeof( buf ), va( "spry\\%s\\", sprayshader ) );
 	if ( ent->r.svFlags & SVF_BOT )
 		Q_strcat( buf, sizeof( buf ), va( "skill\\%s\\", Info_ValueForKey( userinfo, "skill" ) ) );
 	if ( level.gametype == GT_DUEL || level.gametype == GT_POWERDUEL ) {
@@ -3082,6 +3053,8 @@ tryTorso:
 #endif
 }
 
+#include "bg_phys.h"
+
 /*
 ===========
 ClientSpawn
@@ -3281,6 +3254,13 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.customRGBA[0] = (value=Info_ValueForKey( userinfo, "char_color_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[1] = (value=Info_ValueForKey( userinfo, "char_color_green" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[2] = (value=Info_ValueForKey( userinfo, "char_color_blue" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+
+	client->ps.sab1RGB[0] = (value=Info_ValueForKey( userinfo, "sab1_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab1RGB[1] = (value=Info_ValueForKey( userinfo, "sab1_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab1RGB[2] = (value=Info_ValueForKey( userinfo, "sab1_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab2RGB[0] = (value=Info_ValueForKey( userinfo, "sab2_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab2RGB[1] = (value=Info_ValueForKey( userinfo, "sab2_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+	client->ps.sab2RGB[2] = (value=Info_ValueForKey( userinfo, "sab2_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 
 	//Prevent skins being too dark
 	if ( g_charRestrictRGB.integer && ((client->ps.customRGBA[0]+client->ps.customRGBA[1]+client->ps.customRGBA[2]) < 100) )
@@ -3860,6 +3840,8 @@ void ClientSpawn(gentity_t *ent) {
 	//rww - make sure client has a valid icarus instance
 	trap->ICARUS_FreeEnt( (sharedEntity_t *)ent );
 	trap->ICARUS_InitEnt( (sharedEntity_t *)ent );
+
+	BG_RegisterActiveGameEntity(ent);
 }
 
 

@@ -463,6 +463,8 @@ typedef enum
 	SABER_GREEN,
 	SABER_BLUE,
 	SABER_PURPLE,
+	SABER_BLACK,
+	SABER_RGB,
 	NUM_SABER_COLORS
 } saber_colors_t;
 
@@ -1792,6 +1794,9 @@ typedef struct playerState_s {
 
 	int			customRGBA[4];
 
+	byte		sab1RGB[3];
+	byte		sab2RGB[3];
+
 	int			standheight;
 	int			crouchheight;
 
@@ -1826,6 +1831,10 @@ typedef struct playerState_s {
 
 	//keeps track of cloak fuel
 	int			cloakFuel;
+
+	int			hookState;
+	vec3_t		hookPos;
+	float		hookDist;
 
 	//rww - spare values specifically for use by mod authors.
 	//See psf_overrides.txt if you want to increase the send

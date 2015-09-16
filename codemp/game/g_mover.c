@@ -1509,6 +1509,8 @@ FISH
 void SP_func_fish (gentity_t *ent) {
 	trap->SetBrushModel( (sharedEntity_t *)ent, ent->model );
 	ent->s.eType = ET_MOVER;
+	G_SpawnVector("front", "1 0 0", ent->s.angles2);
+	vectoangles(ent->s.angles2, ent->s.angles2);
 	G_SetOrigin(ent, ent->s.origin);
 	ent->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	ent->think = G_FishStartThink;

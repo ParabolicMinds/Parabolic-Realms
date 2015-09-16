@@ -193,6 +193,7 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 				}
 				i += vi + 1;
 				float val = strtod(float_buf, nullptr);
+				if (v) val = 1 - val;
 				uvs[uvs_index] = val;
 				uvs_index++;
 				memset(float_buf, FLOAT_BUF_LEN, sizeof(char));
@@ -270,7 +271,7 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 			}
 
 			if (shader) delete [] shader;
-			shader = new char [strlen(nam_buf)];
+			shader = new char [strlen(nam_buf) + 1];
 			strcpy(shader, nam_buf);
 			shader[strlen(nam_buf)] = '\0';
 
@@ -299,12 +300,12 @@ pObjSurface_t * CM_LoadPObj(char const * name) {
 			Com_Printf("%i: (%f, %f, %f)\n", vs/3, normals[vs+0], normals[vs+1], normals[vs+2]);
 		}
 		Com_Printf("Faces: %i\n", (int)indicies.size());
-		*/
 		int fi = 0;
 		for (objIndex_t const & face : indicies) {
 			Com_Printf("%i: (%i, %i, %i)\n", fi, face.vi, face.uvi, face.ni);
 			fi++;
 		}
+		*/
 	} else {
 		Com_Printf("Obj Load Failed.\n");
 		CM_FreePObj(surf);

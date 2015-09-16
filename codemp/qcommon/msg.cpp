@@ -1413,24 +1413,19 @@ netField_t	playerStateFields[] =
 { PSF(ragAttach), GENTITYNUM_BITS },
 { PSF(iModelScale), 10 }, //0-1024 (guess it's gotta be increased if we want larger allowable scale.. but 1024% is pretty big)
 { PSF(hackingBaseTime), 16 }, //up to 65536ms, over 10 seconds would just be silly anyway
+{ PSF(hookState), 3 },
+{ PSF(hookDist), 0 },
+{ PSF(hookPos[0]), 0 },
+{ PSF(hookPos[1]), 0 },
+{ PSF(hookPos[2]), 0 },
+{ PSF(sab1RGB[0]), 8 }, //0-255
+{ PSF(sab1RGB[1]), 8 }, //0-255
+{ PSF(sab1RGB[2]), 8 }, //0-255
+{ PSF(sab2RGB[0]), 8 }, //0-255
+{ PSF(sab2RGB[1]), 8 }, //0-255
+{ PSF(sab2RGB[2]), 8 }, //0-255
 //{ PSF(hyperSpaceAngles[0]), 0 },//only used by vehicle?
 //{ PSF(hyperSpaceAngles[2]), 0 },//only used by vehicle?
-
-//rww - for use by mod authors only
-	/*
-{ PSF(userInt1), 1 },
-{ PSF(userInt2), 1 },
-{ PSF(userInt3), 1 },
-{ PSF(userFloat1), 1 },
-{ PSF(userFloat2), 1 },
-{ PSF(userFloat3), 1 },
-{ PSF(userVec1[0]), 1 },
-{ PSF(userVec1[1]), 1 },
-{ PSF(userVec1[2]), 1 },
-{ PSF(userVec2[0]), 1 },
-{ PSF(userVec2[1]), 1 },
-{ PSF(userVec2[2]), 1 }
-	*/
 };
 
 netField_t	pilotPlayerStateFields[] =

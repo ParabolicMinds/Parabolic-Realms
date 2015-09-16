@@ -150,9 +150,7 @@ Ghoul2 Insert End
 #define CS_TERRAINS				(CS_LIGHT_STYLES + (MAX_LIGHT_STYLES*3))
 #define CS_BSP_MODELS			(CS_TERRAINS + MAX_TERRAINS)
 
-#define CS_PLAYERSPRAYS			(CS_BSP_MODELS + MAX_SUB_BSP)
-
-#define CS_MAX					(CS_PLAYERSPRAYS + MAX_CLIENTS)
+#define CS_MAX					(CS_BSP_MODELS + MAX_CLIENTS)
 
 #if (CS_MAX) > MAX_CONFIGSTRINGS
 #error overflow: (CS_MAX) > MAX_CONFIGSTRINGS
@@ -1247,6 +1245,7 @@ typedef enum {
 	ET_TERRAIN,
 	ET_FX,
 	ET_SPRAY,
+	ET_GHOOK,
 	ET_EVENTS				// any of the EV_* events can be added freestanding
 							// by setting eType to ET_EVENTS + eventNum
 							// this avoids having to set eFlags and eventNum

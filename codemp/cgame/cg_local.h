@@ -216,6 +216,8 @@ typedef struct clientInfo_s {
 	char			cleanname[MAX_QPATH];
 	team_t			team;
 
+	char			sprayshader[MAX_QPATH];
+
 	int				duelTeam;
 
 	int				botSkill;		// -1 = not bot, 0-5 = bot
@@ -1143,6 +1145,10 @@ typedef struct cgMedia_s {
 	qhandle_t	blueSaberCoreShader;
 	qhandle_t	purpleSaberGlowShader;
 	qhandle_t	purpleSaberCoreShader;
+	qhandle_t	blackSaberGlowShader;
+	qhandle_t	blackSaberCoreShader;
+	qhandle_t	rgbSaberGlowShader;
+	qhandle_t	rgbSaberCoreShader;
 	qhandle_t	saberBlurShader;
 	qhandle_t	swordTrailShader;
 

@@ -412,8 +412,6 @@ extern	cvar_t	*cl_consoleKeys;
 
 extern  cvar_t  *cl_lanForcePackets;
 
-extern  cvar_t  *cl_sprayshader;
-
 //=================================================
 
 //

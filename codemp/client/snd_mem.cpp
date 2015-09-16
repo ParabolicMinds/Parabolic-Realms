@@ -890,9 +890,9 @@ static qboolean S_LoadSound_Actual( sfx_t *sfx )
 			FS_FreeFile (data);
 			return qfalse;
 		}
-	}
-	else
-	{
+	} else if (Q_stricmpn(psExt,".ogg",4)==0) {
+		Com_Printf("OGG SUPPORT COMMING SOONISH\n");
+	} else {
 		// loading a WAV, presumably...
 
 //=========

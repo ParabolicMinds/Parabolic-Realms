@@ -438,18 +438,16 @@ Returns the number of msec spent in the back end
 */
 void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
 	swapBuffersCommand_t *cmd;
-	renderCommandList_t *cmdList;
 
 	if ( !tr.registered ) {
 		return;
 	}
 
-	cmdList = &backEndData->commands;
-	assert( cmdList->used + 4 <= MAX_RENDER_COMMANDS );
-
-	cmd = (swapBuffersCommand_t *)(cmdList->cmds + cmdList->used);
+	cmd = (swapBuffersCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
+	if ( !cmd ) {
+		return;
+	}
 	cmd->commandId = RC_SWAP_BUFFERS;
-	cmdList->used += 4;
 
 	R_IssueRenderCommands( qtrue );
 

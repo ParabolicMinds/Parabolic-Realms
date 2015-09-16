@@ -1843,6 +1843,13 @@ void CG_NewClientInfo( int clientNum, qboolean entitiesInitialized ) {
 		newInfo.colorOverride[0] = newInfo.colorOverride[1] = newInfo.colorOverride[2] = 0.0f;
 	}
 
+	v = Info_ValueForKey( configstring, "spry" );
+	if (v) {
+		Q_strncpyz(newInfo.sprayshader, v, sizeof( newInfo.sprayshader ));
+	} else {
+		Q_strncpyz(newInfo.sprayshader, "textures/imperial/basic", sizeof( newInfo.sprayshader ));
+	}
+
 	// scan for an existing clientinfo that matches this modelname
 	// so we can avoid loading checks if possible
 	if ( !CG_ScanForExistingClientInfo( &newInfo, clientNum ) ) {
@@ -5266,6 +5273,12 @@ static void CG_RGBForSaberColor( saber_colors_t color, vec3_t rgb )
 		case SABER_PURPLE:
 			VectorSet( rgb, 0.9f, 0.2f, 1.0f );
 			break;
+		case SABER_BLACK:
+			VectorSet( rgb, 0.0f, 0.0f, 0.0f );
+			break;
+		case SABER_RGB:
+			VectorSet( rgb, 1.0f, 1.0f, 1.0f );
+			break;
 		default:
 			break;
 	}
@@ -5357,7 +5370,7 @@ static void CG_DoSaberLight( saberInfo_t *saber )
 	}
 }
 
-void CG_DoSaber( vec3_t origin, vec3_t dir, float length, float lengthMax, float radius, saber_colors_t color, int rfx, qboolean doLight )
+static void CG_DoSaber( vec3_t origin, vec3_t dir, float length, float lengthMax, float radius, saber_colors_t color, int rfx, qboolean doLight, byte * sabrgb )
 {
 	vec3_t		mid;
 	qhandle_t	blade = 0, glow = 0;
@@ -5400,6 +5413,14 @@ void CG_DoSaber( vec3_t origin, vec3_t dir, float length, float lengthMax, float
 		case SABER_PURPLE:
 			glow = cgs.media.purpleSaberGlowShader;
 			blade = cgs.media.purpleSaberCoreShader;
+			break;
+		case SABER_BLACK:
+			glow = cgs.media.blackSaberGlowShader;
+			blade = cgs.media.blackSaberCoreShader;
+			break;
+		case SABER_RGB:
+			glow = cgs.media.rgbSaberGlowShader;
+			blade = cgs.media.rgbSaberCoreShader;
 			break;
 		default:
 			glow = cgs.media.blueSaberGlowShader;
@@ -5446,7 +5467,14 @@ void CG_DoSaber( vec3_t origin, vec3_t dir, float length, float lengthMax, float
 	VectorCopy( dir, saber.axis[0] );
 	saber.reType = RT_SABER_GLOW;
 	saber.customShader = glow;
-	saber.shaderRGBA[0] = saber.shaderRGBA[1] = saber.shaderRGBA[2] = saber.shaderRGBA[3] = 0xff;
+	if (color == SABER_RGB) {
+		saber.shaderRGBA[0] = sabrgb[0];
+		saber.shaderRGBA[1] = sabrgb[1];
+		saber.shaderRGBA[2] = sabrgb[2];
+		saber.shaderRGBA[3] = 0xff;
+	} else {
+		saber.shaderRGBA[0] = saber.shaderRGBA[1] = saber.shaderRGBA[2] = saber.shaderRGBA[3] = 0xff;
+	}
 	saber.renderfx = rfx;
 
 	trap->R_AddRefEntityToScene( &saber );
@@ -5464,7 +5492,14 @@ void CG_DoSaber( vec3_t origin, vec3_t dir, float length, float lengthMax, float
 //	saber.radius = (1.0 + crandom() * 0.2f)*radiusmult;
 
 	saber.shaderTexCoord[0] = saber.shaderTexCoord[1] = 1.0f;
-	saber.shaderRGBA[0] = saber.shaderRGBA[1] = saber.shaderRGBA[2] = saber.shaderRGBA[3] = 0xff;
+	if (color == SABER_RGB) {
+		saber.shaderRGBA[0] = sabrgb[0];
+		saber.shaderRGBA[1] = sabrgb[1];
+		saber.shaderRGBA[2] = sabrgb[2];
+		saber.shaderRGBA[3] = 0xff;
+	} else {
+		saber.shaderRGBA[0] = saber.shaderRGBA[1] = saber.shaderRGBA[2] = saber.shaderRGBA[3] = 0xff;
+	}
 
 	trap->R_AddRefEntityToScene( &saber );
 }
@@ -6046,6 +6081,13 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 	effectTrailArgStruct_t fx;
 	int scolor = 0;
 	int	useModelIndex = 0;
+	byte sabrgb[3];
+
+	memset(sabrgb, 3, 1);
+
+	if (cent->playerState) {
+		memcpy(sabrgb, saberNum ? cent->playerState->sab2RGB : cent->playerState->sab1RGB, 3);
+	}
 
 	if (cent->currentState.eType == ET_NPC)
 	{
@@ -6389,6 +6431,12 @@ CheckTrail:
 						case SABER_PURPLE:
 							VectorSet( rgb1, 220.0f, 0.0f, 255.0f );
 							break;
+						case SABER_BLACK:
+							VectorSet( rgb1, 0.0f, 0.0f, 0.0f );
+							break;
+						case SABER_RGB:
+							VectorSet( rgb1, 1.0f, 1.0f, 1.0f );
+							break;
 						default:
 							VectorSet( rgb1, 0.0f, 64.0f, 255.0f );
 							break;
@@ -6529,7 +6577,7 @@ JustDoIt:
 	//CG_DoSaber( org_, axis_[0], saberLen, client->saber[saberNum].blade[bladeNum].lengthMax, client->saber[saberNum].blade[bladeNum].radius,
 	//	scolor, renderfx, (qboolean)(saberNum==0&&bladeNum==0) );
 	CG_DoSaber( org_, axis_[0], saberLen, client->saber[saberNum].blade[bladeNum].lengthMax, client->saber[saberNum].blade[bladeNum].radius,
-		scolor, renderfx, (qboolean)(client->saber[saberNum].numBlades < 3 && !(client->saber[saberNum].saberFlags2&SFL2_NO_DLIGHT)) );
+		scolor, renderfx, (qboolean)(client->saber[saberNum].numBlades < 3 && !(client->saber[saberNum].saberFlags2&SFL2_NO_DLIGHT)), sabrgb );
 }
 
 int CG_IsMindTricked(int trickIndex1, int trickIndex2, int trickIndex3, int trickIndex4, int client)

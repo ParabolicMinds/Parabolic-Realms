@@ -18,6 +18,8 @@ void BG_AdvanceSimulationTarget(int msec);
 void BG_UpdatePhysicsObjects();
 void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius);
 void BG_RegisterBPhysModelHullEntity(entityState_t * ent, char const * model);
+void BG_RegisterBPhysBoxEntity(entityState_t * ent, vec3_t mins, vec3_t maxs);
+void BG_RegisterActiveGameEntity(gentity_t * ent);
 void BG_UnregisterBPhysEntity(entityState_t * ent);
 
 void BG_ApplyImpulse(entityState_t * ent, vec3_t impulse);

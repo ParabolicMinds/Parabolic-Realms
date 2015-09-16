@@ -10820,6 +10820,34 @@ void PmoveSingle (pmove_t *pmove) {
 		BG_VehicleAdjustBBoxForOrientation( pm_entSelf->m_pVehicle, pm->ps->origin, pm->mins, pm->maxs, pm->ps->clientNum, pm->tracemask, pm->trace );
 	}
 
+	/* -- TERRIBLE
+	if (pm->ps->hookState == 2) {
+		vec3_t dif, adj, adjdif;
+		VectorSubtract(pm->ps->origin, pm->ps->hookPos, dif);
+		VectorNormalize(dif);
+		VectorMA(pm->ps->hookPos, pm->ps->hookDist, dif, adj);
+		VectorSubtract(adj, pm->ps->origin, adjdif);
+		VectorScale(adjdif, 1.0f, adjdif);
+		VectorSubtract(adjdif, pm->ps->velocity, adjdif);
+		float mag = VectorNormalize(adjdif);
+		if (mag > 10) mag = 10;
+		VectorScale(adjdif, mag, adjdif);
+		VectorAdd(pm->ps->velocity, adjdif, pm->ps->velocity);
+	}*/
+
+	if (pm->ps->hookState == 2) {
+		vec3_t dif, adj, adjdif;
+		VectorSubtract(pm->ps->origin, pm->ps->hookPos, dif);
+		float mag = VectorNormalize(dif);
+		if (mag > pm->ps->hookDist) {
+			VectorMA(pm->ps->hookPos, pm->ps->hookDist, dif, adj);
+			VectorSubtract(adj, pm->ps->origin, adjdif);
+			VectorScale(adjdif, 0.5f, adjdif);
+			VectorAdd(pm->ps->velocity, adjdif, pm->ps->velocity);
+			VectorScale(pm->ps->velocity, 0.990f, pm->ps->velocity);
+		}
+	}
+
 	// set groundentity
 	PM_GroundTrace();
 	if ( pm_flying == FLY_HOVER )

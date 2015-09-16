@@ -12,6 +12,8 @@ extern "C" {
 
 #include <btBulletDynamicsCommon.h>
 
+#define BtoQVec(btVec, qVec) VectorSet(qVec, btVec.x(), btVec.y(), btVec.z())
+
 typedef struct bulletObject_s {
 	btScalar									mass;
 	btVector3									inertia;
@@ -50,6 +52,7 @@ static btDiscreteDynamicsWorld * bworld;
 static std::vector<bulletObject_t *> map_statics {};
 static std::vector<bulletEntity2_t> map_dynamics {};
 static std::vector<bulletEntity_t> active_states {};
+static std::vector<bulletEntity2_t> active_gentities {};
 
 static int cm_brushes, cm_patches;
 
@@ -112,6 +115,32 @@ static bulletObject_t * B_CreateModelHullObject(entityState_t * ent, btScalar ma
 	return obj;
 }
 
+static bulletObject_t * B_CreateBoxObject(entityState_t * ent, btScalar mass, vec3_t mins, vec3_t maxs) {
+	bulletObject_t * obj = new bulletObject_t;
+	if (mass >= 0) obj->mass = mass;
+	else {
+		obj->mass = (maxs[0] - mins[0]) * (maxs[1] - mins[1]) * (maxs[2] - mins[2]);
+	}
+	obj->inertia = {0, 0, 0};
+	btConvexHullShape * chs = new btConvexHullShape();
+	chs->addPoint({mins[0], mins[1], mins[2]}, false);
+	chs->addPoint({mins[0], mins[1], maxs[2]}, false);
+	chs->addPoint({mins[0], maxs[1], mins[2]}, false);
+	chs->addPoint({mins[0], maxs[1], maxs[2]}, false);
+	chs->addPoint({maxs[0], mins[1], mins[2]}, false);
+	chs->addPoint({maxs[0], mins[1], maxs[2]}, false);
+	chs->addPoint({maxs[0], maxs[1], mins[2]}, false);
+	chs->addPoint({maxs[0], maxs[1], maxs[2]}, false);
+	chs->recalcLocalAabb();
+	obj->shape = chs;
+	obj->motionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3 {ent->origin[0], ent->origin[1], ent->origin[2]}));
+	obj->shape->calculateLocalInertia(obj->mass, obj->inertia);
+	obj->CI = new btRigidBody::btRigidBodyConstructionInfo(obj->mass, obj->motionState, obj->shape, obj->inertia);
+	obj->rigidBody = new btRigidBody(*obj->CI);
+	bworld->addRigidBody(obj->rigidBody);
+	return obj;
+}
+
 static bulletObject_t * B_CreateMapObject(vec3_t * points, int points_num) {
 	bulletObject_t * obj = new bulletObject_t;
 	obj->mass = 0;
@@ -170,11 +199,53 @@ static constexpr float d2r_mult = 0.0174532925f;
 std::atomic_bool run_sim {false};
 std::atomic_int run_advance {0};
 std::mutex sim_lock;
+std::atomic_bool pframe_ready;
 #define SIM_SLEEP std::chrono::duration<float, std::ratio<1, 1000>>(1)
 constexpr int substep {1600};
 constexpr btScalar sim_step {2.0f / substep};
+
+static void  BG_Simulation_Substep_Callback (btDynamicsWorld *world, btScalar timeStep) {
+	int numManifolds = world->getDispatcher()->getNumManifolds();
+	for (int i=0;i<numManifolds;i++) {
+		btPersistentManifold* contactManifold =  world->getDispatcher()->getManifoldByIndexInternal(i);
+		int numContacts = contactManifold->getNumContacts();
+		if (!numContacts) continue;
+		btCollisionObject const * obA = static_cast<btCollisionObject const *>(contactManifold->getBody0());
+		btCollisionObject const * obB = static_cast<btCollisionObject const *>(contactManifold->getBody1());
+		for (uint i = 0; i < active_gentities.size(); i++) {
+			if (obA == active_gentities[i].physobj->rigidBody) {
+				for (int j=0;j<numContacts;j++) {
+					btManifoldPoint& pt = contactManifold->getContactPoint(j);
+					vec3_t imp, impm, impl, impt;
+					BtoQVec(pt.m_normalWorldOnB, imp);
+					VectorScale(imp, pt.getAppliedImpulse() / active_gentities[i].physobj->mass, impm);
+					VectorScale(imp, (pt.getPositionWorldOnB() - pt.getPositionWorldOnA()).length(), impl);
+					VectorAdd(impm, impl, impt);
+					VectorAdd(active_gentities[i].gent->client->ps.velocity, impt, active_gentities[i].gent->client->ps.velocity);
+				}
+			} else if (obB == active_gentities[i].physobj->rigidBody) {
+				for (int j=0;j<numContacts;j++) {
+					btManifoldPoint& pt = contactManifold->getContactPoint(j);
+					vec3_t imp, impm, impl, impt;
+					btVector3 rev = - pt.m_normalWorldOnB;
+					BtoQVec(rev, imp);
+					VectorScale(imp, pt.getAppliedImpulse() / active_gentities[i].physobj->mass, impm);
+					VectorScale(imp, (pt.getPositionWorldOnA() - pt.getPositionWorldOnB()).length(), impl);
+					VectorAdd(impm, impl, impt);
+					VectorAdd(active_gentities[i].gent->client->ps.velocity, impt, active_gentities[i].gent->client->ps.velocity);
+
+				}
+			}
+		}
+	}
+}
+
 void BG_Run_Simulation() {
 	while (run_sim) {
+		if (pframe_ready) {
+			std::this_thread::sleep_for(std::chrono::microseconds(50));
+			continue;
+		}
 		if (run_advance) {
 			sim_lock.lock();
 			for (bulletEntity2_t & bent : map_dynamics) {
@@ -195,6 +266,13 @@ void BG_Run_Simulation() {
 					}
 				}
 			}
+			for (bulletEntity2_t & bent : active_gentities) {
+				btTransform trans = bent.physobj->rigidBody->getWorldTransform();
+				trans.setOrigin( {bent.stored_pos[0], bent.stored_pos[1], bent.stored_pos[2]} );
+				trans.setRotation(btQuaternion(bent.stored_ang[0] * d2r_mult, bent.stored_ang[2] * d2r_mult, bent.stored_ang[1] * d2r_mult));
+				bent.physobj->motionState->setWorldTransform(trans);
+				bent.physobj->rigidBody->activate(true);
+			}
 			bworld->stepSimulation(run_advance.exchange(0) / 1000.0f, substep, sim_step);
 			for (bulletEntity_t & bent : active_states) {
 				btTransform trans;
@@ -205,6 +283,7 @@ void BG_Run_Simulation() {
 				rotmat.getEulerYPR(bent.stored_ang[1], bent.stored_ang[0], bent.stored_ang[2]);
 				VectorScale(bent.stored_ang, 57.2957795f, bent.stored_ang);
 			}
+			pframe_ready.store(true);
 			sim_lock.unlock();
 		}
 		std::this_thread::sleep_for(SIM_SLEEP);
@@ -372,6 +451,7 @@ void BG_InitializeSimulationDynamics() {
 void BG_StartSimulation() {
 	if (!init) return;
 	run_sim.store(true);
+	bworld->setInternalTickCallback(BG_Simulation_Substep_Callback);
 	sim_thread = new std::thread(BG_Run_Simulation);
 }
 
@@ -396,6 +476,12 @@ void BG_ShutdownSimulation() {
 	}
 	map_dynamics.clear();
 
+	for (bulletEntity2_t & es : active_gentities) {
+		B_ConfigureStateRem(&es.gent->s);
+		B_DeleteObject(es.physobj);
+	}
+	active_gentities.clear();
+
 	for (bulletObject_t * obj : map_statics) {
 		B_DeleteObject(obj);
 	}
@@ -412,32 +498,41 @@ void BG_ShutdownSimulation() {
 void BG_UpdatePhysicsObjects() {
 	if (!init) return;
 
-	sim_lock.lock();
-	for (bulletEntity2_t & bent : map_dynamics) {
-		VectorCopy(bent.gent->r.currentOrigin, bent.stored_pos);
-		VectorCopy(bent.gent->r.currentAngles, bent.stored_ang );
-		bent.stored_contents = bent.gent->r.contents;
-		bent.stored_solid = bent.gent->s.solid;
+	if (pframe_ready) {
+		sim_lock.lock();
+		for (bulletEntity2_t & bent : map_dynamics) {
+			VectorCopy(bent.gent->r.currentOrigin, bent.stored_pos);
+			VectorCopy(bent.gent->r.currentAngles, bent.stored_ang );
+			bent.stored_contents = bent.gent->r.contents;
+			bent.stored_solid = bent.gent->s.solid;
+		}
+		for (bulletEntity_t & bent : active_states) {
+			VectorCopy(bent.stored_pos, bent.ent->pos.trBase);
+			VectorCopy(bent.stored_pos, bent.ent->origin);
+			VectorCopy(bent.stored_ang, bent.ent->apos.trBase);
+			VectorCopy(bent.stored_ang, bent.ent->angles);
+		}
+		for (bulletEntity2_t & bent : active_gentities) {
+			VectorCopy(bent.gent->client->ps.origin, bent.stored_pos);
+			VectorCopy(bent.gent->r.currentAngles, bent.stored_ang );
+			bent.stored_contents = bent.gent->r.contents;
+			//bent.stored_solid = bent.gent->s.solid;
+		}
+		pframe_ready.store(false);
+		sim_lock.unlock();
 	}
-	for (bulletEntity_t & bent : active_states) {
-		VectorCopy(bent.stored_pos, bent.ent->pos.trBase);
-		VectorCopy(bent.stored_pos, bent.ent->origin);
-		VectorCopy(bent.stored_ang, bent.ent->apos.trBase);
-		VectorCopy(bent.stored_ang, bent.ent->angles);
-	}
-	sim_lock.unlock();
 }
 
 void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius = 50.0f) {
 	if (!init) return;
 
-	sim_lock.lock();
 	auto iterator = active_states.begin();
 	for (size_t i = 0; i < active_states.size(); i++, iterator++) {
 		if ((*iterator).ent == ent) {
 			return;
 		}
 	}
+	sim_lock.lock();
 	B_ConfigureStateAdd(ent);
 	bulletEntity_t bent {B_CreateSphereObject(ent, 1, radius), ent};
 	VectorCopy(bent.ent->origin, bent.stored_pos);
@@ -449,18 +544,58 @@ void BG_RegisterBPhysSphereEntity(entityState_t * ent, float radius = 50.0f) {
 void BG_RegisterBPhysModelHullEntity(entityState_t * ent, char const * model) {
 	if (!init) return;
 
-	sim_lock.lock();
 	auto iterator = active_states.begin();
 	for (size_t i = 0; i < active_states.size(); i++, iterator++) {
 		if ((*iterator).ent == ent) {
 			return;
 		}
 	}
+	sim_lock.lock();
 	B_ConfigureStateAdd(ent);
 	bulletEntity_t bent {B_CreateModelHullObject(ent, -1, model), ent};
 	VectorCopy(bent.ent->origin, bent.stored_pos);
 	VectorCopy(bent.ent->angles, bent.stored_ang);
 	active_states.push_back( bent );
+	sim_lock.unlock();
+}
+
+void BG_RegisterBPhysBoxEntity(entityState_t * ent, vec3_t mins, vec3_t maxs) {
+	if (!init) return;
+
+	auto iterator = active_states.begin();
+	for (size_t i = 0; i < active_states.size(); i++, iterator++) {
+		if ((*iterator).ent == ent) {
+			return;
+		}
+	}
+	sim_lock.lock();
+	B_ConfigureStateAdd(ent);
+	bulletEntity_t bent {B_CreateBoxObject(ent, -1, mins, maxs), ent};
+	VectorCopy(bent.ent->origin, bent.stored_pos);
+	VectorCopy(bent.ent->angles, bent.stored_ang);
+	active_states.push_back( bent );
+	sim_lock.unlock();
+}
+
+void BG_RegisterActiveGameEntity(gentity_t * ent) {
+	if (!init) return;
+
+	auto iterator = active_gentities.begin();
+	for (size_t i = 0; i < active_gentities.size(); i++, iterator++) {
+		if ((*iterator).gent == ent) {
+			return;
+		}
+	}
+	sim_lock.lock();
+	B_ConfigureStateAdd(&ent->s);
+	bulletEntity2_t bent {B_CreateBoxObject(&ent->s, -1, ent->r.mins, ent->r.maxs), ent};
+	bent.physobj->rigidBody->setCollisionFlags(bent.physobj->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+	bent.physobj->rigidBody->setActivationState(DISABLE_DEACTIVATION);
+	VectorCopy(bent.gent->client->ps.origin, bent.stored_pos);
+	VectorCopy(bent.gent->r.currentAngles, bent.stored_ang);
+	bent.stored_contents = ent->r.contents;
+	bent.stored_solid = true;
+	active_gentities.push_back( bent );
 	sim_lock.unlock();
 }
 

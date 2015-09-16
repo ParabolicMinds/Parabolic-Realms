@@ -289,6 +289,7 @@ struct gentity_s {
 	int			soundPos2;
 	int			soundLoop;
 	gentity_t	*parent;
+	gentity_t	*parent2;
 	gentity_t	*nextTrain;
 	gentity_t	*prevTrain;
 	vec3_t		pos1, pos2;

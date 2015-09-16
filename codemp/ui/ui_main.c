@@ -5081,6 +5081,24 @@ static void UI_GetCharacterCvars ( void )
 	}
 }
 
+static void UI_UpdateRGBSaberCvars ( void ) {
+	trap->Cvar_Set ( "sab1_rgb_red", UI_Cvar_VariableString ( "ui_sab1_rgb_red" ) );
+	trap->Cvar_Set ( "sab1_rgb_grn", UI_Cvar_VariableString ( "ui_sab1_rgb_grn" ) );
+	trap->Cvar_Set ( "sab1_rgb_blu", UI_Cvar_VariableString ( "ui_sab1_rgb_blu" ) );
+	trap->Cvar_Set ( "sab2_rgb_red", UI_Cvar_VariableString ( "ui_sab2_rgb_red" ) );
+	trap->Cvar_Set ( "sab2_rgb_grn", UI_Cvar_VariableString ( "ui_sab2_rgb_grn" ) );
+	trap->Cvar_Set ( "sab2_rgb_blu", UI_Cvar_VariableString ( "ui_sab2_rgb_blu" ) );
+}
+
+static void UI_GetRGBSaberCvars ( void ) {
+	trap->Cvar_Set ( "ui_sab1_rgb_red", UI_Cvar_VariableString ( "sab1_rgb_red" ) );
+	trap->Cvar_Set ( "ui_sab1_rgb_grn", UI_Cvar_VariableString ( "sab1_rgb_grn" ) );
+	trap->Cvar_Set ( "ui_sab1_rgb_blu", UI_Cvar_VariableString ( "sab1_rgb_blu" ) );
+	trap->Cvar_Set ( "ui_sab2_rgb_red", UI_Cvar_VariableString ( "sab2_rgb_red" ) );
+	trap->Cvar_Set ( "ui_sab2_rgb_grn", UI_Cvar_VariableString ( "sab2_rgb_grn" ) );
+	trap->Cvar_Set ( "ui_sab2_rgb_blu", UI_Cvar_VariableString ( "sab2_rgb_blu" ) );
+}
+
 void UI_SetSiegeObjectiveGraphicPos(menuDef_t *menu,const char *itemName,const char *cvarName)
 {
 	itemDef_t	*item;
@@ -6498,6 +6516,12 @@ static void UI_RunMenuScript(char **args)
 		else if (Q_stricmp(name, "getcharcvars") == 0)
 		{
 			UI_GetCharacterCvars();
+		}
+		else if (Q_stricmp(name, "updatesabrgbcvars") == 0) {
+			UI_UpdateRGBSaberCvars();
+		}
+		else if (Q_stricmp(name, "getsabrgbcvars") == 0) {
+			UI_GetRGBSaberCvars();
 		}
 		else if (Q_stricmp(name, "char_skin") == 0)
 		{

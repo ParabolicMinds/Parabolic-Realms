@@ -175,6 +175,12 @@ int CGDEBUG_SaberColor( int saberColor )
 		case SABER_PURPLE:
 			return 0x00ff00ff;
 			break;
+		case SABER_BLACK:
+			return 0x000000ff;
+			break;
+		case SABER_RGB:
+			return 0xffffffff;
+			break;
 		default:
 			return saberColor;
 			break;
@@ -380,7 +386,7 @@ static void CG_CalcBiLerp( vec3_t verts[4], vec3_t subVerts[4], vec2_t uv[4] )
 	VectorMA( temp,			uv[3][1],			subVerts[3], subVerts[3] );
 }
 // bilinear
-//f(p',q') = (1 - y) × {[(1 - x) × f(p,q)] + [x × f(p,q+1)]} + y × {[(1 - x) × f(p+1,q)] + [x × f(p+1,q+1)]}.
+//f(p',q') = (1 - y) ? {[(1 - x) ? f(p,q)] + [x ? f(p,q+1)]} + y ? {[(1 - x) ? f(p+1,q)] + [x ? f(p+1,q+1)]}.
 
 
 static void CG_CalcHeightWidth( vec3_t verts[4], float *height, float *width )

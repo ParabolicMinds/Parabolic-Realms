@@ -1878,7 +1878,7 @@ static void CG_Spray( centity_t *cent ) {
 		VectorClear(cent->modelScale);
 	}
 
-	char const * spraytex = CG_ConfigString(CS_PLAYERSPRAYS + cent->currentState.owner);
+	char const * spraytex = cgs.clientinfo[cent->currentState.clientNum].sprayshader;
 	if (strlen(spraytex) > 1) {
 		ent.customShader = trap->R_RegisterShaderNoLightmaps(spraytex);
 	}
@@ -3408,6 +3408,7 @@ Ghoul2 Insert End
 	case ET_SPRAY:
 		CG_Spray( cent );
 		break;
+	case ET_GHOOK:
 	case ET_GENERAL:
 		CG_General( cent );
 		break;
@@ -3453,6 +3454,8 @@ void CG_ManualEntityRender(centity_t *cent)
 {
 	CG_AddCEntity(cent);
 }
+
+#include "fx_local.h"
 
 /*
 ===============
@@ -3547,6 +3550,17 @@ void CG_AddPacketEntities( qboolean isPortal ) {
 		if (cg.snap->entities[ num ].number != cg.snap->ps.clientNum)
 		{
 			cent = &cg_entities[ cg.snap->entities[ num ].number ];
+			if (cent->currentState.eType == ET_GHOOK) {
+				centity_t * owner = &cg_entities[cent->currentState.owner];
+				static vec3_t col;
+				VectorSet(col, 1, 1, 1);
+				mdxaBone_t boltMatrix;
+				trap->G2API_GetBoltMatrix(owner->ghoul2, 0, 1, &boltMatrix, owner->lerpAngles, owner->lerpOrigin, cg.time, cgs.gameModels, owner->modelScale);
+				vec3_t newpos;
+				BG_GiveMeVectorFromMatrix(&boltMatrix, ORIGIN, newpos);
+				trap->FX_AddLine(newpos, cent->lerpOrigin, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, col, col, 0.0f, 1, trap->R_RegisterShader("models/items/ghook/line"), FX_SIZE_LINEAR); //
+				trap->FX_AddLine(cent->lerpOrigin, newpos, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, col, col, 0.0f, 1, trap->R_RegisterShader("models/items/ghook/line"), FX_SIZE_LINEAR); // two lines with swapped origins - prevents unwanted culling
+			}
 			if (cent->currentState.eType == ET_PLAYER &&
 				cent->currentState.m_iVehicleNum)
 			{ //add his veh first

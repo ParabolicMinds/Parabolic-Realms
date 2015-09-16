@@ -925,6 +925,36 @@ static void G_AddBot( const char *name, float skill, const char *team, int delay
 	if ( !*s )	s = "255";
 	Info_SetValueForKey( userinfo, key, s );
 
+	key = "sab1_rgb_red";
+	s = Info_ValueForKey( botinfo, key );
+	if ( !*s )	s = "255";
+	Info_SetValueForKey( userinfo, key, s );
+
+	key = "sab1_rgb_grn";
+	s = Info_ValueForKey( botinfo, key );
+	if ( !*s )	s = "255";
+	Info_SetValueForKey( userinfo, key, s );
+
+	key = "sab1_rgb_blu";
+	s = Info_ValueForKey( botinfo, key );
+	if ( !*s )	s = "255";
+	Info_SetValueForKey( userinfo, key, s );
+
+	key = "sab2_rgb_red";
+	s = Info_ValueForKey( botinfo, key );
+	if ( !*s )	s = "255";
+	Info_SetValueForKey( userinfo, key, s );
+
+	key = "sab2_rgb_grn";
+	s = Info_ValueForKey( botinfo, key );
+	if ( !*s )	s = "255";
+	Info_SetValueForKey( userinfo, key, s );
+
+	key = "sab2_rgb_blu";
+	s = Info_ValueForKey( botinfo, key );
+	if ( !*s )	s = "255";
+	Info_SetValueForKey( userinfo, key, s );
+
 	key = "teamtask";
 	s = Info_ValueForKey( botinfo, key );
 	if ( !*s )	s = "0";

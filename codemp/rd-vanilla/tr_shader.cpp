@@ -3215,65 +3215,6 @@ static shader_t *FinishShader( void ) {
 
 void R_FinishFutureShader(shader_t * olds, image_t * image) {
 	olds->stages[0].bundle[0].image = image;
-	/*
-	olds->defaultShader = false;
-	Q_strncpyz(shader.name, olds->name, sizeof(shader.name));
-	Com_Memcpy(shader.lightmapIndex, lightmapsNone, sizeof(shader.lightmapIndex));
-	Com_Memcpy(shader.styles, stylesDefault, sizeof(shader.styles));
-	if ( shader.lightmapIndex[0] == LIGHTMAP_NONE ) {
-		// dynamic colors at vertexes
-		stages[0].bundle[0].image = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
-		stages[0].stateBits = GLS_DEFAULT;
-		if (image->transparent) {
-			stages[0].stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-		}
-	} else if ( shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX ) {
-		// explicit colors at vertexes
-		stages[0].bundle[0].image = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_EXACT_VERTEX;
-		stages[0].alphaGen = AGEN_SKIP;
-		stages[0].stateBits = GLS_DEFAULT;
-	} else if ( shader.lightmapIndex[0] == LIGHTMAP_2D ) {
-		// GUI elements
-		stages[0].bundle[0].image = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_VERTEX;
-		stages[0].alphaGen = AGEN_VERTEX;
-		stages[0].stateBits = GLS_DEPTHTEST_DISABLE |
-			  GLS_SRCBLEND_SRC_ALPHA |
-			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-	} else if ( shader.lightmapIndex[0] == LIGHTMAP_WHITEIMAGE ) {
-		// fullbright level
-		stages[0].bundle[0].image = tr.whiteImage;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
-		stages[0].stateBits = GLS_DEFAULT;
-
-		stages[1].bundle[0].image = image;
-		stages[1].active = qtrue;
-		stages[1].rgbGen = CGEN_IDENTITY;
-		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-	} else {
-		// two pass lightmap
-		stages[0].bundle[0].image = tr.lightmaps[shader.lightmapIndex[0]];
-		stages[0].bundle[0].isLightmap = qtrue;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
-													// for identitylight
-		stages[0].stateBits = GLS_DEFAULT;
-
-		stages[1].bundle[0].image = image;
-		stages[1].active = qtrue;
-		stages[1].rgbGen = CGEN_IDENTITY;
-		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-	}
-	shader_t * news = FinishShader();
-	*olds = *news;
-	strcpy(olds->name, news->name);
-	*/
 }
 
 //========================================================================================
@@ -3524,17 +3465,16 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 		image = R_FindImageFile_NoLoad(name, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP );
 		if (image) {
 			stages[0].bundle[0].image = image;
+			stages[0].stateBits = GLS_DEFAULT;
 			if (image->transparent) {
-				stages[0].stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-			} else {
-				stages[0].stateBits = GLS_DEFAULT;
+				stages[0].stateBits |= GLS_ALPHA;
 			}
 			return FinishShader();
 		} else {
 			image = R_FindImageFile("textures/para/nettexload", qtrue, qtrue, qtrue, GL_REPEAT);
 			if (!image) image = tr.whiteImage;
 			stages[0].bundle[0].image = image;
-			stages[0].stateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+			stages[0].stateBits = GLS_DEFAULT | GLS_ALPHA;
 			sh = FinishShader();
 			R_ParallelDownloadNetTexture(name, sh);
 			return sh;
@@ -3603,6 +3543,9 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 			stages[0].active = qtrue;
 			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
 			stages[0].stateBits = GLS_DEFAULT;
+			if (image->transparent) {
+				stages[0].stateBits |= GLS_ALPHA;
+			}
 		} else if ( shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX ) {
 			// explicit colors at vertexes
 			stages[0].bundle[0].image = image;
@@ -3610,6 +3553,9 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 			stages[0].rgbGen = CGEN_EXACT_VERTEX;
 			stages[0].alphaGen = AGEN_SKIP;
 			stages[0].stateBits = GLS_DEFAULT;
+			if (image->transparent) {
+				stages[0].stateBits |= GLS_ALPHA;
+			}
 		} else if ( shader.lightmapIndex[0] == LIGHTMAP_2D ) {
 			// GUI elements
 			stages[0].bundle[0].image = image;

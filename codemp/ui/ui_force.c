@@ -141,6 +141,8 @@ void UI_InitForceShaders(void)
 	uiSaberColorShaders[SABER_GREEN]	= trap->R_RegisterShaderNoMip("menu/art/saber_green");
 	uiSaberColorShaders[SABER_BLUE]		= trap->R_RegisterShaderNoMip("menu/art/saber_blue");
 	uiSaberColorShaders[SABER_PURPLE]	= trap->R_RegisterShaderNoMip("menu/art/saber_purple");
+	uiSaberColorShaders[SABER_BLACK]	= trap->R_RegisterShaderNoMip("menu/art/saber_black");
+	uiSaberColorShaders[SABER_RGB]		= trap->R_RegisterShaderNoMip("menu/art/saber_rgb");
 }
 
 // Draw the stars spent on the current force power
