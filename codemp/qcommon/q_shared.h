@@ -1794,9 +1794,6 @@ typedef struct playerState_s {
 
 	int			customRGBA[4];
 
-	byte		sab1RGB[3];
-	byte		sab2RGB[3];
-
 	int			standheight;
 	int			crouchheight;
 

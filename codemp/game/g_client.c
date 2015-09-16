@@ -1227,6 +1227,12 @@ void SiegeRespawn(gentity_t *ent);
 void ClientRespawn( gentity_t *ent ) {
 	MaintainBodyQueue(ent);
 
+	gentity_t * from = NULL;
+	while ( (from = G_Find( from, FOFS(classname), "grapple_hook" )) != NULL ) {
+		if (from->s.owner == ent->client->ps.clientNum)
+			G_FreeEntity(from);
+	}
+
 	if (gEscaping || level.gametype == GT_POWERDUEL)
 	{
 		ent->client->sess.sessionTeam = TEAM_SPECTATOR;
@@ -2144,13 +2150,6 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	client->ps.customRGBA[1] = (value=Info_ValueForKey( userinfo, "char_color_green" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[2] = (value=Info_ValueForKey( userinfo, "char_color_blue" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 
-	client->ps.sab1RGB[0] = (value=Info_ValueForKey( userinfo, "sab1_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab1RGB[1] = (value=Info_ValueForKey( userinfo, "sab1_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab1RGB[2] = (value=Info_ValueForKey( userinfo, "sab1_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab2RGB[0] = (value=Info_ValueForKey( userinfo, "sab2_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab2RGB[1] = (value=Info_ValueForKey( userinfo, "sab2_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab2RGB[2] = (value=Info_ValueForKey( userinfo, "sab2_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-
 	//Prevent skins being too dark
 	if ( g_charRestrictRGB.integer && ((client->ps.customRGBA[0]+client->ps.customRGBA[1]+client->ps.customRGBA[2]) < 100) )
 		client->ps.customRGBA[0] = client->ps.customRGBA[1] = client->ps.customRGBA[2] = 255;
@@ -2304,6 +2303,13 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	Q_strcat( buf, sizeof( buf ), va( "st\\%s\\", client->pers.saber1 ) );
 	Q_strcat( buf, sizeof( buf ), va( "st2\\%s\\", client->pers.saber2 ) );
 	Q_strcat( buf, sizeof( buf ), va( "c1\\%s\\", color1 ) );
+	Q_strcat( buf, sizeof( buf ), va( "c2\\%s\\", color2 ) );
+	Q_strcat( buf, sizeof( buf ), va( "s1r\\%i\\", (value=Info_ValueForKey( userinfo, "sab1_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255 ) );
+	Q_strcat( buf, sizeof( buf ), va( "s1g\\%i\\", (value=Info_ValueForKey( userinfo, "sab1_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255 ) );
+	Q_strcat( buf, sizeof( buf ), va( "s1b\\%i\\", (value=Info_ValueForKey( userinfo, "sab1_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255 ) );
+	Q_strcat( buf, sizeof( buf ), va( "s2r\\%i\\", (value=Info_ValueForKey( userinfo, "sab2_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255 ) );
+	Q_strcat( buf, sizeof( buf ), va( "s2g\\%i\\", (value=Info_ValueForKey( userinfo, "sab2_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255 ) );
+	Q_strcat( buf, sizeof( buf ), va( "s2b\\%i\\", (value=Info_ValueForKey( userinfo, "sab2_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255 ) );
 	Q_strcat( buf, sizeof( buf ), va( "c2\\%s\\", color2 ) );
 	Q_strcat( buf, sizeof( buf ), va( "hc\\%i\\", client->pers.maxHealth ) );
 	if (strlen(sprayshader)) Q_strcat( buf, sizeof( buf ), va( "spry\\%s\\", sprayshader ) );
@@ -3255,13 +3261,6 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.customRGBA[1] = (value=Info_ValueForKey( userinfo, "char_color_green" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[2] = (value=Info_ValueForKey( userinfo, "char_color_blue" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 
-	client->ps.sab1RGB[0] = (value=Info_ValueForKey( userinfo, "sab1_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab1RGB[1] = (value=Info_ValueForKey( userinfo, "sab1_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab1RGB[2] = (value=Info_ValueForKey( userinfo, "sab1_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab2RGB[0] = (value=Info_ValueForKey( userinfo, "sab2_rgb_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab2RGB[1] = (value=Info_ValueForKey( userinfo, "sab2_rgb_grn" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-	client->ps.sab2RGB[2] = (value=Info_ValueForKey( userinfo, "sab2_rgb_blu" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
-
 	//Prevent skins being too dark
 	if ( g_charRestrictRGB.integer && ((client->ps.customRGBA[0]+client->ps.customRGBA[1]+client->ps.customRGBA[2]) < 100) )
 		client->ps.customRGBA[0] = client->ps.customRGBA[1] = client->ps.customRGBA[2] = 255;
@@ -3906,6 +3905,12 @@ void ClientDisconnect( int clientNum ) {
 	// cleanup if we are kicking a bot that
 	// hasn't spawned yet
 	G_RemoveQueuedBotBegin( clientNum );
+
+	gentity_t * from = NULL;
+	while ( (from = G_Find( from, FOFS(classname), "grapple_hook" )) != NULL ) {
+		if (from->s.owner == clientNum)
+			G_FreeEntity(from);
+	}
 
 	ent = g_entities + clientNum;
 	if ( !ent->client || ent->client->pers.connected == CON_DISCONNECTED ) {

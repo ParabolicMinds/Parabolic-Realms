@@ -213,6 +213,7 @@ static void  BG_Simulation_Substep_Callback (btDynamicsWorld *world, btScalar ti
 		btCollisionObject const * obA = static_cast<btCollisionObject const *>(contactManifold->getBody0());
 		btCollisionObject const * obB = static_cast<btCollisionObject const *>(contactManifold->getBody1());
 		for (uint i = 0; i < active_gentities.size(); i++) {
+			if (active_gentities[i].gent->client->ps.pm_type == PM_NOCLIP) continue;
 			if (obA == active_gentities[i].physobj->rigidBody) {
 				for (int j=0;j<numContacts;j++) {
 					btManifoldPoint& pt = contactManifold->getContactPoint(j);

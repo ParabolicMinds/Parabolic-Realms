@@ -1418,12 +1418,6 @@ netField_t	playerStateFields[] =
 { PSF(hookPos[0]), 0 },
 { PSF(hookPos[1]), 0 },
 { PSF(hookPos[2]), 0 },
-{ PSF(sab1RGB[0]), 8 }, //0-255
-{ PSF(sab1RGB[1]), 8 }, //0-255
-{ PSF(sab1RGB[2]), 8 }, //0-255
-{ PSF(sab2RGB[0]), 8 }, //0-255
-{ PSF(sab2RGB[1]), 8 }, //0-255
-{ PSF(sab2RGB[2]), 8 }, //0-255
 //{ PSF(hyperSpaceAngles[0]), 0 },//only used by vehicle?
 //{ PSF(hyperSpaceAngles[2]), 0 },//only used by vehicle?
 };

@@ -1850,6 +1850,19 @@ void CG_NewClientInfo( int clientNum, qboolean entitiesInitialized ) {
 		Q_strncpyz(newInfo.sprayshader, "textures/imperial/basic", sizeof( newInfo.sprayshader ));
 	}
 
+	v = Info_ValueForKey( configstring, "s1r" );
+	newInfo.sab1RGB[0] = v ? Com_Clampi( 0, 255, atoi( v )) : 255;
+	v = Info_ValueForKey( configstring, "s1g" );
+	newInfo.sab1RGB[1] = v ? Com_Clampi( 0, 255, atoi( v )) : 255;
+	v = Info_ValueForKey( configstring, "s1b" );
+	newInfo.sab1RGB[2] = v ? Com_Clampi( 0, 255, atoi( v )) : 255;
+	v = Info_ValueForKey( configstring, "s2r" );
+	newInfo.sab2RGB[0] = v ? Com_Clampi( 0, 255, atoi( v )) : 255;
+	v = Info_ValueForKey( configstring, "s2g" );
+	newInfo.sab2RGB[1] = v ? Com_Clampi( 0, 255, atoi( v )) : 255;
+	v = Info_ValueForKey( configstring, "s2b" );
+	newInfo.sab2RGB[2] = v ? Com_Clampi( 0, 255, atoi( v )) : 255;
+
 	// scan for an existing clientinfo that matches this modelname
 	// so we can avoid loading checks if possible
 	if ( !CG_ScanForExistingClientInfo( &newInfo, clientNum ) ) {
@@ -6085,9 +6098,6 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 
 	memset(sabrgb, 3, 1);
 
-	if (cent->playerState) {
-		memcpy(sabrgb, saberNum ? cent->playerState->sab2RGB : cent->playerState->sab1RGB, 3);
-	}
 
 	if (cent->currentState.eType == ET_NPC)
 	{
@@ -6097,6 +6107,10 @@ void CG_AddSaberBlade( centity_t *cent, centity_t *scent, refEntity_t *saber, in
 	else
 	{
 		client = &cgs.clientinfo[cent->currentState.number];
+	}
+
+	if (client) {
+		memcpy(sabrgb, saberNum ? client->sab2RGB : client->sab1RGB, 3);
 	}
 
 	saberEnt = &cg_entities[cent->currentState.saberEntityNum];

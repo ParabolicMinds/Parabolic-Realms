@@ -319,6 +319,9 @@ typedef struct clientInfo_s {
 
 	int			superSmoothTime; //do crazy amount of smoothing
 
+	byte		sab1RGB[3];
+	byte		sab2RGB[3];
+
 } clientInfo_t;
 
 //rww - cheap looping sound struct
