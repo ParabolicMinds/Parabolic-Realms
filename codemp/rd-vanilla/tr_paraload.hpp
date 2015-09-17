@@ -4,5 +4,6 @@
 void R_ParallelInitialize();
 void R_ParallelShutdown();
 
-void R_ParallelDownloadNetTexture(char const * name, shader_t * sh);
 bool R_ParallelDownloadReady();
+image_t * R_ParallelDownloadNetImage(char const * name);
+void R_ReloadNetImages();

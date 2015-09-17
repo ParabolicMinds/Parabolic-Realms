@@ -62,6 +62,8 @@ typedef struct refexport_s {
 	const char *		(*ShaderNameFromIndex)					( int index );
 	void				(*LoadWorld)							( const char *name );
 
+	void				(*ReloadNetImages)						( void );
+
 	// the vis data is a large enough block of data that we go to the trouble
 	// of sharing it with the clipmodel subsystem
 	void				(*SetWorldVisData)						( const byte *vis );

@@ -1754,6 +1754,7 @@ void CL_BindCGame( void ) {
 		cgi.R_WorldEffectCommand				= re->WorldEffectCommand;
 		cgi.RE_InitRendererTerrain				= RE_InitRendererTerrain;
 		cgi.WE_AddWeatherZone					= re->AddWeatherZone;
+		cgi.ReloadNetImages						= re->ReloadNetImages;
 		cgi.GetCurrentSnapshotNumber			= CL_GetCurrentSnapshotNumber;
 		cgi.GetCurrentCmdNumber					= CL_GetCurrentCmdNumber;
 		cgi.GetDefaultState						= CL_GetDefaultState;

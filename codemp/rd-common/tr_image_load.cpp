@@ -159,8 +159,6 @@ void R_LoadImageFromMemory( char const * shortname, byte * buf, size_t bufflen, 
 	}
 
 	// Loop through all the image loaders trying to load this image.
-	char extensionlessName[MAX_QPATH];
-	COM_StripExtension(shortname, extensionlessName, sizeof( extensionlessName ));
 	for ( int i = 0; i < numImageLoaders; i++ )
 	{
 		const ImageLoaderMap *tryLoader = &imageLoaders[i];

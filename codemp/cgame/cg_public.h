@@ -595,6 +595,8 @@ typedef struct cgameImport_s {
 	void			(*RE_InitRendererTerrain)				( const char *info );
 	void			(*WE_AddWeatherZone)					( vec3_t mins, vec3_t maxs );
 
+	void			(*ReloadNetImages)						( void );
+
 	// client
 	void			(*GetCurrentSnapshotNumber)				( int *snapshotNumber, int *serverTime );
 	int				(*GetCurrentCmdNumber)					( void );

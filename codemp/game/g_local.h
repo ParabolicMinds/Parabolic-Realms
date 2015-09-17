@@ -804,6 +804,9 @@ struct gclient_s {
 		int		drainDebounce;
 		int		lightningDebounce;
 	} force;
+
+	float		spray_width;
+	float		spray_height;
 };
 
 //Interest points

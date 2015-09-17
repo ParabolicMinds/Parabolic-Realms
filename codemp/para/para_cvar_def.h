@@ -13,6 +13,10 @@
 #define PCVAR_G_GHOOKPULLSPEED		gp_ghookpullspeed					//maximum velocity of the player being pulled by the hook
 #define PCVAR_G_GOLF				gp_golf								//turns thermal detonators into golf balls
 #define PCVAR_G_SBDROPVALID			gp_saberDropValidation				//prevents dropped sabers from getting stuck in walls
+#define PCVAR_G_SPRAYMINHEIGHT		gp_sprayminh						//
+#define PCVAR_G_SPRAYMAXHEIGHT		gp_spraymaxh						//
+#define PCVAR_G_SPRAYMINWIDTH		gp_sprayminw						//
+#define PCVAR_G_SPRAYMAXWIDTH		gp_spraymaxw						//
 
 #define PCVAR_CG_TTS				cgp_tts								//espeak text-to-speech on chat
 

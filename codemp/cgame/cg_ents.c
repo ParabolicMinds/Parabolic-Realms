@@ -1455,14 +1455,15 @@ Ghoul2 Insert End
 	// convert angles to axis
 	AnglesToAxis( cent->lerpAngles, ent.axis );
 
-	if (cent->currentState.iModelScale)
-	{ //if the server says we have a custom scale then set it now.
+	if (cent->currentState.modelScale[0] || cent->currentState.modelScale[1] || cent->currentState.modelScale[2]) {
+		VectorCopy(cent->currentState.modelScale, cent->modelScale);
+		VectorCopy(cent->currentState.modelScale, ent.modelScale);
+		ScaleModelAxis(&ent);
+	} else if (cent->currentState.iModelScale) {
 		cent->modelScale[0] = cent->modelScale[1] = cent->modelScale[2] = cent->currentState.iModelScale/100.0f;
 		VectorCopy(cent->modelScale, ent.modelScale);
 		ScaleModelAxis(&ent);
-	}
-	else
-	{
+	} else {
 		VectorClear(cent->modelScale);
 	}
 
@@ -1870,7 +1871,11 @@ static void CG_Spray( centity_t *cent ) {
 	// convert angles to axis
 	AnglesToAxis( cent->lerpAngles, ent.axis );
 
-	if (cent->currentState.iModelScale) { //if the server says we have a custom scale then set it now.
+	if (cent->currentState.modelScale[0] || cent->currentState.modelScale[1] || cent->currentState.modelScale[2]) {
+		VectorCopy(cent->currentState.modelScale, cent->modelScale);
+		VectorCopy(cent->currentState.modelScale, ent.modelScale);
+		ScaleModelAxis(&ent);
+	} else if (cent->currentState.iModelScale) {
 		cent->modelScale[0] = cent->modelScale[1] = cent->modelScale[2] = cent->currentState.iModelScale/100.0f;
 		VectorCopy(cent->modelScale, ent.modelScale);
 		ScaleModelAxis(&ent);

@@ -2776,6 +2776,8 @@ void CL_Init( void ) {
 	Cvar_Get ("sab2_rgb_blu",  "255", CVAR_USERINFO | CVAR_ARCHIVE );
 
 	Cvar_Get("sprayshader", "textures/imperial/basic", CVAR_USERINFO | CVAR_ARCHIVE);
+	Cvar_Get("spray_width", "1.0", CVAR_USERINFO | CVAR_ARCHIVE);
+	Cvar_Get("spray_height", "1.0", CVAR_USERINFO | CVAR_ARCHIVE);
 
 	// cgame might not be initialized before menu is used
 	Cvar_Get ("cg_viewsize", "100", CVAR_ARCHIVE );

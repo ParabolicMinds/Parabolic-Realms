@@ -24,6 +24,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // tr_shader.c -- this file deals with the parsing and definition of shaders
 
 #include "tr_local.h"
+#include "tr_paraload.hpp"
 
 static char *s_shaderText;
 
@@ -1212,11 +1213,23 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			}
 			else
 			{
-				stage->bundle[0].image = R_FindImageFile( token, (qboolean)!shader.noMipMaps, (qboolean)!shader.noPicMip, (qboolean)!shader.noTC, GL_REPEAT );
-				if ( !stage->bundle[0].image )
-				{
-					ri->Printf( PRINT_ALL, S_COLOR_YELLOW  "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
-					return qfalse;
+				if (token[0] == '@') {
+					stage->bundle[0].image = R_FindImageFile_NoLoad(token, qtrue, qtrue, qtrue, GL_REPEAT);
+					if (!stage->bundle[0].image) {
+						stage->bundle[0].image = R_ParallelDownloadNetImage(token);
+						if ( !stage->bundle[0].image )
+						{
+							ri->Printf( PRINT_ALL, S_COLOR_YELLOW  "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
+							return qfalse;
+						}
+					}
+				} else {
+					stage->bundle[0].image = R_FindImageFile( token, (qboolean)!shader.noMipMaps, (qboolean)!shader.noPicMip, (qboolean)!shader.noTC, GL_REPEAT );
+					if ( !stage->bundle[0].image )
+					{
+						ri->Printf( PRINT_ALL, S_COLOR_YELLOW  "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
+						return qfalse;
+					}
 				}
 			}
 		}
@@ -3471,12 +3484,10 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 			}
 			return FinishShader();
 		} else {
-			image = R_FindImageFile("textures/para/nettexload", qtrue, qtrue, qtrue, GL_REPEAT);
-			if (!image) image = tr.whiteImage;
+			image = R_ParallelDownloadNetImage(name);
 			stages[0].bundle[0].image = image;
 			stages[0].stateBits = GLS_DEFAULT | GLS_ALPHA;
 			sh = FinishShader();
-			R_ParallelDownloadNetTexture(name, sh);
 			return sh;
 		}
 

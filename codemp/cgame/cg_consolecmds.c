@@ -280,6 +280,10 @@ int cmdcmp( const void *a, const void *b ) {
 	return Q_stricmp( (const char *)a, ((consoleCommand_t*)b)->cmd );
 }
 
+static void CG_ReloadNetImages_f(void) {
+	trap->ReloadNetImages();
+}
+
 /* This array MUST be sorted correctly by alphabetical name field */
 static consoleCommand_t	commands[] = {
 	{ "+scores",					CG_ScoresDown_f },
@@ -295,6 +299,7 @@ static consoleCommand_t	commands[] = {
 	{ "nextskin",					CG_TestModelNextSkin_f },
 	{ "prevframe",					CG_TestModelPrevFrame_f },
 	{ "prevskin",					CG_TestModelPrevSkin_f },
+	{ "reloadnetimages",			CG_ReloadNetImages_f },
 	{ "siegeCompleteCvarUpdate",	CG_SiegeCompleteCvarUpdate_f },
 	{ "siegeCvarUpdate",			CG_SiegeCvarUpdate_f },
 	{ "sizedown",					CG_SizeDown_f },

@@ -214,27 +214,29 @@ static void  BG_Simulation_Substep_Callback (btDynamicsWorld *world, btScalar ti
 		btCollisionObject const * obB = static_cast<btCollisionObject const *>(contactManifold->getBody1());
 		for (uint i = 0; i < active_gentities.size(); i++) {
 			if (active_gentities[i].gent->client->ps.pm_type == PM_NOCLIP) continue;
-			if (obA == active_gentities[i].physobj->rigidBody) {
-				for (int j=0;j<numContacts;j++) {
-					btManifoldPoint& pt = contactManifold->getContactPoint(j);
-					vec3_t imp, impm, impl, impt;
-					BtoQVec(pt.m_normalWorldOnB, imp);
-					VectorScale(imp, pt.getAppliedImpulse() / active_gentities[i].physobj->mass, impm);
-					VectorScale(imp, (pt.getPositionWorldOnB() - pt.getPositionWorldOnA()).length(), impl);
-					VectorAdd(impm, impl, impt);
-					VectorAdd(active_gentities[i].gent->client->ps.velocity, impt, active_gentities[i].gent->client->ps.velocity);
-				}
-			} else if (obB == active_gentities[i].physobj->rigidBody) {
-				for (int j=0;j<numContacts;j++) {
-					btManifoldPoint& pt = contactManifold->getContactPoint(j);
-					vec3_t imp, impm, impl, impt;
-					btVector3 rev = - pt.m_normalWorldOnB;
-					BtoQVec(rev, imp);
-					VectorScale(imp, pt.getAppliedImpulse() / active_gentities[i].physobj->mass, impm);
-					VectorScale(imp, (pt.getPositionWorldOnA() - pt.getPositionWorldOnB()).length(), impl);
-					VectorAdd(impm, impl, impt);
-					VectorAdd(active_gentities[i].gent->client->ps.velocity, impt, active_gentities[i].gent->client->ps.velocity);
+			for (uint is = 0; is < active_states.size(); is++) {
+				if (obA == active_gentities[i].physobj->rigidBody && obB == active_states[is].physobj->rigidBody) {
+					for (int j=0;j<numContacts;j++) {
+						btManifoldPoint& pt = contactManifold->getContactPoint(j);
+						vec3_t imp, impm, impl, impt;
+						BtoQVec(pt.m_normalWorldOnB, imp);
+						VectorScale(imp, pt.getAppliedImpulse() / active_gentities[i].physobj->mass, impm);
+						VectorScale(imp, (pt.getPositionWorldOnB() - pt.getPositionWorldOnA()).length(), impl);
+						VectorAdd(impm, impl, impt);
+						VectorAdd(active_gentities[i].gent->client->ps.velocity, impt, active_gentities[i].gent->client->ps.velocity);
+					}
+				} else if (obB == active_gentities[i].physobj->rigidBody && obA == active_states[is].physobj->rigidBody) {
+					for (int j=0;j<numContacts;j++) {
+						btManifoldPoint& pt = contactManifold->getContactPoint(j);
+						vec3_t imp, impm, impl, impt;
+						btVector3 rev = - pt.m_normalWorldOnB;
+						BtoQVec(rev, imp);
+						VectorScale(imp, pt.getAppliedImpulse() / active_gentities[i].physobj->mass, impm);
+						VectorScale(imp, (pt.getPositionWorldOnA() - pt.getPositionWorldOnB()).length(), impl);
+						VectorAdd(impm, impl, impt);
+						VectorAdd(active_gentities[i].gent->client->ps.velocity, impt, active_gentities[i].gent->client->ps.velocity);
 
+					}
 				}
 			}
 		}

@@ -2235,6 +2235,8 @@ typedef struct entityState_s {
 	//If non-0, this is the index of the vehicle a player/NPC is riding.
 	int		m_iVehicleNum;
 
+	vec3_t	modelScale;
+
 	//rww - spare values specifically for use by mod authors.
 	//See netf_overrides.txt if you want to increase the send
 	//amount of any of these above 1 bit.

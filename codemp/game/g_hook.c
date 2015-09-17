@@ -113,9 +113,13 @@ void G_GrappleHook(gentity_t * ent) {
 
 	hook->classname = "grapple_hook";
 
+	vec3_t delta;
+	AngleVectors(ent->client->ps.viewangles, delta, NULL, NULL);
+
 	VectorCopy(ent->client->ps.origin, hook->s.origin);
 	VectorCopy(ent->client->ps.viewangles, hook->s.angles);
-	hook->s.origin[2] += 10;
+	hook->s.origin[2] += 28;
+	VectorMA(hook->s.origin, 16, delta, hook->s.origin);
 	G_SetOrigin(hook, hook->s.origin);
 	G_SetAngles(hook, hook->s.angles);
 
@@ -129,8 +133,6 @@ void G_GrappleHook(gentity_t * ent) {
 	VectorSet(hook->r.mins, -4, -4, -4);
 	VectorSet(hook->r.maxs, 4, 4, 4);
 
-	vec3_t delta;
-	AngleVectors(ent->client->ps.viewangles, delta, NULL, NULL);
 	VectorScale(delta, PCVAR_G_GHOOKSPEED.value, delta);
 	VectorCopy(delta, hook->s.pos.trDelta);
 	hook->s.pos.trTime = level.time;

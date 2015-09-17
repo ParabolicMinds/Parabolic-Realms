@@ -1999,6 +1999,8 @@ static userinfoValidate_t userinfoFields[] = {
 	UIF( sab2_rgb_grn,		1, 1 ),
 	UIF( sab2_rgb_blu,		1, 1 ),
 	UIF( sprayshader,		0, 1 ),
+	UIF( spray_width,		0, 1 ),
+	UIF( spray_height,		0, 1 ),
 };
 static const size_t numUserinfoFields = ARRAY_LEN( userinfoFields );
 
@@ -2149,6 +2151,18 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	client->ps.customRGBA[0] = (value=Info_ValueForKey( userinfo, "char_color_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[1] = (value=Info_ValueForKey( userinfo, "char_color_green" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[2] = (value=Info_ValueForKey( userinfo, "char_color_blue" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+
+	client->spray_width = (value=Info_ValueForKey( userinfo, "spray_width" )) ? Com_Clamp( PCVAR_G_SPRAYMINWIDTH.value, PCVAR_G_SPRAYMAXWIDTH.value, strtof(value, NULL)) : 1.0f;
+	client->spray_height = (value=Info_ValueForKey( userinfo, "spray_height" )) ? Com_Clamp( PCVAR_G_SPRAYMINHEIGHT.value, PCVAR_G_SPRAYMAXHEIGHT.value, strtof(value, NULL)) : 1.0f;
+
+	gentity_t * from = NULL;
+	while ( (from = G_Find( from, FOFS(classname), "spray" )) != NULL ) {
+		if (from->s.owner == client->ps.clientNum) {
+			from->s.modelScale[0] = 1.0f;
+			from->s.modelScale[1] = client->spray_width;
+			from->s.modelScale[2] = client->spray_height;
+		}
+	}
 
 	//Prevent skins being too dark
 	if ( g_charRestrictRGB.integer && ((client->ps.customRGBA[0]+client->ps.customRGBA[1]+client->ps.customRGBA[2]) < 100) )
@@ -3260,6 +3274,9 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.customRGBA[0] = (value=Info_ValueForKey( userinfo, "char_color_red" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[1] = (value=Info_ValueForKey( userinfo, "char_color_green" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
 	client->ps.customRGBA[2] = (value=Info_ValueForKey( userinfo, "char_color_blue" ))	? Com_Clampi( 0, 255, atoi( value ) ) : 255;
+
+	client->spray_width = (value=Info_ValueForKey( userinfo, "spray_width" )) ? Com_Clamp( 0.125f, 8.0f, strtof(value, NULL)) : 1.0f;
+	client->spray_height = (value=Info_ValueForKey( userinfo, "spray_height" )) ? Com_Clamp( 0.125f, 8.0f, strtof(value, NULL)) : 1.0f;
 
 	//Prevent skins being too dark
 	if ( g_charRestrictRGB.integer && ((client->ps.customRGBA[0]+client->ps.customRGBA[1]+client->ps.customRGBA[2]) < 100) )

@@ -976,22 +976,10 @@ netField_t	entityStateFields[] =
 { NETF(boneAngles4[0]), 0 },
 { NETF(boneAngles4[1]), 0 },
 { NETF(boneAngles4[2]), 0 },
+{ NETF(modelScale[0]), 0 },
+{ NETF(modelScale[1]), 0 },
+{ NETF(modelScale[2]), 0 },
 
-//rww - for use by mod authors only
-	/*
-{ NETF(userInt1), 1 },
-{ NETF(userInt2), 1 },
-{ NETF(userInt3), 1 },
-{ NETF(userFloat1), 1 },
-{ NETF(userFloat2), 1 },
-{ NETF(userFloat3), 1 },
-{ NETF(userVec1[0]), 1 },
-{ NETF(userVec1[1]), 1 },
-{ NETF(userVec1[2]), 1 },
-{ NETF(userVec2[0]), 1 },
-{ NETF(userVec2[1]), 1 },
-{ NETF(userVec2[2]), 1 }
-	*/
 };
 
 // if (int)f == f and (int)f + ( 1<<(FLOAT_INT_BITS-1) ) < ( 1 << FLOAT_INT_BITS )

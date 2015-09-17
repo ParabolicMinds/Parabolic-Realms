@@ -3413,12 +3413,23 @@ void Cmd_Spray(gentity_t *ent) {
 	VectorMA(start, 100, dir, end);
 	trap->Trace(&pos, start, mins, maxs, end, ent->s.number, MASK_SOLID, qfalse, 0, 0);
 	if (VectorCompare(pos.endpos, end)) return;
-	Com_Printf("PLACE SPRAY!\n");
+	Com_Printf("PLACE SPRAY! W:%f H:%f\n", ent->client->spray_width, ent->client->spray_height);
 
 	vec3_t ang;
 	vectoangles(pos.plane.normal, ang);
 
+	gentity_t * from = NULL;
+	while ( (from = G_Find( from, FOFS(classname), "spray" )) != NULL ) {
+		if (from->s.owner == ent->client->ps.clientNum) {
+			G_FreeEntity(from);
+		}
+	}
+
 	gentity_t * pb = G_Spawn();
+	pb->classname = "spray";
+	pb->s.modelScale[0] = 1.0f;
+	pb->s.modelScale[1] = ent->client->spray_width;
+	pb->s.modelScale[2] = ent->client->spray_height;
 	VectorCopy(pos.endpos, pb->s.origin);
 	VectorCopy(pos.endpos, pb->s.pos.trBase);
 	VectorCopy(ang, pb->s.angles);

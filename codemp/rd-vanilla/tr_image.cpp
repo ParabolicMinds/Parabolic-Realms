@@ -946,7 +946,7 @@ This is the only way any image_t are created
 ================
 */
 image_t *R_CreateImage( const char *name, const byte *pic, int width, int height,
-					   GLenum format, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode, bool bRectangle )
+					   GLenum format, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode, bool bRectangle, qboolean trackAlloc )
 {
 	image_t		*image;
 	qboolean	isLightmap = qfalse;
@@ -967,9 +967,11 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 		}
 	}
 
-	image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
-	if (image) {
-		return image;
+	if (trackAlloc) {
+		image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
+		if (image) {
+			return image;
+		}
 	}
 
 	image = (image_t*) Z_Malloc( sizeof( image_t ), TAG_IMAGE_T, qtrue );
@@ -1018,7 +1020,9 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 
 	const char *psNewName = GenerateImageMappingName(name);
 	Q_strncpyz(image->imgName, psNewName, sizeof(image->imgName));
-	AllocatedImages[ image->imgName ] = image;
+	if (trackAlloc) {
+		AllocatedImages[ image->imgName ] = image;
+	}
 
 	if ( bRectangle )
 	{
@@ -1081,7 +1085,7 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	return image;
 }
 
-image_t	*R_LoadImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode ) {
+image_t	*R_LoadImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode, qboolean trackAlloc ) {
 	image_t	*image;
 	int		width, height;
 	byte	*pic;
@@ -1091,9 +1095,11 @@ image_t	*R_LoadImageMemory( const char *name, byte * buf, size_t bufflen, qboole
 		return NULL;
 	}
 
-	image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
-	if (image) {
-		return image;
+	if (trackAlloc) {
+		image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
+		if (image) {
+			return image;
+		}
 	}
 
 	// need to do this here as well as in R_CreateImage, or R_FindImageFile_NoLoad() may complain about
@@ -1111,7 +1117,7 @@ image_t	*R_LoadImageMemory( const char *name, byte * buf, size_t bufflen, qboole
 		return NULL;                                        // bail
 	}
 
-	image = R_CreateImage( ( char * ) name, pic, width, height, GL_RGBA, mipmap, allowPicmip, allowTC, glWrapClampMode );
+	image = R_CreateImage( ( char * ) name, pic, width, height, GL_RGBA, mipmap, allowPicmip, allowTC, glWrapClampMode, qfalse, trackAlloc );
 	Z_Free( pic );
 	return image;
 }
@@ -1546,3 +1552,16 @@ void R_DeleteTextures( void ) {
 	GL_ResetBinds();
 }
 
+/*
+===============
+R_CopyImageNewName
+===============
+*/
+image_t * R_CopyImageNewName(image_t * oldimg, char const * newname) {
+	char * newnamem = GenerateImageMappingName(newname);
+	image_t * newimg = (image_t *)Z_Malloc(sizeof(image_t), TAG_IMAGE_T, qfalse);
+	memcpy(newimg, oldimg, sizeof(image_t));
+	Q_strncpyz(newimg->imgName, newnamem, MAX_QPATH);
+	AllocatedImages[ newimg->imgName ] = newimg;
+	return newimg;
+}

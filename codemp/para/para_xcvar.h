@@ -43,6 +43,10 @@ XCVAR_DEF( PCVAR_G_GHOOKSPEED,			"1000.0",						NULL,										CVAR_ARCHIVE,				
 XCVAR_DEF( PCVAR_G_GHOOKPULLSPEED,		"600.0",						NULL,										CVAR_ARCHIVE,				qtrue )
 XCVAR_DEF( PCVAR_G_GOLF,				"0",							G_PCVAR_GOLF_Switchfunc,					CVAR_ARCHIVE,				qtrue )
 XCVAR_DEF( PCVAR_G_SBDROPVALID,			"1",							NULL,										CVAR_ARCHIVE,				qtrue )
+XCVAR_DEF( PCVAR_G_SPRAYMINHEIGHT,		"0.125",						NULL,										CVAR_ARCHIVE,				qtrue )
+XCVAR_DEF( PCVAR_G_SPRAYMAXHEIGHT,		"8.0",							NULL,										CVAR_ARCHIVE,				qtrue )
+XCVAR_DEF( PCVAR_G_SPRAYMINWIDTH,		"0.125",						NULL,										CVAR_ARCHIVE,				qtrue )
+XCVAR_DEF( PCVAR_G_SPRAYMAXWIDTH,		"8.0",							NULL,										CVAR_ARCHIVE,				qtrue )
 #endif
 
 #if defined(_CGAME) //CGame cvars (cg_)

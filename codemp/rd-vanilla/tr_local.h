@@ -1358,9 +1358,9 @@ model_t		*R_AllocModel( void );
 void    	R_Init( void );
 
 image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
-image_t		*R_LoadImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
+image_t		*R_LoadImageMemory( const char *name, byte * buf, size_t bufflen, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode, qboolean trackAlloc = qtrue );
 
-image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, GLenum format, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int wrapClampMode, bool bRectangle = false );
+image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, GLenum format, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int wrapClampMode, bool bRectangle = false, qboolean trackAlloc = qtrue );
 
 qboolean	R_GetModeInfo( int *width, int *height, int mode );
 
@@ -1376,6 +1376,7 @@ void	R_InitFogTable( void );
 float	R_FogFactor( float s, float t );
 void	R_InitImages( void );
 void	R_DeleteTextures( void );
+image_t * R_CopyImageNewName(image_t *, char const *);
 float	R_SumOfUsedImages( qboolean bUseFormat );
 void	R_InitSkins( void );
 skin_t	*R_GetSkinByHandle( qhandle_t hSkin );
